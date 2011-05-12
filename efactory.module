@@ -1,0 +1,587 @@
+<?php 
+
+function efactory_entity_info(){
+  $info = array();
+  $results = db_select('efactory', 'e')->fields('e')->execute();
+  foreach($results as $result){
+    $info = array_merge($info, _basic_entity_info($result));
+  }
+  
+  return $info;
+}
+
+function efactory_menu(){
+  
+  $menu =  array();
+  
+  $menu['admin/efactory'] =
+  array(
+    'title' => 'Entity Factory',
+    'description' => 'A centralized Administrative section for Entities',
+    'page callback' => 'efactory_overview',
+    'access arguments' => array('administer efactory entity')
+  );
+  
+  $menu["admin/efactory/overview"] = array(
+      'title'=>"Overview",
+      'type'=>MENU_DEFAULT_LOCAL_TASK
+    );
+  
+  $menu["admin/efactory/add"] = array(
+    'title'=>'Add',
+    'description' => "Add a new Entity",
+    'page callback' => "drupal_get_form",
+    'page arguments' => array('efactory_add'),
+    'access arguments' => array("add efactory entity"),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1
+  );
+  
+  $results = db_select('efactory', 'e')->fields('e', array('name', 'label'))->execute();
+  
+  foreach($results as $result){
+    $menu = array_merge($menu, _entity_menu($result));
+  }
+  
+  return $menu;
+  
+}
+
+function efactory_overview(){
+  
+$header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
+  $rows = array();
+  
+  $results = db_select('efactory', 'e')->fields('e')->execute();
+  
+  foreach ($results as $record) {
+    $id = $record->id;
+    $name = $record->name;
+    $label = $record->label;
+    
+    $row = array(l("{$id} : {$label}", "admin/efactory/{$name}"));
+    $row[] = array('data' => l(t('delete'), "admin/efactory/{$name}/delete"));
+    $rows[] = $row;
+  }
+  $build['entity_table'] = array(
+  '#theme' => 'table',
+  '#header' => $header,
+  '#rows' => $rows,
+  );
+  
+  return $build;
+
+}
+
+function efactory_add(&$form, &$form_state){
+  
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => "Name"
+  );
+  
+  $form['label'] = array(
+    '#type' => 'textfield',
+    '#title' => "Label"
+  );
+  
+  $form['typed'] = array(
+    '#type' => 'checkbox',
+    '#title' => "Typed"
+  );
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#weight' => 10000,
+    '#value' => t('Save'),
+  );
+  
+  return $form; 
+}
+
+function efactory_add_submit(&$form, &$form_state){
+  
+  $input = $form_state['input'];
+  $record = (object) array(
+  'name' => $input['name']  , 
+  'label' => $input['label'], 
+  'typed' => $input['typed']
+  );
+  
+  $dwr = drupal_write_record('efactory', $record);
+  
+  //$results = db_select('efactory', 'e')->fields('e', array('name'))->execute();
+  
+  //foreach($results as $result){
+    if(!db_table_exists($record->name)){
+      db_create_table($record->name, _basic_schema($record->name, $record->typed));
+    }else{
+      drupal_set_message("Database table {$result->name} already exists", 'error');
+    }
+  //}
+}
+
+function efactory_delete(&$form, &$form_state, $entity){
+  
+  $form['entity'] =
+  array(
+  '#type' => 'value',
+  '#value' => $entity,
+  );
+  
+  $message = "Are you sure that you want to delete {$entity->label}";
+  $caption = "This action is irreversible";
+  
+  return confirm_form($form, $message, 'admin/efactory', $caption, t('Delete')); 
+}
+
+function efactory_delete_submit(&$form, &$form_state){
+  
+  $entity = $form_state['values']['entity'];
+  
+  //TODO: Maybe I should export the entity and make a database dump in case
+  //that they want to recover the entity later
+  
+  //delete the bundle
+  field_attach_delete_bundle($entity->name, $entity->name);
+  
+  //delete the efactory database entry
+  db_delete('efactory')
+  ->condition('name', $entity->name)
+  ->execute();
+  
+  //drop the table
+  db_drop_table($entity->name);
+  
+  drupal_cron_run();
+  
+  //Ok, lets delete the entity
+  $form_state['redirect'] = "admin/efactory";
+}
+
+function efactory__entity_overview($entity){
+  
+  $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
+  $rows = array();
+  foreach (_entity_get_all($entity->name) as $record) {
+      $id = $record->id;
+      $objs = entity_load($entity->name, array($id));
+      $obj = $objs[$id];
+      $uri = entity_uri($entity->name, $obj);
+      $row = array(l(entity_label($entity->name, $obj), $uri['path'], $uri['options']));
+      $row[] = array('data' => l(t('delete'), "admin/efactory/{$entity->name}/{$id}/delete"));
+      $rows[] = $row;
+  }
+  $build['entity_table'] = array(
+  '#theme' => 'table',
+  '#header' => $header,
+  '#rows' => $rows,
+  );
+  
+  return $build;
+}
+
+function efactory__entity_add($entity){
+  
+  global $user;
+  
+  $values = array();
+  $values['entity_name'] = $entity->name;
+  $values['uid'] = $user->uid;
+  $values['created'] = time();
+  $values['changed'] = time();
+  
+  
+  $obj = entity_create($entity->name, $values);
+  
+  return drupal_get_form("efactory__entity_form", $obj);
+  
+}
+
+function efactory__entity_view($entity, $id){
+ 
+  if(is_numeric($id)){
+     $obj = entity_load($entity->name, array($id));
+  }
+  
+  return $obj[$id]->view();
+  
+}
+
+
+function efactory__entity_edit($entity, $id){
+  
+  if(is_numeric($id)){
+     $objs = entity_load($entity->name, array($id));
+     $obj = $objs[$id];
+  }
+  
+  global $user;
+  
+  $obj->uid = $user->uid;
+  $obj->changed = time(); 
+  
+  return drupal_get_form("efactory__entity_form", $obj);
+  
+}
+
+function efactory__entity_delete(&$form, &$form_state, $entity, $id){
+  //dpm($entity);
+  //dpm($id);
+  
+  $objs = entity_load($entity->name, array($id));
+  
+  
+  $form['entity'] =
+  array(
+  '#type' => 'value',
+  '#value' => $objs[$id],
+  );
+  
+  $message = "are you sure that you want to delete {$entity->label}:{$id}";
+  $caption = "This action is irreversible";
+  
+  return confirm_form($form, $message, "admin/efactory/{$entity->name}", $caption, t('Delete'));
+}
+
+function efactory__entity_delete_submit(&$form, &$form_state){
+  $entity = $form_state['values']['entity'];
+  
+  dpm($entity, "Entity");
+  
+  //TODO: Maybe I should export the entity and make a database dump in case
+  //that they want to recover the entity later
+  
+  $entity->delete();
+  
+  drupal_cron_run();
+  
+  //Ok, lets delete the entity
+  $form_state['redirect'] = "admin/efactory/{$entity->entityType()}";
+  
+}
+
+function efactory__entity_form(&$form, &$form_state, $entity) {
+  
+  
+  
+ $form['entity'] = array(
+    '#type' => 'value',
+    '#value' => $entity
+  );
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#weight' => 10000,
+    '#value' => t('Save'),
+  );
+  
+ field_attach_form($entity->entityType(), $entity, $form, $form_state);
+  
+  return $form;
+}
+
+function efactory__entity_form_submit(&$form, &$form_state){
+  $entity = $form_state['values']['entity'];
+ 
+  //dpm($form_state['field'], "Fields");
+  
+  foreach(array_keys($form_state['field']) as $field){
+    $entity->{$field} = _field_unset_empty($field, $form_state['values'][$field]);
+  }
+  
+  $entity->save();
+}
+
+function efactory__entity_page($entity, $id){
+  $build = array();
+  $build["{$entity->name}_page"] = array();
+  
+  $entity_view = efactory__entity_view($entity, $id);
+  
+  $build["{$entity->name}_page"] = $entity_view; 
+  
+  return $build;
+}
+
+function efactory__entity_uri($entity){
+  return array('path' => "{$entity->entityType()}/{$entity->identifier()}");
+}
+
+function efactory__entity_label($entity){
+  $hook_name = "entity_{$entity->entityType()}_label";
+  //dpm($hook_name, "Hook Name");
+  $new_label = module_invoke_all($hook_name, $entity, $entity->id);
+  //dpm($new_label, "NEW LABEL");
+  if(!empty($new_label)){
+    return $new_label[0];
+  }else{
+    return $entity->id;
+  }
+}
+
+function _basic_schema($entity, $typed = FALSE){
+  
+   return array(
+    'description' => "The base table for a(n) {$entity}.",
+    'fields' => array(
+      'id' => array(
+        'description' => "The primary identifier for a(n) {$entity}.",
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'machine_name' => array(
+        'description' => "The machine name (a string unique identifier) {$entity}.",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'default' => "",
+        'length' => 128,
+        'not null' => TRUE
+      ),
+      'uid' => array(
+        'description' => "The {users}.uid that owns this {$entity}; initially, this is the user that created it.",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'description' => "The Unix timestamp when the {$entity} was created.",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => "The Unix timestamp when the {$entity} was most recently saved.",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      "{$entity}_changed" => array('changed'),
+      "{$entity}_created" => array('created'),
+      'uid' => array('uid'),
+    ),
+    'foreign keys' => 
+    array(
+      "{$entity}_author" => 
+       array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  
+ if($typed){
+    $schema["{$entity}_type"] = array(
+      'description' => "Stores information about all defined {$entity} types.",
+      'fields' => array(
+        'id' => array(
+          'type' => 'serial',
+          'not null' => TRUE,
+          'description' => 'Primary Key: Unique entity_test type ID.',
+        ),
+        'name' => array(
+          'description' => 'The machine-readable name of this entity_test type.',
+          'type' => 'varchar',
+          'length' => 32,
+          'not null' => TRUE,
+        ),
+        'label' => array(
+          'description' => 'The human-readable name of this entity_test type.',
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => '',
+        ),
+      ),
+      'primary key' => array('id'),
+      'unique keys' => array(
+        'name' => array('name'),
+      ),
+    );
+  }
+}
+
+
+
+function _basic_entity_info($entity){
+  $info = array();
+  
+  $name = $entity->name;
+  $label = $entity->label;
+  $typed = FALSE;// $entity->typed;
+  
+  $info[$name] = 
+  array(
+    'label' => t($label),
+    'base table' => $name,
+    'entity class' => 'Entity',
+    'controller class' => 'EntityAPIController',
+    'module' => 'efactory',
+    'fieldable' => TRUE,
+    'entity keys' => 
+    array(
+        'id' => 'id'
+    ),
+    'label callback' => 'efactory__entity_label',
+    'uri callback' => 'efactory__entity_uri',
+    'bundle keys' => 
+    array(
+    )
+  );
+  
+  //If there are no types to be managed lets just create a bundle with the same name than the entity
+  if($typed){
+    $info[$name]['entity keys']['bundle'] = 'name';
+    $info[$name]['bundle keys']['bundle'] = 'name';
+    
+    $info["{$name}_type"] = array(
+      'label' => t("{$label} type"),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIController',
+      'module' => 'efactotry',
+      'base table' => "{$name}_type",
+      'fieldable' => FALSE,
+      'bundle of' => $name,
+      'entity keys' => array(
+        'id' => 'id',
+        'name' => 'name',
+      ),
+    );
+  }else{
+    $info[$name]['bundles'] = 
+    array(
+      $name => 
+      array(
+        'label' => $label,
+        'admin' => array(
+          'path' => "admin/efactory/{$name}",
+          'access arguments' => array("administer entity factory"),
+        )));
+  }
+  
+  if($typed){
+    $results = _entity_get_all("{$name}_type");
+    
+    foreach($results as $record){
+      dpm($record);
+    }
+  }
+  
+  return $info;
+}
+
+function _entity_menu($entity){
+  $items = array();
+  $name = $entity->name;
+  $label = $entity->label;
+  
+  //DELETE Entity
+  $items["admin/efactory/{$name}/delete"] = array(
+    'title'=>'Add',
+    'description' => "Add {$name}",
+    'page callback' => "drupal_get_form",
+    'page arguments' => array('efactory_delete', $entity),
+    'access arguments' => array("delete efactory entity"),
+   'type' => MENU_CALLBACK,
+  );
+    
+  //OVERVIEW Entity  Instance
+   $items["admin/efactory/{$name}"] = array(
+    'title'=>$label,
+    'description' => "View all object of the {$name} type",
+    'page callback' => "efactory__entity_overview",
+    'page arguments' => array($entity),
+    'access arguments' => array("administer {$name}"),
+    'weight' => 0
+  );
+  
+   $items["admin/efactory/{$name}/overview"] = array(
+    'title'=>"Overview",
+    'type'=>MENU_DEFAULT_LOCAL_TASK
+  );
+  
+  //CREATE Entity Instance
+  $items["admin/efactory/{$name}/add"] = array(
+    'title'=>'Add',
+    'description' => "Add {$name}",
+    'page callback' => "efactory__entity_add",
+    'page arguments' => array($entity),
+    'access arguments' => array("add {$name}"),
+   'type' => MENU_LOCAL_TASK,
+   'weight' => 1
+  );
+  
+  //READ Entity Instance
+  $items["{$name}/%"] = array(
+    'title'=>"{$name}",
+    'description' => "View the object of {$name} type",
+    'page callback' => "efactory__entity_page",
+    'page arguments' => array($entity, 1),
+    'access arguments' => array("view {$name}"),
+    'weight' => 0
+  );
+  
+  $items["{$name}/%/view"] = array(
+    'title'=>"View",
+    'type'=>MENU_DEFAULT_LOCAL_TASK
+  );
+  
+  //UPDATE Entity Instance
+  $items["{$name}/%/edit"] = array(
+    'title'=>"Edit",
+    'description' => "Edit the object of {$name} type",
+    'page callback' => "efactory__entity_edit",
+    'page arguments' => array($entity, 1),
+    'access arguments' => array("edit {$name}"),
+    'type'=>MENU_LOCAL_TASK,
+    'weight' => 1
+  );
+  
+  //DELETE Entity Instance
+  $items["admin/efactory/{$name}/%/delete"] = array(
+    'title'=>"Delete {$name}",
+    'description' => "Delete the object of {$name} type",
+    'page callback' => "drupal_get_form",
+    'page arguments' => array('efactory__entity_delete', $entity, 3),
+    'access arguments' => array("delete {$name}")
+  );
+ 
+  return $items;
+}
+
+function _field_unset_empty($field_name, $data){
+  //dpm($field_name, "Field");
+  //if there is a value we need to check that it is not empty
+  $info = field_info_field($field_name);
+  //dpm($info, "Info");
+  //dpm($info['indexes'], "Indexes");
+  
+  foreach($data[LANGUAGE_NONE] as $key => $values){
+    
+    $empty = TRUE;
+    foreach(array_keys($info['columns']) as $index){
+      //dpm($index, "Index");
+      //dpm($values[$index]);  
+      if(!empty($values[$index])){
+        $empty = FALSE;
+      }
+    }
+    if($empty){
+      unset($data[LANGUAGE_NONE][$key]);
+    }
+    
+  }
+ 
+  return $data;
+}
+
+function _entity_get_all($table){
+    
+  $results = db_select($table, 't')->fields('t')->execute();
+    
+  return $results;
+}

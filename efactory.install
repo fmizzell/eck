@@ -1,0 +1,48 @@
+<?php
+function efactory_schema(){
+  
+  $schema = array();
+  
+  $schema['efactory'] = array(
+    'description' => "The base table for entities information",
+    'fields' => array(
+      'id' => array(
+        'description' => "The primary identifier for a(n) entity",
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => "The machine name of the entity",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      ),
+      'label' => array(
+        'description' => "The entity's Label",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      ),
+      'typed' => array(
+        'description' => 'A boolean indicating whether this entity has multiple bundles',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+      )
+    ),
+    'primary key' => array('id'),
+  );
+  
+  if(db_table_exists('efactory')){
+    $results = db_select('efactory', 'e')->fields('e', array('name', 'label'))->execute();
+    foreach($results as $result){
+     $schema = array_merge($schema, array($result->name =>  _basic_schema($result->name)));
+    }
+  }
+  
+  return $schema;
+}
