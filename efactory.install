@@ -48,7 +48,7 @@ function efactory_schema(){
       
       //the function entity_basic_schema defines a standard schema for each entity created
      $schema = array_merge($schema, 
-       array($result->name =>  efactory__entity_schema($result->name)));
+       array("efactory_{$result->name}" =>  efactory__entity_schema($result->name)));
     }
   }
   
