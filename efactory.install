@@ -1,8 +1,13 @@
 <?php
+/**
+ * Create the database table that will store the entities information.
+ * All that we need for each entity is a name and a label
+ */
 function efactory_schema(){
-  
+
   $schema = array();
   
+  //Schema for the efactory table
   $schema['efactory'] = array(
     'description' => "The base table for entities information",
     'fields' => array(
@@ -25,22 +30,25 @@ function efactory_schema(){
         'type' => 'varchar',
         'length' => 128,
         'not null' => TRUE
-      ),
-      'typed' => array(
-        'description' => 'A boolean indicating whether this entity has multiple bundles',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-        'size' => 'tiny',
       )
     ),
     'primary key' => array('id'),
   );
   
+  //At the installation stage, efactory has not been created, so what is this for?
   if(db_table_exists('efactory')){
+    
+    //When something requests an entity's info, the hook_schema is called to get
+    //the information about the entity's table, so we need to provide that information
+    //in the hook
+    
+    //get all the entities that have been create (all the rows in efactory table)
     $results = db_select('efactory', 'e')->fields('e', array('name', 'label'))->execute();
     foreach($results as $result){
-     $schema = array_merge($schema, array($result->name =>  _basic_schema($result->name)));
+      
+      //the function entity_basic_schema defines a standard schema for each entity created
+     $schema = array_merge($schema, 
+       array($result->name =>  efactory__entity_schema($result->name)));
     }
   }
   
