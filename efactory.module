@@ -1,4 +1,13 @@
 <?php 
+// $Id$
+
+/**
+ * @file
+ * 
+ * Here is all of the logic that creates and manages entities
+ * 
+ * TODO: Write some more about the logic flow of things
+ */
 
 /****************************************************
  *                ENTITY FACTORY
@@ -77,10 +86,10 @@ function efactory_permission() {
   );
   
   foreach (_db_get_all('efactory') as $result) {
-    foreach (array('add', 'view', 'edit') as $op){
+    foreach (array('add', 'view', 'edit') as $op) {
       $perms["{$op} {$result->name}"] = 
       array(
-        'title' => t(ucfirst($op)." {$result->label}")
+        'title' => t(ucfirst($op) . " {$result->label}")
       );
     }
   }
@@ -124,12 +133,17 @@ function efactory_add(&$form, &$form_state) {
   
   $form['name'] = array(
     '#type' => 'textfield',
-    '#title' => "Name"
+    '#title' => "Name",
+    '#description' => "The name of the entity should be all lowercase, words separated by
+    underscores, and no fancy characters",
+    '#required' => TRUE
   );
   
   $form['label'] = array(
     '#type' => 'textfield',
-    '#title' => "Label"
+    '#title' => "Label",
+    '#description' => "Human readable name",
+    '#required' => TRUE
   );
   
   $form['submit'] = array(
@@ -138,7 +152,19 @@ function efactory_add(&$form, &$form_state) {
     '#value' => t('Save'),
   );
   
+   $form['#validate'][] = 'efactory_add_validate';
+  
   return $form; 
+}
+
+function efactory_add_validate($form, &$form_state) {
+  
+  preg_match("/([^a-z0-9_]|\s)/", $form_state['values']['name'], $matches);
+  
+  if (!empty($matches)) {
+    form_set_error('name', t("Your Entity name has invalid characters or spaces"));
+  }
+  
 }
 
 function efactory_add_submit(&$form, &$form_state) {
@@ -152,11 +178,14 @@ function efactory_add_submit(&$form, &$form_state) {
   $dwr = drupal_write_record('efactory', $record);
   
   if (!db_table_exists($record->name)) {
-    db_create_table("efactory_{$record->name}", efactory__entity_schema($record->name, $record->typed));
+    db_create_table("efactory_{$record->name}", efactory__entity_schema($record->name));
   }
   else {
     drupal_set_message(t("Database table %name already exists", array('%name' => $record->name)), 'error');
   }
+  
+  //lets rebuild the menu for the new entity
+  menu_rebuild();
   
 }
 
@@ -187,9 +216,12 @@ function efactory_delete_submit(&$form, &$form_state) {
   ->execute();
   
   //drop the table
-  db_drop_table($name);
+  db_drop_table("efactory_{$name}");
   
   drupal_cron_run();
+  
+  //lets rebuild the menu to remove all entity paths
+  menu_rebuild();
   
   $form_state['redirect'] = "admin/efactory";
 }
