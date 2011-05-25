@@ -3,3 +3,4 @@ name = Entity Construction Kit
 package = Entity
 core = 7.x
 dependencies[] = entity
+files[] = eck.test

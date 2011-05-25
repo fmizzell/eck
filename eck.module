@@ -171,7 +171,7 @@ function eck_add_submit(&$form, &$form_state) {
   
   $input = $form_state['input'];
   $record = (object) array(
-  'name' => $input['name']  , 
+  'name' => $input['name'], 
   'label' => $input['label'], 
   );
   
@@ -353,8 +353,10 @@ function eck__entity_form(&$form, &$form_state, $entity) {
 function eck__entity_form_submit(&$form, &$form_state) {
   $entity = $form_state['values']['entity'];
   
-  foreach (array_keys($form_state['field']) as $field) {
-    $entity->{$field} = _field_unset_empty($field, $form_state['values'][$field]);
+  if(isset($form_state['field'])){
+    foreach (array_keys($form_state['field']) as $field) {
+      $entity->{$field} = _field_unset_empty($field, $form_state['values'][$field]);
+    }
   }
   
   $entity->save();
