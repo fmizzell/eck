@@ -17,17 +17,17 @@
  * The Entity information for all the entities created
  * with the factory
  */
-function efactory_entity_info() {
+function eck_entity_info() {
   $info = array();
   
-  //Get all the data from the efactory table (All of the entities created)
-  $results = _db_get_all('efactory');
+  //Get all the data from the eck table (All of the entities created)
+  $results = _db_get_all('eck');
   
   //for each of the created entities add its entity info to the $info array
   foreach ($results as $result) {
  
-    //efactory__entity_info creates the entity_info for each entity
-    $info = array_merge($info, efactory__entity_info($result->name, $result->label));
+    //eck__entity_info creates the entity_info for each entity
+    $info = array_merge($info, eck__entity_info($result->name, $result->label));
   }
   
   return $info;
@@ -36,46 +36,46 @@ function efactory_entity_info() {
 /**
  * Define the paths for the administration section of the Entity Factory
  */
-function efactory_menu() {
+function eck_menu() {
   
   $menu =  array();
   
-  $menu['admin/efactory'] =
+  $menu['admin/eck'] =
   array(
     'title' => 'Entity',
     'description' => 'A centralized Administrative section for Entities',
-    'page callback' => 'efactory_overview',
+    'page callback' => 'eck_overview',
     'access arguments' => array('administer entity')
   );
   
-  $menu["admin/efactory/overview"] = array(
+  $menu["admin/eck/overview"] = array(
       'title' => "Overview",
       'type' => MENU_DEFAULT_LOCAL_TASK
     );
   
-  $menu["admin/efactory/add"] = array(
+  $menu["admin/eck/add"] = array(
     'title' => 'Add',
     'description' => "Add a new Entity",
     'page callback' => "drupal_get_form",
-    'page arguments' => array('efactory_add'),
+    'page arguments' => array('eck_add'),
     'access arguments' => array("administer entity"),
     'type' => MENU_LOCAL_TASK,
     'weight' => 1
   );
   
-  $results = _db_get_all('efactory');
+  $results = _db_get_all('eck');
   
   //create the paths for entity administration, the paths are defined by
-  //efactory__entity_menu()
+  //eck__entity_menu()
   foreach ($results as $result) {
-    $menu = array_merge($menu, efactory__entity_menu($result->name, $result->label));
+    $menu = array_merge($menu, eck__entity_menu($result->name, $result->label));
   }
   
   return $menu;
   
 }
 
-function efactory_permission() {
+function eck_permission() {
   $perms = 
   array(
     'administer entity' => 
@@ -85,7 +85,7 @@ function efactory_permission() {
     )
   );
   
-  foreach (_db_get_all('efactory') as $result) {
+  foreach (_db_get_all('eck') as $result) {
     foreach (array('add', 'view', 'edit') as $op) {
       $perms["{$op} {$result->name}"] = 
       array(
@@ -101,20 +101,20 @@ function efactory_permission() {
  *           ENTITY FACTORY CALLBACKS
  ****************************************************/
 
-function efactory_overview() {
+function eck_overview() {
   
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
   $rows = array();
   
-  $results = db_select('efactory', 'e')->fields('e')->execute();
+  $results = db_select('eck', 'e')->fields('e')->execute();
   
   foreach ($results as $record) {
     $id = $record->id;
     $name = $record->name;
     $label = $record->label;
     
-    $row = array(l("{$id} : {$label}", "admin/efactory/{$name}"));
-    $row[] = array('data' => l(t('delete'), "admin/efactory/{$name}/delete"));
+    $row = array(l("{$id} : {$label}", "admin/eck/{$name}"));
+    $row[] = array('data' => l(t('delete'), "admin/eck/{$name}/delete"));
     $rows[] = $row;
   }
   $build['entity_table'] = array(
@@ -127,7 +127,7 @@ function efactory_overview() {
 
 }
 
-function efactory_add(&$form, &$form_state) {
+function eck_add(&$form, &$form_state) {
   
   //TODO: Validata name and label
   
@@ -152,12 +152,12 @@ function efactory_add(&$form, &$form_state) {
     '#value' => t('Save'),
   );
   
-   $form['#validate'][] = 'efactory_add_validate';
+   $form['#validate'][] = 'eck_add_validate';
   
   return $form; 
 }
 
-function efactory_add_validate($form, &$form_state) {
+function eck_add_validate($form, &$form_state) {
   
   preg_match("/([^a-z0-9_]|\s)/", $form_state['values']['name'], $matches);
   
@@ -167,7 +167,7 @@ function efactory_add_validate($form, &$form_state) {
   
 }
 
-function efactory_add_submit(&$form, &$form_state) {
+function eck_add_submit(&$form, &$form_state) {
   
   $input = $form_state['input'];
   $record = (object) array(
@@ -175,10 +175,10 @@ function efactory_add_submit(&$form, &$form_state) {
   'label' => $input['label'], 
   );
   
-  $dwr = drupal_write_record('efactory', $record);
+  $dwr = drupal_write_record('eck', $record);
   
   if (!db_table_exists($record->name)) {
-    db_create_table("efactory_{$record->name}", efactory__entity_schema($record->name));
+    db_create_table("eck_{$record->name}", eck__entity_schema($record->name));
   }
   else {
     drupal_set_message(t("Database table %name already exists", array('%name' => $record->name)), 'error');
@@ -189,7 +189,7 @@ function efactory_add_submit(&$form, &$form_state) {
   
 }
 
-function efactory_delete(&$form, &$form_state, $name, $label) {
+function eck_delete(&$form, &$form_state, $name, $label) {
   
   $form['entity_name'] =
   array(
@@ -200,30 +200,30 @@ function efactory_delete(&$form, &$form_state, $name, $label) {
   $message = t("Are you sure that you want to delete %label", array("%label" => $label));
   $caption = t("This action is irreversible");
   
-  return confirm_form($form, $message, 'admin/efactory', $caption, t('Delete')); 
+  return confirm_form($form, $message, 'admin/eck', $caption, t('Delete')); 
 }
 
-function efactory_delete_submit(&$form, &$form_state) {
+function eck_delete_submit(&$form, &$form_state) {
   
   $name = $form_state['values']['entity_name'];
   
   //delete the bundle
   field_attach_delete_bundle($name, $name);
   
-  //delete the efactory database entry
-  db_delete('efactory')
+  //delete the eck database entry
+  db_delete('eck')
   ->condition('name', $name)
   ->execute();
   
   //drop the table
-  db_drop_table("efactory_{$name}");
+  db_drop_table("eck_{$name}");
   
   drupal_cron_run();
   
   //lets rebuild the menu to remove all entity paths
   menu_rebuild();
   
-  $form_state['redirect'] = "admin/efactory";
+  $form_state['redirect'] = "admin/eck";
 }
 
 
@@ -231,12 +231,12 @@ function efactory_delete_submit(&$form, &$form_state) {
  *                    ENTITY
  ****************************************************/
 
-function efactory__entity_overview($name) {
+function eck__entity_overview($name) {
   
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
   $rows = array();
   
-  $table = "efactory_{$name}";
+  $table = "eck_{$name}";
   
   foreach (_db_get_all($table) as $record) {
       $id = $record->id;
@@ -244,7 +244,7 @@ function efactory__entity_overview($name) {
       $obj = $objs[$id];
       $uri = entity_uri($name, $obj);
       $row = array(l(entity_label($name, $obj), $uri['path'], $uri['options']));
-      $row[] = array('data' => l(t('delete'), "admin/efactory/{$name}/{$id}/delete"));
+      $row[] = array('data' => l(t('delete'), "admin/eck/{$name}/{$id}/delete"));
       $rows[] = $row;
   }
   
@@ -257,7 +257,7 @@ function efactory__entity_overview($name) {
   return $build;
 }
 
-function efactory__entity_add($name) {
+function eck__entity_add($name) {
   
   global $user;
   
@@ -270,11 +270,11 @@ function efactory__entity_add($name) {
   
   $obj = entity_create($name, $values);
   
-  return drupal_get_form("efactory__entity_form", $obj);
+  return drupal_get_form("eck__entity_form", $obj);
   
 }
 
-function efactory__entity_view($name, $id) {
+function eck__entity_view($name, $id) {
  
   if (is_numeric($id)) {
      $obj = entity_load($name, array($id));
@@ -285,7 +285,7 @@ function efactory__entity_view($name, $id) {
 }
 
 
-function efactory__entity_edit($name, $id) {
+function eck__entity_edit($name, $id) {
   
   if (is_numeric($id)) {
      $objs = entity_load($name, array($id));
@@ -297,11 +297,11 @@ function efactory__entity_edit($name, $id) {
   $obj->uid = $user->uid;
   $obj->changed = time(); 
   
-  return drupal_get_form("efactory__entity_form", $obj);
+  return drupal_get_form("eck__entity_form", $obj);
   
 }
 
-function efactory__entity_delete(&$form, &$form_state, $name, $label, $id) {
+function eck__entity_delete(&$form, &$form_state, $name, $label, $id) {
 
   $objs = entity_load($name, array($id));
   
@@ -317,10 +317,10 @@ function efactory__entity_delete(&$form, &$form_state, $name, $label, $id) {
     
   $caption = t("This action is irreversible");
   
-  return confirm_form($form, $message, "admin/efactory/{$name}", $caption, t('Delete'));
+  return confirm_form($form, $message, "admin/eck/{$name}", $caption, t('Delete'));
 }
 
-function efactory__entity_delete_submit(&$form, &$form_state) {
+function eck__entity_delete_submit(&$form, &$form_state) {
   $entity = $form_state['values']['entity'];
   
   $entity->delete();
@@ -328,11 +328,11 @@ function efactory__entity_delete_submit(&$form, &$form_state) {
   drupal_cron_run();
   
   //Ok, lets delete the entity
-  $form_state['redirect'] = "admin/efactory/{$entity->entityType()}";
+  $form_state['redirect'] = "admin/eck/{$entity->entityType()}";
   
 }
 
-function efactory__entity_form(&$form, &$form_state, $entity) {
+function eck__entity_form(&$form, &$form_state, $entity) {
 
  $form['entity'] = array(
     '#type' => 'value',
@@ -350,7 +350,7 @@ function efactory__entity_form(&$form, &$form_state, $entity) {
   return $form;
 }
 
-function efactory__entity_form_submit(&$form, &$form_state) {
+function eck__entity_form_submit(&$form, &$form_state) {
   $entity = $form_state['values']['entity'];
   
   foreach (array_keys($form_state['field']) as $field) {
@@ -360,22 +360,22 @@ function efactory__entity_form_submit(&$form, &$form_state) {
   $entity->save();
 }
 
-function efactory__entity_page($name, $id) {
+function eck__entity_page($name, $id) {
   $build = array();
   $build["{$name}_page"] = array();
   
-  $entity_view = efactory__entity_view($name, $id);
+  $entity_view = eck__entity_view($name, $id);
   
   $build["{$name}_page"] = $entity_view; 
   
   return $build;
 }
 
-function efactory__entity_uri($entity) {
+function eck__entity_uri($entity) {
   return array('path' => "{$entity->entityType()}/{$entity->identifier()}");
 }
 
-function efactory__entity_label($entity) {
+function eck__entity_label($entity) {
   $hook_name = "entity_{$entity->entityType()}_label";
  
   $new_label = module_invoke_all($hook_name, $entity, $entity->id);
@@ -388,7 +388,7 @@ function efactory__entity_label($entity) {
   }
 }
 
-function efactory__entity_schema($name) {
+function eck__entity_schema($name) {
   
    return array(
     'description' => "The base table for a(n) {$name}.",
@@ -442,23 +442,23 @@ function efactory__entity_schema($name) {
  * @param $name the name of the entity
  * @param $label the label of the entity
  */
-function efactory__entity_info($name, $label) {
+function eck__entity_info($name, $label) {
   $info = array();
   
   $info[$name] = 
   array(
     'label' => t($label),
-    'base table' => "efactory_{$name}",
+    'base table' => "eck_{$name}",
     'entity class' => 'Entity',
     'controller class' => 'EntityAPIController',
-    'module' => 'efactory',
+    'module' => 'eck',
     'fieldable' => TRUE,
     'entity keys' => 
     array(
         'id' => 'id'
     ),
-    'label callback' => 'efactory__entity_label',
-    'uri callback' => 'efactory__entity_uri',
+    'label callback' => 'eck__entity_label',
+    'uri callback' => 'eck__entity_uri',
     'bundle keys' => 
     array(
     )
@@ -470,7 +470,7 @@ function efactory__entity_info($name, $label) {
     array(
       'label' => $label,
       'admin' => array(
-        'path' => "admin/efactory/{$name}",
+        'path' => "admin/eck/{$name}",
         'access arguments' => array("administer entity")
       )
     )
@@ -485,39 +485,39 @@ function efactory__entity_info($name, $label) {
  * @param $name
  * @param $label
  */
-function efactory__entity_menu($name, $label) {
+function eck__entity_menu($name, $label) {
   $items = array();
   
   //DELETE Entity
-  $items["admin/efactory/{$name}/delete"] = array(
+  $items["admin/eck/{$name}/delete"] = array(
     'title' => 'Add',
     'description' => "Add {$name}",
     'page callback' => "drupal_get_form",
-    'page arguments' => array('efactory_delete', $name, $label),
+    'page arguments' => array('eck_delete', $name, $label),
     'access arguments' => array("administer entity"),
    'type' => MENU_CALLBACK,
   );
     
   //OVERVIEW Entity  Instance
-   $items["admin/efactory/{$name}"] = array(
+   $items["admin/eck/{$name}"] = array(
     'title' => $label,
     'description' => "View all object of the {$name} type",
-    'page callback' => "efactory__entity_overview",
+    'page callback' => "eck__entity_overview",
     'page arguments' => array($name),
     'access arguments' => array("administer entity"),
     'weight' => 0
   );
   
-   $items["admin/efactory/{$name}/overview"] = array(
+   $items["admin/eck/{$name}/overview"] = array(
     'title' => "Overview",
     'type' => MENU_DEFAULT_LOCAL_TASK
   );
   
   //CREATE Entity Instance
-  $items["admin/efactory/{$name}/add"] = array(
+  $items["admin/eck/{$name}/add"] = array(
     'title' => 'Add',
     'description' => "Add {$name}",
-    'page callback' => "efactory__entity_add",
+    'page callback' => "eck__entity_add",
     'page arguments' => array($name),
     'access arguments' => array("add {$name}"),
    'type' => MENU_LOCAL_TASK,
@@ -528,7 +528,7 @@ function efactory__entity_menu($name, $label) {
   $items["{$name}/%"] = array(
     'title' => "{$name}",
     'description' => "View the object of {$name} type",
-    'page callback' => "efactory__entity_page",
+    'page callback' => "eck__entity_page",
     'page arguments' => array($name, 1),
     'access arguments' => array("view {$name}"),
     'weight' => 0
@@ -543,7 +543,7 @@ function efactory__entity_menu($name, $label) {
   $items["{$name}/%/edit"] = array(
     'title' => "Edit",
     'description' => "Edit the object of {$name} type",
-    'page callback' => "efactory__entity_edit",
+    'page callback' => "eck__entity_edit",
     'page arguments' => array($name, 1),
     'access arguments' => array("edit {$name}"),
     'type' => MENU_LOCAL_TASK,
@@ -551,11 +551,11 @@ function efactory__entity_menu($name, $label) {
   );
   
   //DELETE Entity Instance
-  $items["admin/efactory/{$name}/%/delete"] = array(
+  $items["admin/eck/{$name}/%/delete"] = array(
     'title' => "Delete {$name}",
     'description' => "Delete the object of {$name} type",
     'page callback' => "drupal_get_form",
-    'page arguments' => array('efactory__entity_delete', $name, $label, 3),
+    'page arguments' => array('eck__entity_delete', $name, $label, 3),
     'access arguments' => array("administer entity")
   );
  
