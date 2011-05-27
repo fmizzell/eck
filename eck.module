@@ -127,7 +127,7 @@ function eck_overview() {
 
 }
 
-function eck_add(&$form, &$form_state) {
+function eck_add($form, &$form_state) {
   
   //TODO: Validata name and label
   
@@ -167,7 +167,7 @@ function eck_add_validate($form, &$form_state) {
   
 }
 
-function eck_add_submit(&$form, &$form_state) {
+function eck_add_submit($form, &$form_state) {
   
   $input = $form_state['input'];
   $record = (object) array(
@@ -189,7 +189,7 @@ function eck_add_submit(&$form, &$form_state) {
   
 }
 
-function eck_delete(&$form, &$form_state, $name, $label) {
+function eck_delete($form, &$form_state, $name, $label) {
   
   $form['entity_name'] =
   array(
@@ -203,7 +203,7 @@ function eck_delete(&$form, &$form_state, $name, $label) {
   return confirm_form($form, $message, 'admin/eck', $caption, t('Delete')); 
 }
 
-function eck_delete_submit(&$form, &$form_state) {
+function eck_delete_submit($form, &$form_state) {
   
   $name = $form_state['values']['entity_name'];
   
@@ -301,7 +301,7 @@ function eck__entity_edit($name, $id) {
   
 }
 
-function eck__entity_delete(&$form, &$form_state, $name, $label, $id) {
+function eck__entity_delete($form, &$form_state, $name, $label, $id) {
 
   $objs = entity_load($name, array($id));
   
@@ -320,7 +320,7 @@ function eck__entity_delete(&$form, &$form_state, $name, $label, $id) {
   return confirm_form($form, $message, "admin/eck/{$name}", $caption, t('Delete'));
 }
 
-function eck__entity_delete_submit(&$form, &$form_state) {
+function eck__entity_delete_submit($form, &$form_state) {
   $entity = $form_state['values']['entity'];
   
   $entity->delete();
@@ -332,7 +332,7 @@ function eck__entity_delete_submit(&$form, &$form_state) {
   
 }
 
-function eck__entity_form(&$form, &$form_state, $entity) {
+function eck__entity_form($form, $form_state, $entity) {
 
  $form['entity'] = array(
     '#type' => 'value',
@@ -350,7 +350,7 @@ function eck__entity_form(&$form, &$form_state, $entity) {
   return $form;
 }
 
-function eck__entity_form_submit(&$form, &$form_state) {
+function eck__entity_form_submit($form, &$form_state) {
   $entity = $form_state['values']['entity'];
   
   if(isset($form_state['field'])){
