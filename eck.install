@@ -56,6 +56,43 @@ function eck_schema() {
     'primary key' => array('id'),
   );
   
+  $schema['eck_types'] = array(
+    'description' => "The base table for entities types information",
+    'fields' => array(
+      'id' => array(
+        'description' => "The primary identifier for a(n) entity type",
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'entity' => array(
+        'description' => "The entity this type belongs to",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      ),
+      'type' => array(
+        'description' => "The type (bundle) name that will be used",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      ),
+      'label' => array(
+        'description' => "A human readable name for the bundle (not that the type is not human readable)",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      )
+    ),
+    'primary key' => array('id'),
+    'indexes' => array(
+      'entity_type'      => array('entity', 'type'),
+    ),
+  );
+  
   //At the installation stage, eck has not been created, so what is this for?
   if (db_table_exists('eck')) {
     
@@ -69,9 +106,83 @@ function eck_schema() {
       
       //the function entity_basic_schema defines a standard schema for each entity created
      $schema = array_merge($schema, 
-       array("eck_{$result->name}" =>  eck__entity_schema($result->name)));
+       array("eck_{$result->name}" =>  eck__entity__schema($result->name)));
     }
   }
   
   return $schema;
+}
+
+function eck_update_7000(){
+  
+  //to implement bundles (types), I have decided to have one table that will hold all 
+  //of the types information. So for this update we need to create the table, and add all of the current
+  //entities with their types to the table, so we can unify the implementations of bundles in code
+  
+  $schema = array(
+    'description' => "The base table for entities types information",
+    'fields' => array(
+      'id' => array(
+        'description' => "The primary identifier for a(n) entity type",
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'entity' => array(
+        'description' => "The entity this type belongs to",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      ),
+      'type' => array(
+        'description' => "The type (bundle) name that will be used",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      ),
+      'label' => array(
+        'description' => "A human readable name for the bundle (not that the type is not human readable)",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      )
+    ),
+    'primary key' => array('id'),
+    'indexes' => array(
+      'entity_type'      => array('entity', 'type'),
+    ),
+  );
+  
+  db_create_table('eck_types', $schema);
+  
+  //now we add a type (bundle) to the table for each entity in the eck table
+  
+  $results = db_select('eck', 't')->fields('t')->execute();
+  
+  foreach($results as $record){
+    
+    $nid = db_insert('eck_types')
+    ->fields(array(
+        'entity' => $record->name,
+        'type' => $record->name,
+        'label' => $record->label,
+    ))
+    ->execute();
+    
+    //also we want to add a field to all the enity tables for the type, and populated with
+    //the current type
+    db_add_field("eck_{$record->name}",'type', array(
+    'description' => 'The type of the entity',
+    'type' => 'varchar',
+    'default' => '',
+    'length' => 255,
+    'not null' => TRUE,
+    'initial' => $record->name
+  ));
+    
+  }
+  
 }
