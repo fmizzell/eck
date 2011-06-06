@@ -18,7 +18,7 @@
  * with the factory
  */
 function eck_entity_info() {
-  dpm("Entity Info");
+  //dpm("Entity Info");
   $info = array();
   
   //Get all the data from the eck table (All of the entities created)
@@ -792,7 +792,7 @@ function eck__entity_instance__form_submit($form, &$form_state) {
   
   $entity->save();
   
-  dpm($entity);
+  //dpm($entity);
   
   drupal_set_message(t("Entity {$entity->id} has been saved"));
 }
