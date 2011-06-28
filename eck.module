@@ -318,10 +318,16 @@ function eck_delete_submit($form, &$form_state) {
 }*/
 
 function eck__entity__schema($name) {
-  
-   return array(
+   $schema = array(
     'description' => "The base table for a(n) {$name}.",
     'fields' => array(
+      'uuid' => array(
+        'type' => 'char',
+        'length' => 36,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The Universally Unique Identifier.'
+      ),
       'id' => array(
         'description' => "The primary identifier for a(n) {$name}.",
         'type' => 'serial',
@@ -369,6 +375,9 @@ function eck__entity__schema($name) {
     ),
     'primary key' => array('id'),
   );
+  
+  return $schema;
+  
 }
 
 

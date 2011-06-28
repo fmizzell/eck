@@ -186,3 +186,28 @@ function eck_update_7000(){
   }
   
 }
+
+function eck_update_7001(){
+  
+  //for importing and exporting things it is always good to have a uuid, so we will add that colunm to the current
+  //entity types
+  
+  //now we add a type (bundle) to the table for each entity in the eck table
+  
+  $results = db_select('eck', 't')->fields('t')->execute();
+  
+  foreach($results as $record){
+    
+    //also we want to add a field to all the enity tables for the type, and populated with
+    //the current type
+    db_add_field("eck_{$record->name}",'uuid', array(
+     'type' => 'char',
+    'length' => 36,
+    'not null' => TRUE,
+    'default' => '',
+    'description' => 'The Universally Unique Identifier.'
+    ));
+    
+  }
+  
+}
