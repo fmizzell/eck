@@ -359,6 +359,12 @@ function eck__entity__schema($name) {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'state' => array(
+         'type' => 'int',
+         'unsigned' => TRUE,
+         'not null' => TRUE,
+         'default' => 0
+      )
     ),
     'indexes' => array(
       "{$name}_changed" => array('changed'),
