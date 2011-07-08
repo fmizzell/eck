@@ -646,6 +646,12 @@ function eck__entity_instance__menu($entity, $type){
     'weight' => 0
   );
   
+  $menu["{$entity_name}/{$entity_type}/%/view"] = array(
+    'title' => "View",
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0
+  );
+  
   //UPDATE Entity Instance
   $menu["{$entity_name}/{$entity_type}/%/edit"] = array(
     'title' => "Edit",
