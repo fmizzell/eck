@@ -682,31 +682,47 @@ function eck__entity_instance__overview($entity, $type) {
   $entity_type = $type->type;
   $entity_type_label = $type->label;
   
+  $table = "eck_{$entity_name}";
+  
+  //Get all entities of this type
+  $results = db_select($table, 't')->fields('t')->condition('type', $entity_type, '=')->execute();
+  $ids = array();
+  foreach ($results as $record){
+    $ids[] = $id = $record->id;
+  }
+  
+  $entities = entity_load($entity_name, $ids);
+  
+  return $build['entity_table'] = entity_table($entities);
+}
+
+/**
+ * This function creates the renderable array to display a table of entities
+ * $entities an associative arrays of entities keyed by id, this array is returned by entity_load
+ */
+function entity_table($entities){
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
   $rows = array();
   
-  $table = "eck_{$entity_name}";
-  
-  //Get all entity instances of this type
-  $results = db_select($table, 't')->fields('t')->condition('type', $entity_type, '=')->execute();
-  
-  foreach ($results as $record) {
-      $id = $record->id;
-      $objs = entity_load($entity_name, array($id));
-      $obj = $objs[$id];
-      $uri = entity_uri($entity_name, $obj);
-      $row = array(l(entity_label($entity_name, $obj), $uri['path'], $uri['options']));
-      $row[] = array('data' => l(t('delete'), "admin/eck/{$entity_name}/$entity_type/{$id}/delete"));
-      $rows[] = $row;
+  foreach ($entities as $id => $entity) {
+    $entity_type = $entity->entityType();
+    $type = $entity->type;
+      
+    $uri = entity_uri($entity_type, $entity);
+    $row = array(l(entity_label($entity_type, $entity), $uri['path'], $uri['options']));
+    $row[] = array('data' => l(t('delete'), "admin/eck/$entity_type/$type/{$id}/delete"));
+    
+    drupal_alter("entity_table_{$entity_type}", $row, $entity);
+    
+    $rows[] = $row;
   }
   
-  $build['entity_table'] = array(
+  return array(
   '#theme' => 'table',
   '#header' => $header,
   '#rows' => $rows,
   );
   
-  return $build;
 }
 
 function eck__entity_instance__add($entity, $type) {
