@@ -725,8 +725,7 @@ function entity_table($entities){
   
 }
 
-function eck__entity_instance__add($entity, $type) {
-  
+function eck__entity_create($entity, $type){
   $entity_name = $entity->name;
   $entity_label = $entity->label;
   $entity_type = $type->type;
@@ -741,8 +740,17 @@ function eck__entity_instance__add($entity, $type) {
   $values['created'] = time();
   $values['changed'] = time();
   
+  return entity_create($entity_name, $values);
+}
+
+/**
+ * I would like to fix this.. but for now this function takes this obscure objects, $entity and Etype
+ * $entity must have to variables, a entity_type(name), and a label for the entity.
+ * $type contains the bundle (type) and a label for the type
+ */
+function eck__entity_instance__add($entity, $type) {
   
-  $obj = entity_create($entity_name, $values);
+  $obj = eck__entity_create($entity, $type);
   
   return drupal_get_form("eck__entity_instance__form", $obj);
   
@@ -842,17 +850,19 @@ function eck__entity_instance__form($form, $form_state, $entity) {
 }
 
 function eck__entity_instance__form_submit($form, &$form_state) {
+    //dpm($form_state, "Entity Instance Form Submit");
+  
   $entity = $form_state['values']['entity'];
   
   if(isset($form_state['field'])){
     foreach (array_keys($form_state['field']) as $field) {
+      //dpm($field, "Field");
       $entity->{$field} = _field_unset_empty($field, $form_state['values'][$field]);
     }
   }
   
-  $entity->save();
   
-  //dpm($entity);
+  $entity->save();
   
   drupal_set_message(t("Entity {$entity->id} has been saved"));
 }
