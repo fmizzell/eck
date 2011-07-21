@@ -611,7 +611,7 @@ function eck__entity_instance__menu($entity, $type){
   
   //OVERVIEW Entity Instance
   $menu["admin/eck/{$entity_name}/{$entity_type}"] = array(
-    'title' => $entity_label,
+    'title' => $entity_type_label,
     'description' => "View all {$entity_label} instances of {$entity_type_label} type",
     'page callback' => "eck__entity_instance__overview",
     'page arguments' => array($entity, $type),
