@@ -489,7 +489,6 @@ function eck__entity_type__overview($entity){
   );
   
   return $build;
-  
 }
 
 function eck__entity_type__menu($entity){
@@ -608,13 +607,21 @@ function eck__entity_instance__menu($entity, $type){
   $entity_type = $type->type;
   $entity_type_label = $type->label;
   
+  //AUTOCOMPLETE
+  /*$menu["admin/eck/{$entity_name}/{$entity_type}"] = array(
+    'title' => "",
+    'page callback' => "eck__entity_instance__autocomplete",
+    'page arguments' => array($entity, $type),
+    'access arguments' => array("administer {$entity_label} {$entity_type_label}"),
+    'type' => MENU_CALLBACK
+  );*/
   
   //OVERVIEW Entity Instance
   $menu["admin/eck/{$entity_name}/{$entity_type}"] = array(
     'title' => $entity_type_label,
     'description' => "View all {$entity_label} instances of {$entity_type_label} type",
-    'page callback' => "eck__entity_instance__overview",
-    'page arguments' => array($entity, $type),
+    'page callback' => "drupal_get_form",//"eck__entity_instance__overview",
+    'page arguments' => array("eck__entity_instance__overview", $entity, $type),
     'access arguments' => array("administer {$entity_label} {$entity_type_label}"),
     'weight' => 0
   );
@@ -675,13 +682,7 @@ function eck__entity_instance__menu($entity, $type){
   return $menu;
 }
 
-function eck__entity_instance__overview($entity, $type) {
-  
-  $entity_name = $entity->name;
-  $entity_label = $entity->label;
-  $entity_type = $type->type;
-  $entity_type_label = $type->label;
-  
+function eck__entity_ids($entity_name, $entity_type){
   $table = "eck_{$entity_name}";
   
   //Get all entities of this type
@@ -691,9 +692,45 @@ function eck__entity_instance__overview($entity, $type) {
     $ids[] = $id = $record->id;
   }
   
-  $entities = entity_load($entity_name, $ids);
+  return $ids;
+}
+
+function eck__entities($entity_name, $entity_type){
+  $ids = eck__entity_ids($entity_name, $entity_type);
   
-  return $build['entity_table'] = entity_table($entities);
+  return entity_load($entity_name, $ids);
+}
+
+function eck__entity_instance__overview($form, $state, $entity, $type) {
+  //dpm("ECK entity instance overview");
+  $entity_name = $entity->name;
+  $entity_label = $entity->label;
+  $entity_type = $type->type;
+  $entity_type_label = $type->label;
+  
+  $entities = eck__entities($entity_name, $entity_type);
+  
+  $form['entity_type'] = array('#type' => 'value', '#value' => $entity_name);
+  $form['bundle'] = array('#type' => 'value', '#value' => $entity_type);
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#weight' => 0,
+    '#value' => t('Do Stuff'),
+  );
+  $form['entity_table'] = entity_table($entities);
+  
+  return $form;//$build['entity_table'] = entity_table($entities);
+}
+
+function eck__entity_instance__overview_submit($form, &$state){
+  //dpm($form, "Form");
+  //dpm($state, "State");
+  //dpm("ECK entity instance overview submit");
+  
+ drupal_alter('eck_overview_dostuff', $state);
+ 
+ //dpm($state, "After hook");
+ //dpm($form, "Form After hook");
 }
 
 /**
@@ -714,13 +751,15 @@ function entity_table($entities){
     
     drupal_alter("entity_table_{$entity_type}", $row, $entity);
     
-    $rows[] = $row;
+    $rows[$id] = $row;
   }
   
   return array(
-  '#theme' => 'table',
+  //'#theme' => 'table',
+  '#type' => 'tableselect',
   '#header' => $header,
-  '#rows' => $rows,
+  //'#rows' => $rows,
+  '#options' => $rows
   );
   
 }
