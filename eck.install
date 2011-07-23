@@ -211,25 +211,3 @@ function eck_update_7001(){
   }
   
 }
-
-function eck_update_7002(){
-  
-  //The more I think about it, the more it makes sense to replicate the "status" property from nodes, this is just a flag that lets
-  //the system know whether a piece of data should be seen by the public or not. Instead of a boolean, I think that a int instead of 
-  //a boolean could be more useful, that way more complicated workflows can be implemented. For example if a piece of data needs to
-  //be reviewed before showing it to the public, and int can campture those different states: 0- don't show 1 - show 3 - needs review 
-  // 4 - revised by editor, etc. Also instead of status, I think that "state" is a more appropiate name. 
-  
-  $results = db_select('eck', 't')->fields('t')->execute();
-  
-  foreach($results as $record){
-    
-    db_add_field("eck_{$record->name}",'state', array(
-     'type' => 'int',
-     'unsigned' => TRUE,
-     'not null' => TRUE,
-     'default' => 0,
-     'description' => 'The state of the entity'
-    ));
-  }
-}

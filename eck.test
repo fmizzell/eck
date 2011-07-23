@@ -19,7 +19,7 @@ class MyModuleTestCase extends DrupalWebTestCase {
     $name = "test";
     $label = "Test";
     
-    $user = $this->drupalCreateUser(array('administer entity'));
+    $user = $this->drupalCreateUser(array('administer entities'));
     $this->drupalLogin($user);
 
     //ADD an Entity
@@ -42,7 +42,7 @@ class MyModuleTestCase extends DrupalWebTestCase {
     
     /************ "Test" ENTITY CRUD ***************/
    /* //Create an user with the permission to add "Test" entity instances
-    $user = $this->drupalCreateUser(array('administer entity', 'add test'));
+    $user = $this->drupalCreateUser(array('administer entities', 'add test'));
     $this->drupalLogin($user);
     
     //Add a new "Test" Entity
