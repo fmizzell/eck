@@ -939,7 +939,6 @@ function eck__entity_instance__page($entity, $type, $id) {
   return $build;
 }
 
-
 function _get_types($name){
   return db_select("eck_types", 't')->fields('t')->condition('entity', $name)->execute();
   
