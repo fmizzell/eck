@@ -731,6 +731,12 @@ function eck__entity_instance__menu($entity, $type) {
     'access arguments' => array("view {$entity_name} {$entity_type}"),
     'weight' => 0
   );
+  
+  $menu["{$entity_name}/{$entity_type}/%/view"] = array(
+    'title' => "View",
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0
+  );
 
   //UPDATE Entity Instance
   $menu["{$entity_name}/{$entity_type}/%/edit"] = array(
@@ -756,6 +762,30 @@ function eck__entity_instance__menu($entity, $type) {
 }
 
 
+function entities_table($entities, $select = FALSE){
+  $rows = array();
+  $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
+  
+  foreach ($entities as $entity) {
+    $entity_type = $entity->entityType();
+    $bundle = $entity->type;
+    $id = $entity->id;
+    
+    $uri = entity_uri($entity_type, $entity);
+    $row = array(l(entity_label($entity_type, $entity), $uri['path'], $uri['options']));
+    $row[] = array('data' => l(t('delete'), "admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
+    
+    drupal_alter("entity_{$entity_type}_tr", $row, $entity);
+    $rows[$id] = $row;
+  }
+  
+  if($select){
+    return drupal_get_form("entity_table_select", $entity_type, $bundle, $header, $rows);
+  }else{
+    return array('#theme' => 'table', '#header' => $header, '#rows' => $rows);
+  }
+}
+
 
 function eck__entity_instance__overview($entity, $type) {
 
@@ -764,29 +794,20 @@ function eck__entity_instance__overview($entity, $type) {
   $entity_type = $type->type;
   $entity_type_label = $type->label;
 
-  $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
-  $rows = array();
-
   $table = "eck_{$entity_name}";
 
   //Get all entity instances of this type
   $results = db_select($table, 't')->fields('t')->condition('type', $entity_type, '=')->execute();
-
+  
+  $ids = array();
   foreach ($results as $record) {
-    $id = $record->id;
-    $objs = entity_load($entity_name, array($id));
-    $obj = $objs[$id];
-    $uri = entity_uri($entity_name, $obj);
-    $row = array(l(entity_label($entity_name, $obj), $uri['path'], $uri['options']));
-    $row[] = array('data' => l(t('delete'), "admin/structure/eck/{$entity_name}/$entity_type/{$id}/delete"));
-    $rows[] = $row;
+    $ids[] = $record->id;
   }
-
-  $build['entity_table'] = array(
-    '#theme' => 'table',
-    '#header' => $header,
-    '#rows' => $rows,
-  );
+  
+  $entities = entity_load($entity_name, $ids);
+  
+  
+  $build['table'] = entities_table($entities, TRUE);
 
   $build['sample_code'] = array(
     '#theme' => 'form_element',
@@ -798,6 +819,33 @@ function eck__entity_instance__overview($entity, $type) {
   );
 
   return $build;
+}
+
+function entity_table_select($form, &$state, $entity_type, $bundle, $header, $rows){
+  
+  $form['entity_type'] = array('#type' => 'value', '#value' => $entity_type);
+  $form['bundle'] = array('#type' => 'value', '#value' => $bundle);
+  
+  $form['do'] = array(
+    '#type' => 'submit',
+    '#value' => t('Do'),
+  );
+
+  $form['entity_table'] = array(
+    //'#theme' => 'table',
+    '#type' => 'tableselect',
+    '#header' => $header,
+    '#options' => $rows,
+  );
+  
+  return $form;
+}
+
+function entity_table_select_submit($form, &$state){
+  //dpm($form);
+  //dpm($state);
+  drupal_alter('entity_table_select_submit', $state);
+  
 }
 
 
