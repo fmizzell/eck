@@ -754,7 +754,7 @@ function eck__entity_instance__menu($entity, $type) {
     'title' => "Delete",
     'description' => "Delete the object of {$entity_name} type",
     'page callback' => "drupal_get_form",
-    'page arguments' => array('eck__entity_instance__delete', $entity_name, $entity_type, 4),
+    'page arguments' => array('eck__entity_instance__delete', $entity_name, $entity_type, 5),
     'access arguments' => array("delete {$entity_name} {$entity_type}")
   );
 
@@ -763,6 +763,7 @@ function eck__entity_instance__menu($entity, $type) {
 
 
 function entities_table($entities, $select = FALSE){
+  //dpm($entities, "Entities");
   $rows = array();
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
   
@@ -780,7 +781,11 @@ function entities_table($entities, $select = FALSE){
   }
   
   if($select){
-    return drupal_get_form("entity_table_select", $entity_type, $bundle, $header, $rows);
+    if(!isset($entity_type)){
+     return array('#theme' => 'table', '#header' => $header, '#rows' => $rows);
+    }else{
+      return drupal_get_form("entity_table_select", $entity_type, $bundle, $header, $rows);
+    }
   }else{
     return array('#theme' => 'table', '#header' => $header, '#rows' => $rows);
   }
@@ -867,7 +872,7 @@ function eck__entity_create($entity, $type){
 }
 
 function eck__entity_instance__add($entity, $type) {
-  $obj = eck__entity_instance__create($entity, $type);
+  $obj = eck__entity_create($entity, $type);
   return drupal_get_form("eck__entity_instance__form", $obj);
 }
 
@@ -904,9 +909,12 @@ function eck__entity_instance__edit($entity, $type, $id) {
 
 
 
-function eck__entity_instance__delete($form, &$form_state, $entity_name, $entity_type, $id) {
+function eck__entity_instance__delete($form, &$form_state, $entity_type, $bundle, $id) {
+  //dpm($entity_type);
+  //dpm($bundle);
+  //dpm($id);
 
-  $objs = entity_load($entity_name, array($id));
+  $objs = entity_load($entity_type, array($id));
 
 
   $form['entity'] =
@@ -918,13 +926,13 @@ function eck__entity_instance__delete($form, &$form_state, $entity_name, $entity
   $form['entity_name'] =
       array(
         '#type' => 'value',
-        '#value' => $entity_name,
+        '#value' => $entity_type,
   );
 
   $form['entity_type'] =
       array(
         '#type' => 'value',
-        '#value' => $entity_type,
+        '#value' => $bundle,
   );
 
   $message = t("are you sure that you want to delete %id",
@@ -932,7 +940,7 @@ function eck__entity_instance__delete($form, &$form_state, $entity_name, $entity
 
   $caption = t("This action is irreversible");
 
-  return confirm_form($form, $message, "admin/structure/eck/{$entity_name}", $caption, t('Delete'));
+  return confirm_form($form, $message, "admin/structure/eck/{$entity_type}", $caption, t('Delete'));
 }
 
 
