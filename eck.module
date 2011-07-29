@@ -853,26 +853,22 @@ function entity_table_select_submit($form, &$state){
   
 }
 
-function eck__entity_create($entity, $type){
-  $entity_name = $entity->name;
-  $entity_label = $entity->label;
-  $entity_type = $type->type;
-  $entity_type_label = $type->label;
-
+function eck__entity_create($entity_type, $bundle){
+ 
   global $user;
 
   $values = array(
-    'entity_name' => $entity_name,
-    'type' => $entity_type,
+    'entity_name' => $entity_type,
+    'type' => $bundle,
     'uid' => $user->uid,
     'created' => REQUEST_TIME,
     'changed' => REQUEST_TIME,
   );
-  return entity_create($entity_name, $values);
+  return entity_create($entity_type, $values);
 }
 
 function eck__entity_instance__add($entity, $type) {
-  $obj = eck__entity_create($entity, $type);
+  $obj = eck__entity_create($entity->name, $type->type);
   return drupal_get_form("eck__entity_instance__form", $obj);
 }
 
