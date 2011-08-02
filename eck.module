@@ -783,6 +783,7 @@ function entities_table($entities, $select = FALSE){
     $row = array(l(entity_label($entity_type, $entity), $uri['path'], $uri['options']));
     $row[] = array('data' => l(t('delete'), "admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
     
+    drupal_alter("entity_tr", $row, $entity_type, $entity);
     drupal_alter("entity_{$entity_type}_tr", $row, $entity);
     $rows[$id] = $row;
   }
