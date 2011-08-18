@@ -415,7 +415,7 @@ function eck__entity_type__schema($entity_type) {
 function eck__entity_type__info($entity_type) {
   $info = array();
   $entity_type_label = eck__get_entity_type_label($entity_type);
-  dpm($entity_type_label, "label");
+  //dpm($entity_type_label, "label");
 
   if (!drupal_autoload_class($entity_class = eck_get_class_name($entity_type, 'Entity'))) {
     $entity_class = 'Entity';
@@ -468,10 +468,10 @@ function eck__entity_type__info($entity_type) {
   );
 
   foreach (eck__get_bundles($entity_type) as $bundle) {
-  	dpm($bundle,"Bundle");
+  	//dpm($bundle,"Bundle");
   	
   	$bundle_label = eck__get_bundle_label($entity_type, $bundle);
-  	dpm($bundle_label, "Bundle Label");
+  	//dpm($bundle_label, "Bundle Label");
     $info[$entity_type]['bundles'][$bundle] = array(
       'label' => $bundle_label,
       'admin' => array(
