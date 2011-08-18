@@ -900,14 +900,21 @@ function eck__entity__form_submit($form, &$form_state) {
   drupal_set_message(t("Entity {$entity->id} has been saved"));
 }
 
-
-
 function eck__entity__label($entity) {
-  $hook_name = "entity_{$entity->entityType()}_label";
+  $hook_names = array(
+  "entity_label", 
+  "entity_{$entity->entityType()}_label",
+  "entity_{$entity->entityType()}_{$entity->type}_label");
+  
+  foreach($hook_names as $hook_name){
+    $new_label = module_invoke_all($hook_name, $entity, $entity->id);
+    $empty = empty($new_label);
+    if(!$empty){
+      break;
+    }
+  }
 
-  $new_label = module_invoke_all($hook_name, $entity, $entity->id);
-
-  if (!empty($new_label)) {
+  if (!$empty) {
     return $new_label[0];
   }
   else {
@@ -915,13 +922,9 @@ function eck__entity__label($entity) {
   }
 }
 
-
-
 function eck__entity__uri($entity) {
   return array('path' => "{$entity->entityType()}/{$entity->type}/{$entity->identifier()}");
 }
-
-
 
 function eck__entity__page($entity_type, $bundle, $id) {
 
