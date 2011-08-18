@@ -67,55 +67,6 @@ function eck_entity_property_info_alter(&$info) {
 function eck_menu() {
 
   $menu = eck__entity_type__menu();
-
-  /* //DELETE Entity
-    $items["admin/structure/eck/{$name}/delete"] = array(
-    'title' => 'Add',
-    'description' => "Add {$name}",
-    'page callback' => "drupal_get_form",
-    'page arguments' => array('eck_delete', $name, $label),
-    'access arguments' => array("administer entities"),
-    'type' => MENU_CALLBACK,
-    ); */
-
-
-
-
-  /* //READ Entity Instance
-    $items["{$name}/%"] = array(
-    'title' => "{$name}",
-    'description' => "View the object of {$name} type",
-    'page callback' => "eck__entity_page",
-    'page arguments' => array($name, 1),
-    'access arguments' => array("view {$name}"),
-    'weight' => 0
-    );
-
-    $items["{$name}/%/view"] = array(
-    'title' => "View",
-    'type' => MENU_DEFAULT_LOCAL_TASK
-    );
-
-    //UPDATE Entity Instance
-    $items["{$name}/%/edit"] = array(
-    'title' => "Edit",
-    'description' => "Edit the object of {$name} type",
-    'page callback' => "eck__entity_edit",
-    'page arguments' => array($name, 1),
-    'access arguments' => array("edit {$name}"),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 1
-    );
-
-    //DELETE Entity Instance
-    $items["admin/structure/eck/{$name}/%/delete"] = array(
-    'title' => "Delete {$name}",
-    'description' => "Delete the object of {$name} type",
-    'page callback' => "drupal_get_form",
-    'page arguments' => array('eck__entity_delete', $name, $label, 3),
-    'access arguments' => array("administer entities")
-    ); */
-
   return $menu;
 }
 
@@ -125,25 +76,42 @@ function eck_menu() {
  * Implements hook_permission().
  */
 function eck_permission() {
-  /*$perms = array(
-    'administer entity types' =>
-    array(
-      'title' => t('Administer Entity Types'),
-      'restrict access' => TRUE
-    )
+  $perms = array();
+
+  $perms['administer entity types'] =
+  array(
+    'title' => t('Administer Entity Types'),
+    'restrict access' => TRUE
+  );
+  
+  $perms['add entity types'] =
+  array(
+    'title' => t('Add Entity Types'),
+    'restrict access' => TRUE
   );
 
-  foreach (eck_get_entities () as $result) {
-    foreach (array('add', 'view', 'edit') as $op) {
-      $perms["{$op} {$result->name}"] = array(
-        // @todo Bad use of t()
-        'title' => t(ucfirst($op) . " {$result->label}")
-      );
+  foreach (eck__get_entity_types() as $entity_type) {
+    $entity_type_label = eck__get_entity_type_label($entity_type);
+        
+    
+    foreach (array('administer', 'add') as $op) {
+      $perms["{$op} {$entity_type} bundles"] = array(
+        'title' => ucfirst($op) . " {$entity_type_label} Bundles"
+      );   
+    }
+    
+    foreach(eck__get_bundles($entity_type) as $bundle){
+      $bundle_label = eck__get_bundle_label($entity_type, $bundle);
+      
+      foreach (array('administer', 'add', 'view', 'edit', 'delete') as $op) {
+        $perms["{$op} {$entity_type} {$bundle} entities"] = array(
+          'title' => ucfirst($op) . " {$entity_type_label} {$bundle_label} Entities"
+        );   
+      }
     }
   }
 
-  return $perms;*/
-  return array();
+  return $perms;
 }
 
 
@@ -449,10 +417,10 @@ function eck__entity_type__info($entity_type) {
   $entity_type_label = eck__get_entity_type_label($entity_type);
   dpm($entity_type_label, "label");
 
-  if (!drupal_autoload_class($entity_class = eck_get_class_name($name, 'Entity'))) {
+  if (!drupal_autoload_class($entity_class = eck_get_class_name($entity_type, 'Entity'))) {
     $entity_class = 'Entity';
   }
-  if (!drupal_autoload_class($controller_class = eck_get_class_name($name, 'Controller'))) {
+  if (!drupal_autoload_class($controller_class = eck_get_class_name($entity_type, 'Controller'))) {
     $controller_class = 'EckController';
   }
 
@@ -504,7 +472,7 @@ function eck__entity_type__info($entity_type) {
   	
   	$bundle_label = eck__get_bundle_label($entity_type, $bundle);
   	dpm($bundle_label, "Bundle Label");
-    $info[$entity_name]['bundles'][$bundle] = array(
+    $info[$entity_type]['bundles'][$bundle] = array(
       'label' => $bundle_label,
       'admin' => array(
         'path' => "admin/structure/eck/{$entity_type}/{$bundle}",
@@ -570,9 +538,9 @@ function eck__bundle__overview($entity_type) {
     '#theme' => 'form_element',
     '#title' => t('Optional entity class'),
     '#description' => t('You may add this custom class the entity. To create a new instance of this class programmatically call: %code', array(
-      '%code' => "entity_create('{$entity_name}', array());"
+      '%code' => "entity_create('{$entity_type}', array());"
     )),
-    '#children' => "<pre>" . check_plain("class " . eck_get_class_name($entity_name, 'EntityType') . " extends Entity{\n\n}") . "</pre>"
+    '#children' => "<pre>" . check_plain("class " . eck_get_class_name($entity_type, 'EntityType') . " extends Entity{\n\n}") . "</pre>"
   );
 
 
@@ -600,11 +568,11 @@ function eck__bundle__menu($entity_type) {
   );
 
   $menu["admin/structure/eck/{$entity_type}/add"] = array(
-    'title' => "Add a(n) '{$entity_label}' Bundle ",
-    'description' => "Add a(n) new '{$entity_label} Bundle'",
+    'title' => "Add a(n) '{$entity_type_label}' Bundle ",
+    'description' => "Add a(n) new '{$entity_type_label} Bundle'",
     'page callback' => "drupal_get_form",
     'page arguments' => array('eck__bundle__add', $entity_type),
-    'access arguments' => array("add {$entity_label} bundles"),
+    'access arguments' => array("add {$entity_type} bundles"),
     'type' => MENU_LOCAL_ACTION,
     'weight' => 1
   );
@@ -703,7 +671,7 @@ function eck__entity__menu($entity_type, $bundle) {
 
   
   $entity_type_label = eck__get_entity_type_label($entity_type);
-  $bundle_label = eck_get_bundle_label($entity_type, $bundle);
+  $bundle_label = eck__get_bundle_label($entity_type, $bundle);
 
   //OVERVIEW Entity
   $menu["admin/structure/eck/{$entity_type}/{$bundle}"] = array(
@@ -750,7 +718,7 @@ function eck__entity__menu($entity_type, $bundle) {
 
   //UPDATE Entity
   $menu["{$entity_type}/{$bundle}/%/edit"] = array(
-    'title' => "Should be the entity label (implement callback) Edit",
+    'title' => "Edit",
     'description' => "Is there a description callback? Edit",
     'page callback' => "eck__entity__edit",
     'page arguments' => array($entity_type, $bundle, 2),
@@ -883,8 +851,8 @@ function eck__entity__delete($form, &$form_state, $entity_type, $bundle, $id) {
 
 function eck__entity__delete_submit($form, &$form_state) {
   $entity = $form_state['values']['entity'];
-  $entity_name = $form_state['values']['entity_type'];
-  $entity_type = $form_state['values']['bundle'];
+  $entity_type = $form_state['values']['entity_type'];
+  $bundle = $form_state['values']['bundle'];
 
   $entity->delete();
 

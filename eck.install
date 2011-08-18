@@ -106,7 +106,7 @@ function eck_schema() {
       
       //the function entity_basic_schema defines a standard schema for each entity created
      $schema = array_merge($schema, 
-       array("eck_{$result->name}" =>  eck__entity__schema($result->name)));
+       array("eck_{$result->name}" =>  eck__entity_type__schema($result->name)));
     }
   }
   
