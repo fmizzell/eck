@@ -675,7 +675,7 @@ function eck__entity__menu($entity_type, $bundle) {
 
   //OVERVIEW Entity
   $menu["admin/structure/eck/{$entity_type}/{$bundle}"] = array(
-    'title' => "{$entity_type_label} => {$bundle_label} Entities",
+    'title' => "{$bundle_label} Entities",
     'description' => "View all entites of type {$entity_type_label} with bundle {$bundle_label}",
     'page callback' => "eck__entity__overview",
     'page arguments' => array($entity_type, $bundle),
@@ -691,7 +691,7 @@ function eck__entity__menu($entity_type, $bundle) {
 
   //CREATE Entity
   $menu["admin/structure/eck/{$entity_type}/{$bundle}/add"] = array(
-    'title' => "Add {$entity_type_label} => {$bundle_label} Entity",
+    'title' => "Add {$bundle_label} Entity",
     'description' => "Add an entity of type {$entity_type_label} with bundle {$bundle_label}",
     'page callback' => "eck__entity__add",
     'page arguments' => array($entity_type, $bundle),
