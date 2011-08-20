@@ -443,28 +443,7 @@ function eck__entity_type__info($entity_type) {
     'bundle keys' => array(
       'bundle' => 'type'
     ),
-    'view modes' => array(
-      'full' => array(
-        'label' => t('Full content'),
-        'custom settings' => TRUE,
-      ),
-      'teaser' => array(
-        'label' => t('Teaser'),
-        'custom settings' => TRUE,
-      ),
-      'search' => array(
-        'label' => t('Search'),
-        'custom settings' => TRUE,
-      ),
-      'xml' => array(
-        'label' => t('XML'),
-        'custom settings' => TRUE,
-      ),
-      'rss' => array(
-        'label' => t('RSS'),
-        'custom settings' => TRUE,
-      ),
-    )
+    'view modes' => array()
   );
 
   foreach (eck__get_bundles($entity_type) as $bundle) {
