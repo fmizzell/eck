@@ -443,7 +443,13 @@ function eck__entity_type__info($entity_type) {
     'bundle keys' => array(
       'bundle' => 'type'
     ),
-    'view modes' => array()
+    //I guess we need at least one view mode for entity_view_modes (the module) to work
+    'view modes' => array(
+      'teaser' => array(
+          'label' => t('Teaser'),
+          'custom settings' => TRUE,
+      )
+    )
   );
 
   foreach (eck__get_bundles($entity_type) as $bundle) {
