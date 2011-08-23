@@ -39,7 +39,6 @@ function eck_entity_info() {
   //Get all the names of all the entity types from the eck table
   //for each of the created entity types add its info to the $info array
   foreach (eck__get_entity_types() as $entity_type) {
-  	//dpm($entity_type);
     //eck__entity_info creates the entity_info for each entity
     $info = array_merge($info, eck__entity_type__info($entity_type));
   }
@@ -415,7 +414,6 @@ function eck__entity_type__schema($entity_type) {
 function eck__entity_type__info($entity_type) {
   $info = array();
   $entity_type_label = eck__get_entity_type_label($entity_type);
-  //dpm($entity_type_label, "label");
 
   if (!drupal_autoload_class($entity_class = eck_get_class_name($entity_type, 'Entity'))) {
     $entity_class = 'Entity';
@@ -687,7 +685,10 @@ function eck__entity__menu($entity_type, $bundle) {
 
   //READ Entity
   $menu["{$entity_type}/{$bundle}/%"] = array(
-    'title' => "Should be the entity label (implement callback)",
+    //'title' => "Should be the entity label (implement callback)",
+		'title' => $entity_type,
+		'title callback' => "eck_get_entity_label",
+		'title arguments' => array($entity_type, 2),
     'description' => "Is there a description callback?",
     'page callback' => "eck__entity__page",
     'page arguments' => array($entity_type, $bundle, 2),
@@ -704,7 +705,6 @@ function eck__entity__menu($entity_type, $bundle) {
   //UPDATE Entity
   $menu["{$entity_type}/{$bundle}/%/edit"] = array(
     'title' => "Edit",
-    'description' => "Is there a description callback? Edit",
     'page callback' => "eck__entity__edit",
     'page arguments' => array($entity_type, $bundle, 2),
     'access arguments' => array("edit {$entity_type} {$bundle} entities"),
@@ -714,8 +714,9 @@ function eck__entity__menu($entity_type, $bundle) {
 
   //DELETE Entity
   $menu["admin/structure/eck/{$entity_type}/{$bundle}/%/delete"] = array(
-     'title' => "Should be the entity label (implement callback) Delete",
-    'description' => "Is there a description callback? Delete",
+		'title' => $entity_type . " - " . $bundle,
+		'title callback' => "eck_get_entity_label",
+		'title arguments' => array($entity_type, 5),
     'page callback' => "drupal_get_form",
     'page arguments' => array('eck__entity__delete', $entity_type, $bundle, 5),
     'access arguments' => array("delete {$entity_type} {$bundle} entities")
@@ -723,10 +724,6 @@ function eck__entity__menu($entity_type, $bundle) {
 
   return $menu;
 }
-
-
-
-
 
 function eck__entity__overview($entity_type, $bundle) {
 
@@ -799,12 +796,7 @@ function eck__entity__edit($entity_type, $bundle, $id) {
 
 
 function eck__entity__delete($form, &$form_state, $entity_type, $bundle, $id) {
-  //dpm($entity_type);
-  //dpm($bundle);
-  //dpm($id);
-
   $entities = entity_load($entity_type, array($id));
-
 
   $form['entity'] =
       array(
@@ -823,11 +815,18 @@ function eck__entity__delete($form, &$form_state, $entity_type, $bundle, $id) {
         '#type' => 'value',
         '#value' => $bundle,
   );
+  
+  $form['submit_redirect'] =
+       array(
+         '#type' => 'value',
+         '#value' => "admin/structure/eck/{$entity_type}/{$bundle}",
+   );
+  
 
-  $message = t("are you sure that you want to delete %id",
+  $message = t("Are you sure that you want to delete %id",
           array("%id" => $id));
 
-  $caption = t("This action is irreversible");
+  $caption = t("This action cannot be undone.");
 
   return confirm_form($form, $message, "admin/structure/eck/{$entity_type}", $caption, t('Delete'));
 }
@@ -838,13 +837,14 @@ function eck__entity__delete_submit($form, &$form_state) {
   $entity = $form_state['values']['entity'];
   $entity_type = $form_state['values']['entity_type'];
   $bundle = $form_state['values']['bundle'];
+  $submit_redirect = $form_state['values']['submit_redirect'];
 
   $entity->delete();
 
   drupal_cron_run();
 
   //Ok, lets delete the entity
-  $form_state['redirect'] = "admin/structure/eck/{$entity_type}/{$bundle}";
+  $form_state['redirect'] = $submit_redirect;
 }
 
 
@@ -880,9 +880,7 @@ function eck__entity__form_submit($form, &$form_state) {
 
   $entity->save();
 
-  //dpm($entity);
-
-  drupal_set_message(t("Entity {$entity->id} has been saved"));
+  drupal_set_message(t("Entity {$entity->id} - @entity_label has been saved", array("@entity_label" => entity_label($form['#entity_type'], $entity)) ));
 }
 
 function eck__entity__label($entity) {
@@ -980,11 +978,9 @@ function eck__get_entity_types() {
   
   $entity_types = array();
   foreach($data as $entity_type_obj){
-  	//dpm($entity_type_obj);
   	$entity_types[] = $entity_type_obj->name;
   }
   
-  //dpm($entity_types);
   return $entity_types;
 }
 
@@ -1003,7 +999,6 @@ function eck__get_entity_type_label($entity_type){
 }
 
 function entities_table($entities, $select = FALSE){
-  //dpm($entities, "Entities");
   $rows = array();
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
   
@@ -1053,8 +1048,6 @@ function entity_table_select($form, &$state, $entity_type, $bundle, $header, $ro
 }
 
 function entity_table_select_submit($form, &$state){
-  //dpm($form);
-  //dpm($state);
   drupal_alter('entity_table_select_submit', $state);
 }
 
@@ -1119,12 +1112,30 @@ function eck_get_class_name($name, $suffix = '') {
 }
 
 /**
+ * Retreive the entity label
+ **/
+function eck_get_entity_label($entity_type, $entity_id){
+	if(!is_numeric($entity_id)){
+		return FALSE;
+	}
+	
+	$entity = entity_load($entity_type, array($entity_id));
+	$entity = $entity[$entity_id];
+
+	if(is_object($entity) && !empty($entity)){
+		return entity_label($entity_type, $entity);
+	}else{
+		return NULL;
+	}
+}
+
+
+
+/**
  * Base controller class for ECK entites.
  */
 class EckController extends EntityAPIController {
-
-
-
+	
   public function create(array $values = array()) {
     global $user;
 
