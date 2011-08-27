@@ -213,6 +213,8 @@ function eck__entity_type__add($form, &$form_state) {
       'source' => array('bundle_label'),
     ),
   );
+  
+  $form['#validate'][] = 'eck__entity_type__add_validate';
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -225,15 +227,14 @@ function eck__entity_type__add($form, &$form_state) {
 
 
 
-/* function eck__entity__add_validate($form, &$form_state) {
-  preg_match("/([^a-z0-9_]|\s)/", $form_state['values']['name'], $matches);
-
-  if (!empty($matches)) {
-  form_set_error('name', t("Your Entity name has invalid characters or spaces"));
+function eck__entity_type__add_validate($form, &$state) {
+  $info = entity_get_info();
+  $entity_types = array_keys($info);
+  $entity_type = $state['values']['entity_type'];
+  if(in_array($entity_type, $entity_types)){
+    form_set_error('name', t("Entity {$entity_type} already exists"));
   }
-  } */
-
-
+}
 
 function eck__entity_type__add_submit($form, &$form_state) {
 

@@ -25,6 +25,8 @@
  * All that we need for each entity is a name and a label
  */
 function eck_schema() {
+  
+  module_load_include('module','eck');
 
   $schema = array();
   
