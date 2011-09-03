@@ -1,4 +1,9 @@
 <?php 
+/**
+ * @file
+ * 
+ * no relevant tests yet
+ */
 /*
 class MyModuleTestCase extends DrupalWebTestCase {
   
