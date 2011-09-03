@@ -26,7 +26,7 @@
  */
 function eck_schema() {
   
-  module_load_include('module','eck');
+  module_load_include('inc', 'eck', 'eck.entity_type');
 
   $schema = array();
   
@@ -115,7 +115,7 @@ function eck_schema() {
   return $schema;
 }
 
-function eck_update_7000(){
+function eck_update_7000() {
   
   //to implement bundles (types), I have decided to have one table that will hold all 
   //of the types information. So for this update we need to create the table, and add all of the current
@@ -164,7 +164,7 @@ function eck_update_7000(){
   
   $results = db_select('eck', 't')->fields('t')->execute();
   
-  foreach($results as $record){
+  foreach ($results as $record) {
     
     $nid = db_insert('eck_types')
     ->fields(array(
@@ -176,7 +176,7 @@ function eck_update_7000(){
     
     //also we want to add a field to all the enity tables for the type, and populated with
     //the current type
-    db_add_field("eck_{$record->name}",'type', array(
+    db_add_field("eck_{$record->name}", 'type', array(
     'description' => 'The type of the entity',
     'type' => 'varchar',
     'default' => '',
@@ -189,7 +189,7 @@ function eck_update_7000(){
   
 }
 
-function eck_update_7001(){
+function eck_update_7001() {
   
   //for importing and exporting things it is always good to have a uuid, so we will add that colunm to the current
   //entity types
@@ -198,11 +198,11 @@ function eck_update_7001(){
   
   $results = db_select('eck', 't')->fields('t')->execute();
   
-  foreach($results as $record){
+  foreach ($results as $record) {
     
     //also we want to add a field to all the enity tables for the type, and populated with
     //the current type
-    db_add_field("eck_{$record->name}",'uuid', array(
+    db_add_field("eck_{$record->name}", 'uuid', array(
      'type' => 'char',
     'length' => 36,
     'not null' => TRUE,
@@ -213,7 +213,7 @@ function eck_update_7001(){
   }
 }
 
-function eck_update_7002(){
+function eck_update_7002() {
   
   //The more I think about it, the more it makes sense to replicate the "status" property from nodes, this is just a flag that lets
   //the system know whether a piece of data should be seen by the public or not. Instead of a boolean, I think that a int instead of 
@@ -223,9 +223,9 @@ function eck_update_7002(){
   
   $results = db_select('eck', 't')->fields('t')->execute();
   
-  foreach($results as $record){
+  foreach ($results as $record) {
     
-    db_add_field("eck_{$record->name}",'state', array(
+    db_add_field("eck_{$record->name}", 'state', array(
      'type' => 'int',
      'unsigned' => TRUE,
      'not null' => TRUE,

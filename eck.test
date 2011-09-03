@@ -1,5 +1,5 @@
 <?php 
-
+/*
 class MyModuleTestCase extends DrupalWebTestCase {
   
   public static function getInfo() {
@@ -38,8 +38,8 @@ class MyModuleTestCase extends DrupalWebTestCase {
     
     cache_clear_all();
     menu_rebuild();
-    cache_clear_all();*/
-    
+    cache_clear_all();
+    */
     /************ "Test" ENTITY CRUD ***************/
    /* //Create an user with the permission to add "Test" entity instances
     $user = $this->drupalCreateUser(array('administer entities', 'add test'));
@@ -56,7 +56,7 @@ class MyModuleTestCase extends DrupalWebTestCase {
       'The instance of the "Test" entity has been deleted from the eck_test table');*/
     
     //DELETE an Entity
-    $this->drupalPost('admin/eck/test/delete', array(), t('Delete'));
+    /*$this->drupalPost('admin/eck/test/delete', array(), t('Delete'));
     
     $this->assertFalse($this->eckCount('eck', array('name' => $name, 'label' => $label)), 
       'A record of the "Test" entity has been deleted from the eck table');
@@ -83,4 +83,4 @@ class MyModuleTestCase extends DrupalWebTestCase {
     
     return $count;
   }
-}
+}*/
