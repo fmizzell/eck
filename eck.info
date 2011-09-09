@@ -1,6 +1,6 @@
 name = Entity Construction Kit
-description = @todo.
+description = ECK (Entity Construction Kit) Allows users to create and administer entity types, bundles, and entities from an easy to use UI
 package = Entity
 core = 7.x
 dependencies[] = entity
-files[] = eck.test
+
