@@ -1,21 +1,26 @@
 <?php
+
 /**
  * @file
- *
- * BUNDLE
- * 
- * All of the menu, pages, and forms related to bundle 
- * administration are in this file
+ * All of the menu, pages, and forms related to bundle administration.
  */
 
+/**
+ * This function creates the menu items relevant to bundle administration
+ *
+ * @param $entity_type
+ *  (String) entity type
+ *
+ * This function called is triggered from hook_menu()
+ * @see eck_menu()
+ */
 function eck__bundle__menu($entity_type) {
- 
   $entity_type_label = eck__get_entity_type_label($entity_type);
 
-  //Create the menus relavant to types
+  // Create the menus relavant to types.
   $menu = array();
 
-  //OVERVIEW Entity types
+  // OVERVIEW Entity types.
   $menu["admin/structure/eck/{$entity_type}"] = array(
     'title' => "{$entity_type_label} Bundles" ,
     'description' => "View all the bundles for '{$entity_type_label}'",
@@ -36,7 +41,7 @@ function eck__bundle__menu($entity_type) {
     'weight' => 1,
     'file' => 'eck.bundle.inc'
   );
-  
+
   module_load_include('inc', 'eck', 'eck.entity');
   foreach (eck__get_bundles($entity_type) as $bundle) {
     $menu = array_merge($menu, eck__entity__menu($entity_type, $bundle));
@@ -45,19 +50,22 @@ function eck__bundle__menu($entity_type) {
   return $menu;
 }
 
+/**
+ * Page call back for the bundle overview table (to see and manipulate all created label of
+ * a given type)
+ *
+ * @param entity_type
+ *  (String) entity type
+ */
 function eck__bundle__overview($entity_type) {
-
   $header = array(t('Type'), array('data' => t('Operations'), 'colspan' => '1'));
   $rows = array();
 
   foreach (eck__get_bundles($entity_type) as $bundle) {
-    
     $bundle_label =  eck__get_bundle_label($entity_type, $bundle);
-    
+
     $uri = "admin/structure/eck/{$entity_type}/{$bundle}";
-    $row = array(l($bundle_label, url($uri, array('absolute' => TRUE))));
-    //$row[] = array('data' => l(t('delete'), "admin/structure/eck/{$name}/{$id}/delete"));
-    $rows[] = $row;
+    $row[] = array(l($bundle_label, url($uri, array('absolute' => TRUE))));
   }
 
   $build['bundle_table'] = array(
@@ -74,13 +82,21 @@ function eck__bundle__overview($entity_type) {
     )),
     '#children' => "<pre>" . check_plain("class " . eck_get_class_name($entity_type, 'EntityType') . " extends Entity{\n\n}") . "</pre>"
   );
-  
+
   return $build;
 }
 
-//ADD Entity types
+/**
+ * ADD Entity types.
+ *
+ * @param $form
+ *  Form array provided by the Form API
+ * @param $form_state
+ *  array provided by the Form API
+ * @param entity_type
+ *  (String) entity type
+ */
 function eck__bundle__add($form, &$form_state, $entity_type) {
-
   $form['entity_type'] = array(
     '#type' => 'value',
     '#value' => $entity_type,
@@ -112,11 +128,19 @@ function eck__bundle__add($form, &$form_state, $entity_type) {
   return $form;
 }
 
+/**
+ * Validation for bundle creation (Make sure this bundle don't exist for thie entity type)
+ *
+ * @param $form
+ *  Form array provided by the Form API
+ * @param $form_state
+ *  array provided by the Form API
+ */
 function eck__bundle__add_validate($form, &$form_state) {
-
   $entity_type = $form_state['values']['entity_type'];
 
-  //the type does not have to be unique in the table, but it should be unique to its entity so we will check that here
+  // The type does not have to be unique in the table, but it should be unique
+  // to its entity so we will check that here.
   foreach (eck__get_bundles($entity_type) as $bundle) {
     if ($bundle == $form_state['values']['bundle']) {
       form_set_error('bundle', t("bundle '{$bundle} already exists for this entity"));
@@ -124,8 +148,15 @@ function eck__bundle__add_validate($form, &$form_state) {
   }
 }
 
+/**
+ * Submit function for add form
+ *
+ * @param $form
+ *  Form array provided by the Form API
+ * @param $form_state
+ *  array provided by the Form API
+ */
 function eck__bundle__add_submit($form, &$form_state) {
-
   $entity_type = $form_state['values']['entity_type'];
   $bundle = $form_state['values']['bundle'];
   $bundle_label = $form_state['values']['bundle_label'];

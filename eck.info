@@ -1,5 +1,5 @@
-
 name = Entity Construction Kit
+description = @todo.
 package = Entity
 core = 7.x
 dependencies[] = entity

@@ -1,22 +1,25 @@
 <?php
-
 /**
  * @file
- * 
- * ENTITY
- * 
- * All the menues, pages, and functionality related to administering
- * entities is in this file
+ * All the menus, pages, and functionality related to administering entities.
  */
 
+/**
+ * This function creates the menu items related to entity administration
+ * @param $entity_type
+ *  (String) the entity type
+ * @param $bundle
+ *  (String) the bundle of the entity
+ *
+ * this function is called from hook_menu()
+ * @see eck_menu()
+ */
 function eck__entity__menu($entity_type, $bundle) {
   $menu = array();
-
-  
   $entity_type_label = eck__get_entity_type_label($entity_type);
   $bundle_label = eck__get_bundle_label($entity_type, $bundle);
 
-  //OVERVIEW Entity
+  // OVERVIEW Entity
   $menu["admin/structure/eck/{$entity_type}/{$bundle}"] = array(
     'title' => "{$bundle_label} Entities",
     'description' => "View all entites of type {$entity_type_label} with bundle {$bundle_label}",
@@ -33,7 +36,7 @@ function eck__entity__menu($entity_type, $bundle) {
     'weight' => 0
   );
 
-  //CREATE Entity
+  // CREATE Entity
   $menu["admin/structure/eck/{$entity_type}/{$bundle}/add"] = array(
     'title' => "Add {$bundle_label} Entity",
     'description' => "Add an entity of type {$entity_type_label} with bundle {$bundle_label}",
@@ -45,7 +48,7 @@ function eck__entity__menu($entity_type, $bundle) {
     'file' => 'eck.entity.inc'
   );
 
-  //READ Entity
+  // READ Entity
   $menu["{$entity_type}/{$bundle}/%"] = array(
   'title' => $entity_type,
   'title callback' => "eck_get_entity_label",
@@ -57,14 +60,14 @@ function eck__entity__menu($entity_type, $bundle) {
     'weight' => 0,
     'file' => 'eck.entity.inc'
   );
-  
+
   $menu["{$entity_type}/{$bundle}/%/view"] = array(
     'title' => "View",
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0
   );
 
-  //UPDATE Entity
+  // UPDATE Entity
   $menu["{$entity_type}/{$bundle}/%/edit"] = array(
     'title' => "Edit",
     'page callback' => "eck__entity__edit",
@@ -75,7 +78,7 @@ function eck__entity__menu($entity_type, $bundle) {
     'file' => 'eck.entity.inc'
   );
 
-  //DELETE Entity
+  // DELETE Entity
   $menu["admin/structure/eck/{$entity_type}/{$bundle}/%/delete"] = array(
     'title' => $entity_type . " - " . $bundle,
     'title callback' => "eck_get_entity_label",
@@ -89,26 +92,31 @@ function eck__entity__menu($entity_type, $bundle) {
   return $menu;
 }
 
+/**
+ * This is the callback function for the entity overview page. This page shows all
+ * of the entities created of a given type and bundle
+ * @param $entity_type
+ *  (String) entity type
+ * @param $bundle
+ *  (String) Bundle
+ */
 function eck__entity__overview($entity_type, $bundle) {
-
-  
   $entity_type_label = eck__get_entity_type_label($entity_type);
   $bundle_label = eck__get_bundle_label($entity_type, $bundle);
 
   $table = "eck_{$entity_type}";
 
-  //TODO: Mabye I should use entity field query
-  //Get all entity instances of this type
+  // @todo Mabye I should use entity field query
+  // Get all entity instances of this type
   $results = db_select($table, 't')->fields('t')->condition('type', $bundle, '=')->execute();
-  
+
   $ids = array();
   foreach ($results as $record) {
     $ids[] = $record->id;
   }
-  
+
   $entities = entity_load($entity_type, $ids);
-  
-  
+
   $build['table'] = entities_table($entities, TRUE);
 
   $build['sample_code'] = array(
@@ -123,17 +131,28 @@ function eck__entity__overview($entity_type, $bundle) {
   return $build;
 }
 
-
-
+/**
+ * Call back for the local action add (It adds a new entity)
+ *
+ * @param $entity_type
+ *  (String) entity type
+ * @param $bundle
+ *  (String) Bundle
+ */
 function eck__entity__add($entity_type, $bundle) {
   $entity = eck__entity_create($entity_type, $bundle);
   return drupal_get_form("eck__entity__form", $entity);
 }
 
-
-
+/**
+ * Get the entities view
+ *
+ * @param $entity_type
+ *  (String) entity type
+ * @param $id
+ *  (int) The entities id
+ */
 function eck__entity__view($entity_type, $id) {
-
   if (is_numeric($id)) {
     $entities = entity_load($entity_type, array($id));
   }
@@ -141,8 +160,16 @@ function eck__entity__view($entity_type, $id) {
   return $entities[$id]->view();
 }
 
-
-
+/**
+ * Callback function for an entities edit page
+ *
+ * @param $entity_type
+ *  (String) entity type
+ * @param $bundle
+ *  (String) Bundle
+ * @param $id
+ *  (int) the Id of the entity to be edited
+ */
 function eck__entity__edit($entity_type, $bundle, $id) {
   if (is_numeric($id)) {
     $entities = entity_load($entity_type, array($id));
@@ -157,6 +184,20 @@ function eck__entity__edit($entity_type, $bundle, $id) {
   return drupal_get_form("eck__entity__form", $entity);
 }
 
+/**
+ * Callback function for the delete functionality
+ *
+ * @param $form
+ *  Form array provided by the Form API
+ * @param $form_state
+ *  array provided by the Form API
+ * @param $entity_type
+ *  (String) entity type
+ * @param $bundle
+ *  (String) Bundle
+ * @param $id
+ *  (int) the Id of the entity to be deleted
+ */
 function eck__entity__delete($form, &$form_state, $entity_type, $bundle, $id) {
   $entities = entity_load($entity_type, array($id));
 
@@ -177,13 +218,12 @@ function eck__entity__delete($form, &$form_state, $entity_type, $bundle, $id) {
         '#type' => 'value',
         '#value' => $bundle,
   );
-  
+
   $form['submit_redirect'] =
-       array(
-         '#type' => 'value',
-         '#value' => "admin/structure/eck/{$entity_type}/{$bundle}",
-   );
-  
+  array(
+    '#type' => 'value',
+    '#value' => "admin/structure/eck/{$entity_type}/{$bundle}",
+  );
 
   $message = t("Are you sure that you want to delete %id",
           array("%id" => $id));
@@ -193,8 +233,14 @@ function eck__entity__delete($form, &$form_state, $entity_type, $bundle, $id) {
   return confirm_form($form, $message, "admin/structure/eck/{$entity_type}", $caption, t('Delete'));
 }
 
-
-
+/**
+ * Sumbmit function for the delete functionality
+ *
+ * @param $form
+ *  Form array provided by the Form API
+ * @param $form_state
+ *  array provided by the Form API
+ */
 function eck__entity__delete_submit($form, &$form_state) {
   $entity = $form_state['values']['entity'];
   $entity_type = $form_state['values']['entity_type'];
@@ -205,14 +251,21 @@ function eck__entity__delete_submit($form, &$form_state) {
 
   drupal_cron_run();
 
-  //Ok, lets delete the entity
+  // Ok, lets delete the entity
   $form_state['redirect'] = $submit_redirect;
 }
 
-
-
+/**
+ * Sets up an entities form
+ *
+ * @param $form
+ *  Form array provided by the Form API
+ * @param $form_state
+ *  array provided by the Form API
+ * @param $entity
+ *  an object as returned by entity_load()
+ */
 function eck__entity__form($form, $form_state, $entity) {
-
   $form['entity'] = array(
     '#type' => 'value',
     '#value' => $entity
@@ -229,8 +282,14 @@ function eck__entity__form($form, $form_state, $entity) {
   return $form;
 }
 
-
-
+/**
+ * Submit function for entity form
+ *
+ * @param $form
+ *  Form array provided by the Form API
+ * @param $form_state
+ *  array provided by the Form API
+ */
 function eck__entity__form_submit($form, &$form_state) {
   $entity = $form_state['values']['entity'];
 
@@ -245,12 +304,21 @@ function eck__entity__form_submit($form, &$form_state) {
   drupal_set_message(t("Entity {$entity->id} - @entity_label has been saved", array("@entity_label" => entity_label($form['#entity_type'], $entity)) ));
 }
 
+/**
+ * This is the callback function for an entities label
+ * By default the label is the id of the entity, but a number of
+ * hooks are defined to customize the label if needed
+ *
+ * @param $entity
+ *  an object as returned by entity_load()
+ */
 function eck__entity__label($entity) {
   $hook_names = array(
-  "entity_label", 
-  "entity_{$entity->entityType()}_label",
-  "entity_{$entity->entityType()}_{$entity->type}_label");
-  
+    "entity_label",
+    "entity_{$entity->entityType()}_label",
+    "entity_{$entity->entityType()}_{$entity->type}_label",
+  );
+
   foreach ($hook_names as $hook_name) {
     $new_label = module_invoke_all($hook_name, $entity, $entity->id);
     $empty = empty($new_label);
@@ -267,12 +335,27 @@ function eck__entity__label($entity) {
   }
 }
 
+/**
+ * Entity URI callback
+ *
+ * @param $entity
+ *  an object as returned by entity_load()
+ */
 function eck__entity__uri($entity) {
   return array('path' => "{$entity->entityType()}/{$entity->type}/{$entity->identifier()}");
 }
 
+/**
+ * Creates a renderable array to show an entity
+ *
+ * @param $entity_type
+ *  (String) entity type
+ * @param $bundle
+ *  (String) Bundle
+ * @param $id
+ *  (int) the Id of the entity to be deleted
+ */
 function eck__entity__page($entity_type, $bundle, $id) {
-
   $build = array();
 
   $entity_view = eck__entity__view($entity_type, $id);

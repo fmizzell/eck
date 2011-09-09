@@ -2,14 +2,11 @@
 
 /**
  * @files
- * 
- * ECK working with features
+ * ECK Features integration.
  */
 
-
-
 /**
- * Implementation of hook_features_export_options().
+ * Implements hook_features_export_options().
  */
 function eck_features_export_options() {
   $types = array();
@@ -20,17 +17,15 @@ function eck_features_export_options() {
   return $types;
 }
 
-
-
 /**
- * Implementation of hook_features_export.
+ * Implements hook_features_export().
  */
 function eck_features_export($data, &$export, $module_name = '') {
   $pipe = array();
 
   foreach ($data as $type) {
 
-    // Get the entity name of type
+    // Get the entity name of type.
     $instances = field_info_instances();
     foreach ($instances as $name => $bundles) {
       if (isset($bundles[$type])) {
@@ -39,13 +34,12 @@ function eck_features_export($data, &$export, $module_name = '') {
       }
     }
 
-
-    // Export Entity
+    // Export Entity.
     $export['features']['eck'][$type] = $type;
     $export['dependencies']['eck'] = 'eck';
     $export['dependencies']['features'] = 'features';
 
-    // Export fields
+    // Export fields.
     $fields = $instances[$entity_name][$type];
     foreach ($fields as $field) {
       $pipe['field'][] = "{$entity_name}-{$field['bundle']}-{$field['field_name']}";
@@ -55,10 +49,8 @@ function eck_features_export($data, &$export, $module_name = '') {
   return $pipe;
 }
 
-
-
 /**
- * Implementation of hook_features_export_render().
+ * Implements hook_features_export_render().
  */
 function eck_features_export_render($module, $data, $export = NULL) {
   $elements = array(
@@ -93,16 +85,12 @@ function eck_features_export_render($module, $data, $export = NULL) {
   return array('eck_info' => $output);
 }
 
-
-
 /**
- * Implementation of hook_features_revert().
+ * Implements hook_features_revert().
  */
 function eck_features_revert($module) {
   eck_features_rebuild($module);
 }
-
-
 
 /**
  * Implements of hook_features_rebuild().
@@ -145,6 +133,3 @@ function eck_features_rebuild($module) {
     menu_rebuild();
   }
 }
-
-
-

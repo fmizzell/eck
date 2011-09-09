@@ -1,16 +1,18 @@
 <?php
+
 /**
  * @file
- * 
+ *
  * ENTITY CONSTRUCTION KIT
  *
- * This module is a fairly simple module. It exposes an administration section for creating
- * entity types, bundles and entities. This module also keeps track in the database of the
- * entities that have been created with eck (eck db table), and the different bundles that have been
- * creates (eck_type db table).
- * 
- * If you want to follow the flow of this modules functionality I suggest starting with the
- * hook menu, where all of the paths for the administration section are defined.
+ * This module is a fairly simple module. It exposes an administration section
+ * for creating entity types, bundles and entities. This module also keeps track
+ * in the database of the entities that have been created with eck (eck db
+ * table), and the different bundles that have been creates (eck_type db table).
+ *
+ * If you want to follow the flow of this modules functionality I suggest
+ * starting with the hook menu, where all of the paths for the administration
+ * section are defined.
  */
 
 /**
@@ -26,8 +28,6 @@ function eck_features_api() {
   );
 }
 
-
-
 /**
  * Implements hook_entity_info().
  *
@@ -36,11 +36,11 @@ function eck_features_api() {
 function eck_entity_info() {
   module_load_include('inc', 'eck', 'eck.entity_type');
   $info = array();
-  
-  //Get all the names of all the entity types from the eck table
-  //for each of the created entity types add its info to the $info array
+
+  // Get all the names of all the entity types from the eck table
+  // for each of the created entity types add its info to the $info array.
   foreach (eck__get_entity_types() as $entity_type) {
-    //eck__entity_info creates the entity_info for each entity type
+    // eck__entity_info creates the entity_info for each entity type.
     $info = array_merge($info, eck__entity_type__info($entity_type));
   }
 
@@ -52,7 +52,7 @@ function eck_entity_info() {
  */
 function eck_entity_property_info_alter(&$info) {
   module_load_include('inc', 'eck', 'eck.entity_type');
-  
+
   // Create property infos for all defined entites.
   foreach (eck__get_entity_types () as $entity_type) {
     eck__entity_type__property_info($info[$entity_type], $entity_type);
@@ -60,8 +60,8 @@ function eck_entity_property_info_alter(&$info) {
 }
 
 /**
- * Implements hook_menu() 
- * 
+ * Implements hook_menu().
+ *
  * Define the paths for the administration section of the Entity Factory
  * The  menues get created in three functions
  * eck__entity_type__mene()
@@ -76,24 +76,22 @@ function eck_menu() {
   return $menu;
 }
 
-
-
 /**
- * Implements hook_permission()
- * 
+ * Implements hook_permission().
+ *
  * A pretty through set of permission
  * you can set permissiona at each level: entity_type, bundle, entity
  * and for each action of the CRUD
  */
 function eck_permission() {
   $perms = array();
-  
+
   $perms['administer entity types'] =
   array(
     'title' => t('Administer Entity Types'),
     'restrict access' => TRUE
   );
-  
+
   $perms['add entity types'] =
   array(
     'title' => t('Add Entity Types'),
@@ -102,21 +100,19 @@ function eck_permission() {
 
   foreach (eck__get_entity_types() as $entity_type) {
     $entity_type_label = eck__get_entity_type_label($entity_type);
-        
-    
-    foreach (array('administer', 'add') as $op) {
+
+    foreach (array('administer' => 'Administer', 'add' => "Add") as $op => $op_label) {
       $perms["{$op} {$entity_type} bundles"] = array(
-        'title' => ucfirst($op) . " {$entity_type_label} Bundles"
-      );   
+        'title' => "{$op_label} {$entity_type_label} Bundles"
+      );
     }
-    
+
     foreach (eck__get_bundles($entity_type) as $bundle) {
       $bundle_label = eck__get_bundle_label($entity_type, $bundle);
-      
-      foreach (array('administer', 'add', 'view', 'edit', 'delete') as $op) {
+      foreach (array('administer' => 'Administer', 'add' => "Add", 'view' => 'View', 'edit' => 'Edit', 'delete' => 'Delete') as $op => $op_label) {
         $perms["{$op} {$entity_type} {$bundle} entities"] = array(
-          'title' => ucfirst($op) . " {$entity_type_label} {$bundle_label} Entities"
-        );   
+          'title' => "{$op_label} {$entity_type_label} {$bundle_label} Entities"
+        );
       }
     }
   }
@@ -124,12 +120,14 @@ function eck_permission() {
   return $perms;
 }
 
-/***************************************************
- * 				HELPER FUNCTIONS
- **************************************************/
-
+/**
+ * This function creates and entity
+ * @param $entity_type
+ *  A string witht the type of entity to be created (node, user, etc)
+ * @param $bundle
+ *  The bundle for the entity to be created (String)
+ */
 function eck__entity_create($entity_type, $bundle) {
- 
   global $user;
 
   $values = array(
@@ -148,11 +146,11 @@ function eck__entity_create($entity_type, $bundle) {
 function eck__get_bundles($entity_types) {
   $data = db_select('eck_types', 't')->fields('t', array('type'))->condition('entity', $entity_types)->execute();
   $bundles = array();
-  
+
   foreach ($data as $bundle_obj) {
     $bundles[] = $bundle_obj->type;
   }
-  
+
   return $bundles;
 }
 
@@ -163,11 +161,11 @@ function eck__get_bundle_label($entity_type, $bundle) {
   $data = db_select('eck_types', 'e')->fields('e', array('label'))
   ->condition('entity', $entity_type, '=')
   ->condition('type', $bundle, '=')->execute();
-  
+
   foreach ($data as $bundle_obj) {
     return $bundle_obj->label;
   }
-  
+
   return NULL;
 }
 
@@ -176,57 +174,61 @@ function eck__get_bundle_label($entity_type, $bundle) {
  */
 function eck__get_entity_types() {
   $data = db_select('eck', 'e')->fields('e', array('name'))->execute();
-  
+
   $entity_types = array();
   foreach ($data as $entity_type_obj) {
     $entity_types[] = $entity_type_obj->name;
   }
-  
+
   return $entity_types;
 }
 
 /**
  * Get the label for a given entity type.
+ * @param $entity_type
+ *  The entity_type that we want the label for (String)
  */
 function eck__get_entity_type_label($entity_type) {
   $data = db_select('eck', 'e')->fields('e', array('label'))
   ->condition('name', $entity_type, '=')->execute();
-  
+
   foreach ($data as $entity_type_obj) {
     return $entity_type_obj->label;
   }
-  
+
   return NULL;
 }
 
 /**
- * creates a table showing a group of entities
- * 
- * @param $entities the entities to create the table from
- * @param $select a boolean value that will determine whether the 
- * table is a select table or a regular table
+ * Creates a table showing a group of entities.
+ *
+ * @param $entities
+ *  the entities to create the table from
+ * @param $select
+ *  a boolean value that will determine whether the
+ *  table is a select table or a regular table
  */
 function entities_table($entities, $select = FALSE) {
   $rows = array();
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
-  
+
   foreach ($entities as $entity) {
     $entity_type = $entity->entityType();
     $bundle = $entity->type;
     $id = $entity->id;
-    
+
     $uri = entity_uri($entity_type, $entity);
     $row = array(l(entity_label($entity_type, $entity), $uri['path'], $uri['options']));
     $row[] = array('data' => l(t('delete'), "admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
-    
+
     drupal_alter("entity_tr", $row, $entity_type, $entity);
     drupal_alter("entity_{$entity_type}_tr", $row, $entity);
     $rows[$id] = $row;
   }
-  
+
   if ($select) {
     if (!isset($entity_type)) {
-     return array('#theme' => 'table', '#header' => $header, '#rows' => $rows);
+      return array('#theme' => 'table', '#header' => $header, '#rows' => $rows);
     }
     else {
       return drupal_get_form("entity_table_select", $entity_type, $bundle, $header, $rows);
@@ -238,28 +240,40 @@ function entities_table($entities, $select = FALSE) {
 }
 
 /**
- * Helper function for the entities_table
- * 
- * this function creates a select table
+ * Helper function for the entities_table.
+ * This function creates a select table.
+ *
+ * @param $form
+ *  A form arrary as returned by drupal_get_form
+ * @param $state
+ *  The form state, this is also provided by the Form API
+ * @param $enttiy_type
+ *  (String) the type of the entities that will be in the table
+ * @param $bundle
+ *  (String) The bundle of the entity that will be in the table
+ * @param $header
+ *  An array for the table header for more info look at theme_table
+ * @param $rows
+ *  The rows of the table for more info on what this should look like look
+ *  at theme_table
  */
 
 function entity_table_select($form, &$state, $entity_type, $bundle, $header, $rows) {
-  
   $form['entity_type'] = array('#type' => 'value', '#value' => $entity_type);
   $form['bundle'] = array('#type' => 'value', '#value' => $bundle);
-  
+
   $form['do'] = array(
     '#type' => 'submit',
     '#value' => t('Do'),
   );
 
   $form['entity_table'] = array(
-    //'#theme' => 'table',
+    // '#theme' => 'table',
     '#type' => 'tableselect',
     '#header' => $header,
     '#options' => $rows,
   );
-  
+
   return $form;
 }
 
@@ -274,25 +288,25 @@ function entity_table_select_submit($form, &$state) {
 }
 
 /**
- * When an entity form is submitted, field for which no information  was inputed are
- * still returned, then if we submit that data, empty rows are created in those field databases
- * cluttering them. This function checks and makes sure that the data returned for a field is not
- * empty and unsets it if it is, so no empty data will be added to the database
+ * When an entity form is submitted, field for which no information  was inputed
+ * are still returned, then if we submit that data, empty rows are created in
+ * those field databases cluttering them. This function checks and makes sure
+ * that the data returned for a field is not empty and unsets it if it is, so no
+ * empty data will be added to the database.
  *
- * @param $field_name the name of the field
- * @param $data the data for the field: It usually has this format
- * array(lang => array( 0 => array( <field stuff> ), 1 => ...));
+ * @param $field_name
+ *   The name of the field.
+ * @param $data
+ *   The data for the field: It usually has this format
+ *   array(lang => array( 0 => array( <field stuff> ), 1 => ...));
  */
 function _field_unset_empty($field_name, $data) {
-
-  //if there is a value we need to check that it is not empty
+  // If there is a value we need to check that it is not empty.
   $info = field_info_field($field_name);
 
   foreach ($data[LANGUAGE_NONE] as $key => $values) {
-
     $empty = TRUE;
     foreach (array_keys($info['columns']) as $index) {
-
       if (!empty($values[$index])) {
         $empty = FALSE;
       }
@@ -305,8 +319,10 @@ function _field_unset_empty($field_name, $data) {
   return $data;
 }
 
-
-
+/**
+ * As you can see this is just use to comply with requirements
+ * probably no one will use this
+ */
 function _eck_fake_exists() {
   return FALSE;
 }
@@ -328,8 +344,8 @@ function eck_get_class_name($name, $suffix = '') {
 }
 
 /**
- * Retreive the entity label
- **/
+ * Retrieve the entity label
+ */
 function eck_get_entity_label($entity_type, $entity_id) {
   if (!is_numeric($entity_id)) {
     return FALSE;
@@ -350,7 +366,6 @@ function eck_get_entity_label($entity_type, $entity_id) {
  * Base controller class for ECK entites.
  */
 class EckController extends EntityAPIController {
-  
   public function create(array $values = array()) {
     global $user;
 
