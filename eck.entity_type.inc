@@ -64,11 +64,12 @@ function eck__entity_type__overview() {
   $results = db_select('eck', 'e')->fields('e')->execute();
 
   foreach ($results as $record) {
+    dpm($record);
     $id = $record->id;
     $name = $record->name;
     $label = $record->label;
 
-    $row[] = array(l(t("{$id} : {$label}"), "admin/structure/eck/{$name}"));
+    $rows[] = array(l(t("{$id} : {$label}"), "admin/structure/eck/{$name}"));
   }
   $build['entity_table'] = array(
     '#theme' => 'table',
