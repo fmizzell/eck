@@ -20,6 +20,16 @@ function eck__bundle__menu($entity_type) {
   // Create the menus relavant to types.
   $menu = array();
 
+  // DELETE ENTITY TYPE
+  $menu["admin/structure/eck/{$entity_type}/delete"] = array(
+    'title' => "Delete a(n) '{$entity_type_label}'",
+    'description' => "Delete the '{$entity_type_label}' Entity Type",
+    'page callback' => "drupal_get_form",//"eck__entity_type__delete",
+    'page arguments' => array("eck__entity_type__delete_form", $entity_type),
+    'access arguments' => array("delete {$entity_type} entity type"),
+    'file' => 'eck.entity_type.inc'
+  );
+
   // OVERVIEW Entity types.
   $menu["admin/structure/eck/{$entity_type}"] = array(
     'title' => "{$entity_type_label} Bundles" ,
@@ -176,4 +186,87 @@ function eck__bundle__add_submit($form, &$form_state) {
   menu_rebuild();
 
   drupal_goto("admin/structure/eck/{$entity_type}/{$bundle}");
+}
+
+/**
+ * Delete the bundle of a given entity type
+ * @param $entity_type
+ *  (String) The entity type of the bundle that will be deleted
+ * @param  $bundle
+ *  (String) The bundle to be deleted
+ */
+function eck__bundle__delete($entity_type, $bundle){
+  //first delete all of the entities of this bundle
+  $query = new EntityFieldQuery();
+  $query
+  ->entityCondition('entity_type', $entity_type, '=')
+  ->entityCondition('bundle', $bundle,'=');
+  
+  $results = $query->execute();
+  
+  if(!empty($results)){
+    $ids = array_keys($results[$entity_type]);
+    entity_delete($entity_type, $ids);
+  }
+  //then we delete the bundle (field_instances)
+  field_attach_delete_bundle($entity_type, $bundle);
+  
+  //and finally we delete the bundle from the eck_type table
+  db_delete('eck_types')
+  ->condition('entity', $entity_type)
+  ->condition('type', $bundle)
+  ->execute();
+  
+  menu_rebuild();
+  drupal_flush_all_caches();
+  
+  drupal_set_message("The bundle '{$bundle}' from the entity type '$entity_type' has been deleted");
+  //return "<h1>Deletion Completed</h1>
+  //<h3>The bundle '{$bundle}' from the entity type '$entity_type' has been deleted<h3>";
+}
+
+function eck__bundle__delete_form($form, &$form_state, $entity_type, $bundle) {
+  $form['entity_type'] =
+      array(
+        '#type' => 'value',
+        '#value' => $entity_type,
+  );
+
+  $form['bundle'] =
+      array(
+        '#type' => 'value',
+        '#value' => $bundle,
+  );
+
+  $form['submit_redirect'] =
+  array(
+    '#type' => 'value',
+    '#value' => "admin/structure/eck/{$entity_type}",
+  );
+
+  $message = t("Are you sure that you want to delete the bundle '{$bundle}'");
+
+  $caption = t("All of the data (entities) associated with this bundle
+  will be deleted. This action cannot be undone.");
+
+  return confirm_form($form, $message, "admin/structure/eck/{$entity_type}", $caption, t('Delete'));
+}
+
+/**
+ * Sumbmit function for the delete functionality
+ *
+ * @param $form
+ *  Form array provided by the Form API
+ * @param $form_state
+ *  array provided by the Form API
+ */
+function eck__bundle__delete_form_submit($form, &$form_state) {
+  $entity_type = $form_state['values']['entity_type'];
+  $bundle = $form_state['values']['bundle'];
+  $submit_redirect = $form_state['values']['submit_redirect'];
+
+  eck__bundle__delete($entity_type, $bundle);
+
+  // Ok, lets delete the entity
+  $form_state['redirect'] = $submit_redirect;
 }

@@ -64,7 +64,6 @@ function eck__entity_type__overview() {
   $results = db_select('eck', 'e')->fields('e')->execute();
 
   foreach ($results as $record) {
-    dpm($record);
     $id = $record->id;
     $name = $record->name;
     $label = $record->label;
@@ -207,6 +206,64 @@ function eck__entity_type__add_submit($form, &$form_state) {
   else {
     drupal_set_message(t('Database table %name already exists', array('%name' => $entity_type)), 'error');
   }
+}
+/**
+ * Delete the entity type
+ * 
+ * @param $entity_type 
+ *  (String) entity type to be deleted 
+ */
+function eck__entity_type__delete($entity_type){
+  module_load_include('inc', 'eck', 'eck.bundle');
+  //delete all the bundles from this entity type
+  $bundles = eck__get_bundles($entity_type);
+  foreach($bundles as $bundle){
+    eck__bundle__delete($entity_type, $bundle);
+  }
+  
+  //delete the entity type record from the eck table
+  db_delete('eck')
+  ->condition('name', $entity_type)
+  ->execute();
+  
+  // then delete the entity type table
+  db_drop_table('eck_'.$entity_type);
+  drupal_set_message("Entity type '{$entity_type}' has been deleted");
+  //return "<h1>Deletion Completed</h1> <h3>Entity type '{$entity_type}' has been deleted";
+}
+
+function eck__entity_type__delete_form($form, &$state, $entity_type){
+  $form['entity_type'] = 
+  array(
+  '#type' => 'value',
+  '#value' => $entity_type
+  );
+  
+  $form['submit_redirect'] =
+  array(
+    '#type' => 'value',
+    '#value' => "admin/structure/eck",
+  );
+  
+  $message = t("Are you sure that you want to delete the entity type '{$entity_type}'");
+
+  $caption = t("All of the data (entities and bundles) from this entity type 
+  will be deleted. This action cannot be undone.");
+
+  return 
+  confirm_form($form, $message, 
+  "admin/structure/eck", $caption, t('Delete'));
+}
+
+function eck__entity_type__delete_form_submit($form, &$state){
+  $entity_type = $state['values']['entity_type'];
+  $submit_redirect = $state['values']['submit_redirect'];
+  
+  // Ok, lets delete the entity type
+  
+  eck__entity_type__delete($entity_type);
+  
+  $state['redirect'] = $submit_redirect;
 }
 
 /**

@@ -18,6 +18,15 @@ function eck__entity__menu($entity_type, $bundle) {
   $menu = array();
   $entity_type_label = eck__get_entity_type_label($entity_type);
   $bundle_label = eck__get_bundle_label($entity_type, $bundle);
+  
+  // DELETE Bundle
+  $menu["admin/structure/eck/{$entity_type}/{$bundle}/delete"] = array(
+    'title' => "Delete {$entity_type}'s Bundle: {$bundle}",
+    'page callback' => "drupal_get_form",//"eck__bundle__delete",
+    'page arguments' => array('eck__bundle__delete_form', $entity_type, $bundle),
+    'access arguments' => array("delete {$entity_type} {$bundle} bundle"),
+    'file' => 'eck.bundle.inc'
+  );
 
   // OVERVIEW Entity
   $menu["admin/structure/eck/{$entity_type}/{$bundle}"] = array(
