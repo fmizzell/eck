@@ -28,6 +28,15 @@ function eck_features_api() {
   );
 }
 
+function eck_entity_info_alter(&$info){
+  //dpm($info, "Entity Info Alter");
+  $info['vendor']['bundles']['vendor']['crud']['view']['path'] = 'vendor/%';
+  $info['vendor']['bundles']['vendor']['crud']['view']['args'] = array('entity_type'=>0, 'bundle'=>'vendor', 'id'=>1);
+  
+  $info['vendor']['bundles']['vendor']['crud']['edit']['path'] = 'fart/%';
+  $info['vendor']['bundles']['vendor']['crud']['edit']['args'] = array('entity_type'=>'vendor', 'bundle'=>'vendor', 'id'=>1);
+}
+
 /**
  * Implements hook_entity_info().
  *
