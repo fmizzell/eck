@@ -68,7 +68,11 @@ function eck__entity_type__overview() {
     $name = $record->name;
     $label = $record->label;
 
-    $rows[] = array(l(t("{$id} : {$label}"), "admin/structure/eck/{$name}"));
+    $rows[] = 
+    array(
+      l(t("{$id} : {$label}"), "admin/structure/eck/{$name}"),
+      l(t("delete"), "admin/structure/eck/{$name}/delete")
+    );
   }
   $build['entity_table'] = array(
     '#theme' => 'table',

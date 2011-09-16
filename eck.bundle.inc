@@ -75,7 +75,11 @@ function eck__bundle__overview($entity_type) {
     $bundle_label =  eck__get_bundle_label($entity_type, $bundle);
 
     $uri = "admin/structure/eck/{$entity_type}/{$bundle}";
-    $rows[] = array(l($bundle_label, url($uri, array('absolute' => TRUE))));
+    $rows[] = 
+    array(
+      l($bundle_label, url($uri, array('absolute' => TRUE))),
+      l("delete", $uri."/delete")
+    );
   }
 
   $build['bundle_table'] = array(
