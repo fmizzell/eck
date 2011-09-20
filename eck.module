@@ -216,9 +216,13 @@ function entities_table($entities, $select = FALSE) {
     $entity_type = $entity->entityType();
     $bundle = $entity->type;
     $id = $entity->id;
-
+    
+    $label = entity_label($entity_type, $entity);
+    //dpm($label, "label");
     $uri = entity_uri($entity_type, $entity);
-    $row = array(l(entity_label($entity_type, $entity), $uri['path'], $uri['options']));
+    //dpm($uri, "URI");
+    
+    $row = array(l($label, $uri['path']));
     $row[] = array('data' => l(t('delete'), "admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
 
     drupal_alter("entity_tr", $row, $entity_type, $entity);
@@ -385,4 +389,45 @@ class EckController extends EntityAPIController {
 
     return parent::create($values);
   }
+}
+
+/**
+ * This is the callback function for an entities label
+ * By default the label is the id of the entity, but a number of
+ * hooks are defined to customize the label if needed
+ *
+ * @param $entity
+ *  an object as returned by entity_load()
+ */
+function eck__entity__label($entity) {
+  $hook_names = array(
+    "entity_label",
+    "entity_{$entity->entityType()}_label",
+    "entity_{$entity->entityType()}_{$entity->type}_label",
+  );
+
+  foreach ($hook_names as $hook_name) {
+    $new_label = module_invoke_all($hook_name, $entity, $entity->id);
+    $empty = empty($new_label);
+    if (!$empty) {
+      break;
+    }
+  }
+
+  if (!$empty) {
+    return $new_label[0];
+  }
+  else {
+    return $entity->id;
+  }
+}
+
+/**
+ * Entity URI callback
+ *
+ * @param $entity
+ *  an object as returned by entity_load()
+ */
+function eck__entity__uri($entity) {
+  return array('path' => "{$entity->entityType()}/{$entity->type}/{$entity->identifier()}");
 }

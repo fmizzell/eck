@@ -313,46 +313,6 @@ function eck__entity__form_submit($form, &$form_state) {
   drupal_set_message(t("Entity {$entity->id} - @entity_label has been saved", array("@entity_label" => entity_label($form['#entity_type'], $entity)) ));
 }
 
-/**
- * This is the callback function for an entities label
- * By default the label is the id of the entity, but a number of
- * hooks are defined to customize the label if needed
- *
- * @param $entity
- *  an object as returned by entity_load()
- */
-function eck__entity__label($entity) {
-  $hook_names = array(
-    "entity_label",
-    "entity_{$entity->entityType()}_label",
-    "entity_{$entity->entityType()}_{$entity->type}_label",
-  );
-
-  foreach ($hook_names as $hook_name) {
-    $new_label = module_invoke_all($hook_name, $entity, $entity->id);
-    $empty = empty($new_label);
-    if (!$empty) {
-      break;
-    }
-  }
-
-  if (!$empty) {
-    return $new_label[0];
-  }
-  else {
-    return $entity->id;
-  }
-}
-
-/**
- * Entity URI callback
- *
- * @param $entity
- *  an object as returned by entity_load()
- */
-function eck__entity__uri($entity) {
-  return array('path' => "{$entity->entityType()}/{$entity->type}/{$entity->identifier()}");
-}
 
 /**
  * Creates a renderable array to show an entity
