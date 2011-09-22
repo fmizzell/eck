@@ -429,7 +429,6 @@ function eck__entity_type__info($entity_type) {
     );
   }
   
-  //dpm($info, "Info");
 
   return $info;
 }

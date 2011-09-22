@@ -28,15 +28,6 @@ function eck_features_api() {
   );
 }
 
-function eck_entity_info_alter(&$info){
-  //dpm($info, "Entity Info Alter");
-  $info['vendor']['bundles']['vendor']['crud']['view']['path'] = 'vendor/%';
-  $info['vendor']['bundles']['vendor']['crud']['view']['args'] = array('entity_type'=>0, 'bundle'=>'vendor', 'id'=>1);
-  
-  $info['vendor']['bundles']['vendor']['crud']['edit']['path'] = 'fart/%';
-  $info['vendor']['bundles']['vendor']['crud']['edit']['args'] = array('entity_type'=>'vendor', 'bundle'=>'vendor', 'id'=>1);
-}
-
 /**
  * Implements hook_entity_info().
  *
@@ -218,6 +209,11 @@ function eck__get_entity_type_label($entity_type) {
  *  table is a select table or a regular table
  */
 function entities_table($entities, $select = FALSE) {
+  module_load_include('inc', 'eck', 'eck.entity');
+  //This is information set up for each bundle in the hook_entity_info
+  //look there for more details
+  $crud_info = NULL; 
+  
   $rows = array();
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
 
@@ -225,10 +221,16 @@ function entities_table($entities, $select = FALSE) {
     $entity_type = $entity->entityType();
     $bundle = $entity->type;
     $id = $entity->id;
-
+    
+    if($crud_info == NULL){
+      $crud_info = get_bundle_crud_info($entity_type, $bundle);
+    }
+    
+    $edit_path = str_replace('%', $id, $crud_info['edit']['path']);
+    $delete_path = str_replace('%', $id, $crud_info['delete']['path']);
     $uri = entity_uri($entity_type, $entity);
     $row = array(l(entity_label($entity_type, $entity), $uri['path'], $uri['options']));
-    $row[] = array('data' => l(t('delete'), "admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
+    $row[] = array('data' => l(t('edit'), $edit_path)."<br>".l(t('delete'), $delete_path)); //"admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
 
     drupal_alter("entity_tr", $row, $entity_type, $entity);
     drupal_alter("entity_{$entity_type}_tr", $row, $entity);
@@ -394,4 +396,49 @@ class EckController extends EntityAPIController {
 
     return parent::create($values);
   }
+}
+
+/**
+ * This is the callback function for an entities label
+ * By default the label is the id of the entity, but a number of
+ * hooks are defined to customize the label if needed
+ *
+ * @param $entity
+ *  an object as returned by entity_load()
+ */
+function eck__entity__label($entity) {
+  $hook_names = array(
+    "entity_label",
+    "entity_{$entity->entityType()}_label",
+    "entity_{$entity->entityType()}_{$entity->type}_label",
+  );
+
+  foreach ($hook_names as $hook_name) {
+    $new_label = module_invoke_all($hook_name, $entity, $entity->id);
+    $empty = empty($new_label);
+    if (!$empty) {
+      break;
+    }
+  }
+
+  if (!$empty) {
+    return $new_label[0];
+  }
+  else {
+    return $entity->id;
+  }
+}
+
+/**
+ * Entity URI callback
+ *
+ * @param $entity
+ *  an object as returned by entity_load()
+ */
+function eck__entity__uri($entity) {
+  module_load_include('inc', 'eck', 'eck.entity');
+  $crud_info = get_bundle_crud_info($entity->entityType(), $entity->type);
+  $view_path = str_replace('%', $entity->identifier(), $crud_info['view']['path']);
+  
+  return array('path' => $view_path);
 }

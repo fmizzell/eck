@@ -48,7 +48,6 @@ function eck__entity__menu($entity_type, $bundle) {
   );
   
   $crud_info = get_bundle_crud_info($entity_type, $bundle);
-  //dpm($crud_info, "CRUD Info");
   
   foreach($crud_info as $action => $info){
       
@@ -56,16 +55,12 @@ function eck__entity__menu($entity_type, $bundle) {
     $arg_labels = array('entity_type', 'bundle', 'id');
     $args = array();
     
-    //dpm($info, "{$action} Info");
-    
     foreach($arg_labels as $arg){
-      //dpm($arg, "Arg Label");
+      
       if(array_key_exists($arg, $info['args'])){
         $args[] = $info['args'][$arg];
       }
     }
-    //dpm($info['path'], "{$action} Path");
-    //dpm($args, "{$action} Args");
     
     $menu[$info['path']] = array(
       'title' => "{$action_label} {$bundle_label} Entity",
@@ -136,7 +131,7 @@ function eck__entity__menu($entity_type, $bundle) {
 //a few helper function to get data our of the info array
 function get_bundle_admin_info($entity_type, $bundle){
   $info = entity_get_info();
-  //dpm($info, "INFO");
+  
   return $info[$entity_type]['bundles'][$bundle]['admin'];
 }
 function get_bundle_crud_info($entity_type, $bundle){
@@ -153,6 +148,7 @@ function get_bundle_crud_info($entity_type, $bundle){
  *  (String) Bundle
  */
 function eck__entity__overview($entity_type, $bundle) {
+  
   $entity_type_label = eck__get_entity_type_label($entity_type);
   $bundle_label = eck__get_bundle_label($entity_type, $bundle);
 
@@ -168,6 +164,11 @@ function eck__entity__overview($entity_type, $bundle) {
   }
 
   $entities = entity_load($entity_type, $ids);
+  
+  //Because of the flexible paths capabilities, we are not guaranteed to see a local action for the add here,
+  //so lets add a link ourselves until we figure out whether there is a better solution
+  $crud_info = get_bundle_crud_info($entity_type, $bundle);
+  $build['add'] = array('#markup' => "+ ".l(t('Add Entity'), $crud_info['add']['path']));
 
   $build['table'] = entities_table($entities, TRUE);
 
@@ -360,47 +361,6 @@ function eck__entity__form_submit($form, &$form_state) {
   $entity->save();
 
   drupal_set_message(t("Entity {$entity->id} - @entity_label has been saved", array("@entity_label" => entity_label($form['#entity_type'], $entity)) ));
-}
-
-/**
- * This is the callback function for an entities label
- * By default the label is the id of the entity, but a number of
- * hooks are defined to customize the label if needed
- *
- * @param $entity
- *  an object as returned by entity_load()
- */
-function eck__entity__label($entity) {
-  $hook_names = array(
-    "entity_label",
-    "entity_{$entity->entityType()}_label",
-    "entity_{$entity->entityType()}_{$entity->type}_label",
-  );
-
-  foreach ($hook_names as $hook_name) {
-    $new_label = module_invoke_all($hook_name, $entity, $entity->id);
-    $empty = empty($new_label);
-    if (!$empty) {
-      break;
-    }
-  }
-
-  if (!$empty) {
-    return $new_label[0];
-  }
-  else {
-    return $entity->id;
-  }
-}
-
-/**
- * Entity URI callback
- *
- * @param $entity
- *  an object as returned by entity_load()
- */
-function eck__entity__uri($entity) {
-  return array('path' => "{$entity->entityType()}/{$entity->type}/{$entity->identifier()}");
 }
 
 /**
