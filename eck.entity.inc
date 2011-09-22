@@ -27,25 +27,52 @@ function eck__entity__menu($entity_type, $bundle) {
     'access arguments' => array("delete {$entity_type} {$bundle} bundle"),
     'file' => 'eck.bundle.inc'
   );
-
+  
+  $admin_info = get_bundle_admin_info($entity_type, $bundle);
+  
   // OVERVIEW Entity
-  $menu["admin/structure/eck/{$entity_type}/{$bundle}"] = array(
+  $menu[$admin_info['path']] = array(
     'title' => "{$bundle_label} Entities",
     'description' => "View all entites of type {$entity_type_label} with bundle {$bundle_label}",
     'page callback' => "eck__entity__overview",
-    'page arguments' => array($entity_type, $bundle),
+    'page arguments' => array($admin_info['args']['entity_type'], $admin_info['args']['bundle']),
     'access arguments' => array("administer {$entity_type} {$bundle} entities"),
     'weight' => 0,
     'file' => 'eck.entity.inc'
   );
 
-  $menu["admin/structure/eck/{$entity_type}/{$bundle}/overview"] = array(
+  $menu[$admin_info['path']."/overview"] = array(
     'title' => "Overview",
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0
   );
+  
+  $crud_info = get_bundle_crud_info($entity_type, $bundle);
+  
+  foreach($crud_info as $action => $info){
+      
+    $action_label = ucfirst($action);
+    $arg_labels = array('entity_type', 'bundle', 'id');
+    $args = array();
+    
+    foreach($arg_labels as $arg){
+      
+      if(array_key_exists($arg, $info['args'])){
+        $args[] = $info['args'][$arg];
+      }
+    }
+    
+    $menu[$info['path']] = array(
+      'title' => "{$action_label} {$bundle_label} Entity",
+      'description' => "{$action_label} an entity of type {$entity_type_label} with bundle {$bundle_label}",
+      'page callback' => "eck__entity__{$action}",
+      'page arguments' => $args,
+      'access arguments' => array("{$action} {$entity_type} {$bundle} entities"),
+      'file' => 'eck.entity.inc'
+    );
+  }
 
-  // CREATE Entity
+  /*// CREATE Entity
   $menu["admin/structure/eck/{$entity_type}/{$bundle}/add"] = array(
     'title' => "Add {$bundle_label} Entity",
     'description' => "Add an entity of type {$entity_type_label} with bundle {$bundle_label}",
@@ -96,9 +123,20 @@ function eck__entity__menu($entity_type, $bundle) {
     'page arguments' => array('eck__entity__delete', $entity_type, $bundle, 5),
     'access arguments' => array("delete {$entity_type} {$bundle} entities"),
     'file' => 'eck.entity.inc'
-  );
+  );*/
 
   return $menu;
+}
+
+//a few helper function to get data our of the info array
+function get_bundle_admin_info($entity_type, $bundle){
+  $info = entity_get_info();
+  
+  return $info[$entity_type]['bundles'][$bundle]['admin'];
+}
+function get_bundle_crud_info($entity_type, $bundle){
+  $info = entity_get_info();
+  return $info[$entity_type]['bundles'][$bundle]['crud'];
 }
 
 /**
@@ -110,6 +148,7 @@ function eck__entity__menu($entity_type, $bundle) {
  *  (String) Bundle
  */
 function eck__entity__overview($entity_type, $bundle) {
+  
   $entity_type_label = eck__get_entity_type_label($entity_type);
   $bundle_label = eck__get_bundle_label($entity_type, $bundle);
 
@@ -125,6 +164,11 @@ function eck__entity__overview($entity_type, $bundle) {
   }
 
   $entities = entity_load($entity_type, $ids);
+  
+  //Because of the flexible paths capabilities, we are not guaranteed to see a local action for the add here,
+  //so lets add a link ourselves until we figure out whether there is a better solution
+  $crud_info = get_bundle_crud_info($entity_type, $bundle);
+  $build['add'] = array('#markup' => "+ ".l(t('Add Entity'), $crud_info['add']['path']));
 
   $build['table'] = entities_table($entities, TRUE);
 
@@ -161,7 +205,7 @@ function eck__entity__add($entity_type, $bundle) {
  * @param $id
  *  (int) The entities id
  */
-function eck__entity__view($entity_type, $id) {
+function eck__entity__build($entity_type, $id) {
   if (is_numeric($id)) {
     $entities = entity_load($entity_type, array($id));
   }
@@ -207,7 +251,12 @@ function eck__entity__edit($entity_type, $bundle, $id) {
  * @param $id
  *  (int) the Id of the entity to be deleted
  */
-function eck__entity__delete($form, &$form_state, $entity_type, $bundle, $id) {
+function eck__entity__delete($entity_type, $bundle, $id) {
+  return drupal_get_form('eck__entity__delete_form', $entity_type, $bundle, $id);
+  
+}
+
+function eck__entity__delete_form($form, &$form_state, $entity_type, $bundle, $id){
   $entities = entity_load($entity_type, array($id));
 
   $form['entity'] =
@@ -240,6 +289,7 @@ function eck__entity__delete($form, &$form_state, $entity_type, $bundle, $id) {
   $caption = t("This action cannot be undone.");
 
   return confirm_form($form, $message, "admin/structure/eck/{$entity_type}", $caption, t('Delete'));
+  
 }
 
 /**
@@ -250,7 +300,7 @@ function eck__entity__delete($form, &$form_state, $entity_type, $bundle, $id) {
  * @param $form_state
  *  array provided by the Form API
  */
-function eck__entity__delete_submit($form, &$form_state) {
+function eck__entity__delete_form_submit($form, &$form_state) {
   $entity = $form_state['values']['entity'];
   $entity_type = $form_state['values']['entity_type'];
   $bundle = $form_state['values']['bundle'];
@@ -324,10 +374,10 @@ function eck__entity__form_submit($form, &$form_state) {
  * @param $id
  *  (int) the Id of the entity to be deleted
  */
-function eck__entity__page($entity_type, $bundle, $id) {
+function eck__entity__view($entity_type, $bundle, $id) {
   $build = array();
 
-  $entity_view = eck__entity__view($entity_type, $id);
+  $entity_view = eck__entity__build($entity_type, $id);
 
   $build["{$entity_type}_{$bundle}_page"] = $entity_view;
 

@@ -395,14 +395,40 @@ function eck__entity_type__info($entity_type) {
 
   foreach (eck__get_bundles($entity_type) as $bundle) {
     $bundle_label = eck__get_bundle_label($entity_type, $bundle);
+    $path = "admin/structure/eck/{$entity_type}/{$bundle}";
     $info[$entity_type]['bundles'][$bundle] = array(
       'label' => $bundle_label,
       'admin' => array(
-        'path' => "admin/structure/eck/{$entity_type}/{$bundle}",
+        'path' => $path,
+        'args' => array('entity_type' => 3, 'bundle' => 4),
         'access arguments' => array('administer entities')
+      ),
+      'crud' =>
+      array(
+        'add' => 
+        array(
+          'path' => $path."/add", 
+          'args'=> array('entity_type' => 3, 'bundle' => 4)
+        ),
+        'edit' => 
+        array(
+          'path' => $path."/%/edit",
+          'args' => array('entity_type' => 3, 'bundle' => 4, 'id' => 5)
+        ),
+        'delete' => 
+        array(
+          'path' => $path."/%/delete",
+          'args' => array('entity_type' => 3, 'bundle' => 4, 'id' => 5)
+        ),
+        'view' => 
+        array(
+          'path' => "{$entity_type}/{$bundle}/%",
+          'args' => array('entity_type' => 0, 'bundle' => 1, 'id' => 2)
+        )
       )
     );
   }
+  
 
   return $info;
 }

@@ -209,6 +209,11 @@ function eck__get_entity_type_label($entity_type) {
  *  table is a select table or a regular table
  */
 function entities_table($entities, $select = FALSE) {
+  module_load_include('inc', 'eck', 'eck.entity');
+  //This is information set up for each bundle in the hook_entity_info
+  //look there for more details
+  $crud_info = NULL; 
+  
   $rows = array();
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
 
@@ -217,13 +222,15 @@ function entities_table($entities, $select = FALSE) {
     $bundle = $entity->type;
     $id = $entity->id;
     
-    $label = entity_label($entity_type, $entity);
-    //dpm($label, "label");
-    $uri = entity_uri($entity_type, $entity);
-    //dpm($uri, "URI");
+    if($crud_info == NULL){
+      $crud_info = get_bundle_crud_info($entity_type, $bundle);
+    }
     
-    $row = array(l($label, $uri['path']));
-    $row[] = array('data' => l(t('delete'), "admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
+    $edit_path = str_replace('%', $id, $crud_info['edit']['path']);
+    $delete_path = str_replace('%', $id, $crud_info['delete']['path']);
+    $uri = entity_uri($entity_type, $entity);
+    $row = array(l(entity_label($entity_type, $entity), $uri['path'], $uri['options']));
+    $row[] = array('data' => l(t('edit'), $edit_path)."<br>".l(t('delete'), $delete_path)); //"admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
 
     drupal_alter("entity_tr", $row, $entity_type, $entity);
     drupal_alter("entity_{$entity_type}_tr", $row, $entity);
@@ -429,5 +436,11 @@ function eck__entity__label($entity) {
  *  an object as returned by entity_load()
  */
 function eck__entity__uri($entity) {
-  return array('path' => "{$entity->entityType()}/{$entity->type}/{$entity->identifier()}");
+
+  module_load_include('inc', 'eck', 'eck.entity');
+  $crud_info = get_bundle_crud_info($entity->entityType(), $entity->type);
+  $view_path = str_replace('%', $entity->identifier(), $crud_info['view']['path']);
+  
+  return array('path' => $view_path);
+
 }

@@ -68,13 +68,16 @@ function eck__bundle__menu($entity_type) {
  *  (String) entity type
  */
 function eck__bundle__overview($entity_type) {
+  module_load_include('inc', 'eck', 'eck.entity');
   $header = array(t('Type'), array('data' => t('Operations'), 'colspan' => '1'));
   $rows = array();
 
   foreach (eck__get_bundles($entity_type) as $bundle) {
     $bundle_label =  eck__get_bundle_label($entity_type, $bundle);
-
-    $uri = "admin/structure/eck/{$entity_type}/{$bundle}";
+    
+    $admin_info = get_bundle_admin_info($entity_type, $bundle);
+    
+    $uri = $admin_info['path'];
     $rows[] = 
     array(
       l($bundle_label, url($uri, array('absolute' => TRUE))),
