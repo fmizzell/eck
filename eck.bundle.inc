@@ -9,55 +9,88 @@
  * This function creates the menu items relevant to bundle administration
  *
  * @param $entity_type
- *  (String) entity type
+ *  (Object) as returned by eck__entity_type__load()
  *
  * This function called is triggered from hook_menu()
  * @see eck_menu()
  */
 function eck__bundle__menu($entity_type) {
-  $entity_type_label = eck__get_entity_type_label($entity_type);
 
   // Create the menus relavant to types.
   $menu = array();
 
   // DELETE ENTITY TYPE
-  $menu["admin/structure/eck/{$entity_type}/delete"] = array(
-    'title' => "Delete a(n) '{$entity_type_label}'",
-    'description' => "Delete the '{$entity_type_label}' Entity Type",
+  $menu["admin/structure/eck/{$entity_type->name}/delete"] = array(
+    'title' => "Delete a(n) '{$entity_type->label}'",
+    'description' => "Delete the '{$entity_type->label}' Entity Type",
     'page callback' => "drupal_get_form",//"eck__entity_type__delete",
-    'page arguments' => array("eck__entity_type__delete_form", $entity_type),
-    'access arguments' => array("delete {$entity_type} entity type"),
+    'page arguments' => array("eck__entity_type__delete_form", $entity_type->name),
+    'access arguments' => array("delete {$entity_type->name} entity type"),
     'file' => 'eck.entity_type.inc'
+  );
+  
+  $menu["admin/structure/eck/{$entity_type->name}/list"] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  
+ // $entity_type_object = eck__entity_type_load($entity_type);
+  
+  $menu["admin/structure/eck/{$entity_type->name}/edit"] = array(
+    'title' => "Edit $entity_type->label",
+    'description' => "Edit the '{$entity_type->label}' entity type",
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array("eck__entity_type__form", $entity_type->name),
+    'access arguments' => array("edit {$entity_type->name} entity type"),
+    'file' => 'eck.entity_type.inc',
+    'type' => MENU_LOCAL_TASK,
   );
 
   // OVERVIEW Entity types.
-  $menu["admin/structure/eck/{$entity_type}"] = array(
-    'title' => "{$entity_type_label} Bundles" ,
-    'description' => "View all the bundles for '{$entity_type_label}'",
+  $menu["admin/structure/eck/{$entity_type->name}"] = array(
+    'title' => "{$entity_type->label} Bundles" ,
+    'description' => "View all the bundles for '{$entity_type->label}'",
     'page callback' => "eck__bundle__overview",
     'page arguments' => array($entity_type),
-    'access arguments' => array("administer {$entity_type} bundles"),
+    'access arguments' => array("administer {$entity_type->name} bundles"),
     'weight' => 0,
     'file' => 'eck.bundle.inc'
   );
 
-  $menu["admin/structure/eck/{$entity_type}/add"] = array(
-    'title' => "Add a(n) '{$entity_type_label}' Bundle ",
-    'description' => "Add a(n) new '{$entity_type_label} Bundle'",
+  $menu["admin/structure/eck/{$entity_type->name}/add"] = array(
+    'title' => "Add a(n) '{$entity_type->label}' Bundle ",
+    'description' => "Add a(n) new '{$entity_type->label} Bundle'",
     'page callback' => "drupal_get_form",
     'page arguments' => array('eck__bundle__add', $entity_type),
-    'access arguments' => array("add {$entity_type} bundles"),
+    'access arguments' => array("add {$entity_type->name} bundles"),
     'type' => MENU_LOCAL_ACTION,
     'weight' => 1,
     'file' => 'eck.bundle.inc'
   );
 
   module_load_include('inc', 'eck', 'eck.entity');
-  foreach (eck__get_bundles($entity_type) as $bundle) {
+  foreach (eck__bundle__load($entity_type->name) as $bundle) {
     $menu = array_merge($menu, eck__entity__menu($entity_type, $bundle));
   }
 
   return $menu;
+}
+
+/**
+ * Get all the bundles for a given entity_type.
+ * @param $entity_type_name
+ *   (String) the name of an entity type
+ */
+function eck__bundle__load($entity_type_name) {
+  $data = db_select('eck_bundle', 't')->fields('t')->condition('entity_type', $entity_type_name)->execute();
+  $bundles = array();
+
+  foreach ($data as $bundle) {
+    $bundles[] = $bundle;
+  }
+
+  return $bundles;
 }
 
 /**
@@ -72,10 +105,10 @@ function eck__bundle__overview($entity_type) {
   $header = array(t('Type'), array('data' => t('Operations'), 'colspan' => '1'));
   $rows = array();
 
-  foreach (eck__get_bundles($entity_type) as $bundle) {
-    $bundle_label =  eck__get_bundle_label($entity_type, $bundle);
+  foreach (eck__bundle__load($entity_type->name) as $bundle) {
+    $bundle_label =  $bundle->label;
     
-    $admin_info = get_bundle_admin_info($entity_type, $bundle);
+    $admin_info = get_bundle_admin_info($entity_type->name, $bundle->name);
     
     $uri = $admin_info['path'];
     $rows[] = 
@@ -95,9 +128,9 @@ function eck__bundle__overview($entity_type) {
     '#theme' => 'form_element',
     '#title' => t('Optional entity class'),
     '#description' => t('You may add this custom class the entity. To create a new instance of this class programmatically call: %code', array(
-      '%code' => "entity_create('{$entity_type}', array());"
+      '%code' => "entity_create('{$entity_type->name}', array());"
     )),
-    '#children' => "<pre>" . check_plain("class " . eck_get_class_name($entity_type, 'EntityType') . " extends Entity{\n\n}") . "</pre>"
+    '#children' => "<pre>" . check_plain("class " . eck_get_class_name($entity_type->name, 'EntityType') . " extends Entity{\n\n}") . "</pre>"
   );
 
   return $build;

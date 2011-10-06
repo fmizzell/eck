@@ -1,31 +1,156 @@
 <?php
 
 /**
- * @files
- * ECK Features integration.
+ * @{
+ * ECK entities
  */
 
 /**
- * Implements hook_features_export_options().
+ * Implementation of hook_features_export_options().
  */
 function eck_features_export_options() {
+  $entities = array();
+  foreach (eck_get_entities() as $entity) {
+    $entities[$entity->name] = $entity->label;
+  }
+  return $entities;
+}
+
+
+
+/**
+ * Implementation of hook_features_export.
+ */
+function eck_features_export($data, &$export, $module_name = '') {
+  $pipe = array();
+
+  foreach ($data as $entity) {
+    // Export the entity
+    $export['features']['eck'][$entity] = $entity;
+    $export['dependencies']['eck'] = 'eck';
+    $export['dependencies']['features'] = 'features';
+  }
+
+  return $pipe;
+}
+
+
+
+/**
+ * Implementation of hook_features_export_render().
+ */
+function eck_features_export_render($module, $data, $export = NULL) {
+  $elements = array(
+    'name' => FALSE,
+    'label' => TRUE,
+    'properties' => FALSE,
+    'custom_properties' => FALSE,
+  );
+
+  $output = array();
+  $output[] = '  $items = array(';
+
+  foreach ($data as $entity) {
+    // Get the entity definition.
+    $entity = eck__entity__load($entity);
+
+    $output[] = "    '{$entity->name}' => array(";
+    foreach ($elements as $key => $t) {
+      if ($t) {
+        $text = str_replace("'", "\'", $entity->$key);
+        $text = !empty($text) ? "t('{$text}')" : "''";
+        $output[] = "      '{$key}' => {$text},";
+      }
+      else if (is_array($entity->$key)) {
+        $output[] = "      '{$key}' => '" . serialize($entity->$key) . "',";
+      }
+      else {
+        $output[] = "      '{$key}' => '{$entity->$key}',";
+      }
+    }
+    $output[] = "    ),";
+  }
+
+  $output[] = '  );';
+  $output[] = '  return $items;';
+
+  return array('eck_info' => implode("\n", $output));
+}
+
+
+
+/**
+ * Implementation of hook_features_revert().
+ */
+function eck_features_revert($module) {
+  eck_features_rebuild($module);
+}
+
+
+
+/**
+ * Implements of hook_features_rebuild().
+ *
+ * Rebuilds eck entities from code defaults.
+ */
+function eck_features_rebuild($module) {
+  if ($default_entities = features_get_default('eck', $module)) {
+    foreach ($default_entities as $entity_name => $entity_info) {
+      $entity = array(
+        'name' => $entity_name,
+        'label' => $entity_info['label'],
+        'properties' => $entity_info['properties'],
+        'custom_properties' => $entity_info['custom_properties'],
+      );
+      db_merge('eck')
+        ->key(array('name' => $entity_name))
+        ->fields($entity)
+        ->execute();
+
+      if (!db_table_exists("eck_{$entity_name}")) {
+        $entity['properties'] = unserialize($entity['properties']);
+        $entity['custom_properties'] = unserialize($entity['custom_properties']);
+        db_create_table("eck_{$entity_name}", eck__entity__schema((object) $entity));
+      }
+    }
+
+    drupal_get_schema(NULL, TRUE);
+    entity_info_cache_clear();
+    menu_rebuild();
+  }
+}
+
+/**
+ * @} End of ECK entities.
+ */
+
+/**
+ * @{
+ * ECK entity types
+ */
+
+/**
+ * Implementation of hook_features_export_options().
+ */
+function eck_type_features_export_options() {
   $types = array();
-  $result = db_select("eck_types", 't')->fields('t')->execute();
-  foreach ($result as $type) {
+  foreach (eck_get_types() as $type) {
     $types[$type->type] = $type->label;
   }
   return $types;
 }
 
+
+
 /**
- * Implements hook_features_export().
+ * Implementation of hook_features_export.
  */
-function eck_features_export($data, &$export, $module_name = '') {
+function eck_type_features_export($data, &$export, $module_name = '') {
   $pipe = array();
+  $map = features_get_default_map('eck');
 
   foreach ($data as $type) {
-
-    // Get the entity name of type.
+    // Get the entity name of type
     $instances = field_info_instances();
     foreach ($instances as $name => $bundles) {
       if (isset($bundles[$type])) {
@@ -34,8 +159,17 @@ function eck_features_export($data, &$export, $module_name = '') {
       }
     }
 
-    // Export Entity.
-    $export['features']['eck'][$type] = $type;
+    // If this entity type is provided by a different module, add it as a dependency.
+    if (isset($map[$entity_name]) && $map[$entity_name] != $module_name) {
+      $export['dependencies'][$map[$entity_name]] = $map[$entity_name];
+    }
+    else {
+      // Add a dependency on the ECK entity.
+      $pipe['eck'][] = $entity_name;
+    }
+
+    // Export the entity type.
+    $export['features']['eck_type'][$type] = $type;
     $export['dependencies']['eck'] = 'eck';
     $export['dependencies']['features'] = 'features';
 
@@ -49,83 +183,77 @@ function eck_features_export($data, &$export, $module_name = '') {
   return $pipe;
 }
 
+
+
 /**
- * Implements hook_features_export_render().
+ * Implementation of hook_features_export_render().
  */
-function eck_features_export_render($module, $data, $export = NULL) {
+function eck_type_features_export_render($module, $data, $export = NULL) {
   $elements = array(
     'entity' => FALSE,
     'type' => FALSE,
     'label' => TRUE,
   );
+
   $output = array();
   $output[] = '  $items = array(';
+
   foreach ($data as $type) {
-    $info = db_select("eck_types", 't')
-            ->fields('t')
-            ->condition('type', $type)
-            ->execute()
-            ->fetchObject();
-    $output[] = "    '{$type}' => array(";
+    // Get the entity definition.
+    $type = eck__entity_type__load($type);
+
+    if(!$type){
+      continue;
+    }
+
+    $output[] = "    '{$type->type}' => array(";
     foreach ($elements as $key => $t) {
       if ($t) {
-        $text = str_replace("'", "\'", $info->$key);
+        $text = str_replace("'", "\'", $type->$key);
         $text = !empty($text) ? "t('{$text}')" : "''";
         $output[] = "      '{$key}' => {$text},";
       }
       else {
-        $output[] = "      '{$key}' => '{$info->$key}',";
+        $output[] = "      '{$key}' => '{$type->$key}',";
       }
     }
     $output[] = "    ),";
   }
+
   $output[] = '  );';
   $output[] = '  return $items;';
-  $output = implode("\n", $output);
-  return array('eck_info' => $output);
+
+  return array('eck_type_info' => implode("\n", $output));
 }
 
+
+
 /**
- * Implements hook_features_revert().
+ * Implementation of hook_features_revert().
  */
-function eck_features_revert($module) {
-  eck_features_rebuild($module);
+function eck_type_features_revert($module) {
+  eck_type_features_rebuild($module);
 }
+
+
 
 /**
  * Implements of hook_features_rebuild().
  *
  * Rebuilds eck entities from code defaults.
  */
-function eck_features_rebuild($module) {
-  if ($default_types = features_get_default('eck', $module)) {
+function eck_type_features_rebuild($module) {
+  if ($default_types = features_get_default('eck_type', $module)) {
     foreach ($default_types as $type_name => $type_info) {
-      db_delete('eck_types')
-          ->condition('type', $type_name)
-          ->execute();
-
-      db_insert('eck_types')
-          ->fields(array(
-            'entity' => $type_info['entity'],
-            'type' => $type_name,
-            'label' => $type_info['label'],
-          ))
-          ->execute();
-
-      db_delete('eck')
-          ->condition('name', $type_info['entity'])
-          ->execute();
-
-      db_insert('eck')
-          ->fields(array(
-            'name' => $type_info['entity'],
-            'label' => $type_info['label'],
-          ))
-          ->execute();
-
-      if (!db_table_exists("eck_{$type_info['entity']}")) {
-        db_create_table("eck_{$type_info['entity']}", eck__entity__schema($type_info['entity']));
-      }
+      $type = array(
+        'entity' => $type_info['entity'],
+        'type' => $type_name,
+        'label' => $type_info['label'],
+      );
+      db_merge('eck_types')
+        ->key(array('type' => $type_name))
+        ->fields($type)
+        ->execute();
     }
 
     drupal_get_schema(NULL, TRUE);
@@ -133,3 +261,7 @@ function eck_features_rebuild($module) {
     menu_rebuild();
   }
 }
+
+/**
+ * @} End of ECK entity types
+ */
