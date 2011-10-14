@@ -205,12 +205,31 @@ function eck__entity__add($entity_type, $bundle) {
  * @param $id
  *  (int) The entities id
  */
-function eck__entity__build($entity_type, $id) {
+function eck__entity__build($entity_type, $bundle, $id) {
   if (is_numeric($id)) {
+    
     $entities = entity_load($entity_type, array($id));
+    if(array_key_exists($id, $entities)){
+     $entity = $entities[$id];
+    }else{
+      $entity = NULL;
+    }
+  }else{
+    drupal_not_found();
+    exit();
   }
-
-  return $entities[$id]->view();
+  
+  if(!$entity){
+    drupal_not_found();
+    exit();
+  }else{
+    if($entity->type == $bundle){
+      return $entity->view();
+    }else{
+      drupal_not_found();
+      exit();
+    }
+  }
 }
 
 /**
@@ -377,7 +396,7 @@ function eck__entity__form_submit($form, &$form_state) {
 function eck__entity__view($entity_type, $bundle, $id) {
   $build = array();
 
-  $entity_view = eck__entity__build($entity_type, $id);
+  $entity_view = eck__entity__build($entity_type, $bundle, $id);
 
   $build["{$entity_type}_{$bundle}_page"] = $entity_view;
 
