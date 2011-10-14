@@ -32,15 +32,9 @@ function eck_schema() {
   $schema = array();
 
   // Schema for the eck table.
-  $schema['eck'] = array(
-    'description' => "The base table for entities information",
+  $schema['eck_entity_type'] = array(
+    'description' => "The base table for entity type information",
     'fields' => array(
-      'id' => array(
-        'description' => "The primary identifier for a(n) entity",
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
       'name' => array(
         'description' => "The machine name of the entity",
         'type' => 'varchar',
@@ -54,29 +48,48 @@ function eck_schema() {
         'type' => 'varchar',
         'length' => 128,
         'not null' => TRUE
-      )
+      ),
+      'properties' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+        'serialize' => TRUE,
+        'initial' => serialize(array()),
+        'description' => 'A serialized list of properties attached to this entity.',
+      ),
+      'custom_properties' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+        'serialize' => TRUE,
+        'initial' => serialize(array()),
+        'description' => 'A serialized list of custom properties attached to this entity.',
+      )      
     ),
-    'primary key' => array('id'),
+    'primary key' => array('name'),
+    'indexes' => array()
   );
 
-  $schema['eck_types'] = array(
-    'description' => "The base table for entities types information",
+  $schema['eck_bundle'] = array(
+    'description' => "The base table for bundle information",
     'fields' => array(
+    /*Really the identifier should be some sort of combination between'
+     * the entity type the bundle belongs too, and the bundles name 
+     * but since I don't know db stuff to that extent, i will leave this
+     * useless id hanging around */
       'id' => array(
-        'description' => "The primary identifier for a(n) entity type",
+        'description' => "The primary identifier for a bundle",
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'entity' => array(
-        'description' => "The entity this type belongs to",
+      'entity_type' => array(
+        'description' => "The entity type this bundle belongs to",
         'type' => 'varchar',
         'type' => 'varchar',
         'length' => 128,
         'not null' => TRUE
       ),
-      'type' => array(
-        'description' => "The type (bundle) name that will be used",
+      'name' => array(
+        'description' => "The bundle's name",
         'type' => 'varchar',
         'type' => 'varchar',
         'length' => 128,
@@ -92,26 +105,29 @@ function eck_schema() {
     ),
     'primary key' => array('id'),
     'indexes' => array(
-      'entity_type'      => array('entity', 'type'),
+      'entity_type_bundle'      => array('entity_type', 'name'),
     ),
   );
 
   // At the installation stage, eck has not been created, so what is this for?
-  if (db_table_exists('eck')) {
+  // The schema is not only used during installation, it is used at many other
+  // stages and by many other processes withing drupal. Because we are creating
+  // tables dynamically with eck, we need to expose those schemas through this
+  // function, that is why we are doing this.
+  if (db_table_exists('eck_entity_type')) {
     // When something requests an entity's info, the hook_schema is called to
     // get the information about the entity's table, so we need to provide that
     // information in the hook.
 
-    // Get all the entities that have been create (all the rows in eck table).
-    $results = db_select('eck', 'e')->fields('e', array('name', 'label'))->execute();
-    foreach ($results as $result) {
-      // The function entity_basic_schema defines a standard schema for each
-      // entity created.
+    // Get all the entity types that have been create (all the rows in eck_entity_type table).
+    foreach (eck__entity_type__load() as $entity_type) {
+      // The function eck__entity_type__schema returns a schema for that entity type 
+      // given and entity_type object.
       $schema =
-      array_merge($schema, array("eck_{$result->name}" => eck__entity_type__schema($result->name)));
+      array_merge($schema, array("eck_{$entity_type->name}" => eck__entity_type__schema($entity_type)));
     }
   }
-
+  
   return $schema;
 }
 
@@ -238,3 +254,84 @@ function eck_update_7002() {
     ));
   }
 }
+
+/**
+ * Adds the properties column to the eck table.
+ */
+function eck_update_7003() {
+  db_add_field('eck', 'properties', array(
+    'type' => 'text',
+    'not null' => TRUE,
+    'serialize' => TRUE,
+    'initial' => serialize(array(
+      'uuid' => 1,
+      'uid' => 1,
+      'created' => 1,
+      'changed' => 1,
+      'state' => 1
+    )),
+    'description' => 'A serialized list of additional properties attached to this entity.',
+  ));
+}
+
+/**
+ * Adds the custom properties column to the eck table.
+ */
+function eck_update_7004() {
+  db_add_field('eck', 'custom_properties', array(
+    'type' => 'text',
+    'not null' => TRUE,
+    'serialize' => TRUE,
+    'initial' => serialize(array()),
+    'description' => 'A serialized list of custom properties attached to this entity.',
+  ));
+}
+
+function eck_update_7005() {
+  //change the name of the eck table to eck_entity_type
+  db_rename_table('eck', 'eck_entity_type');
+  //change the name of the eck_types table to eck_bundle
+  db_rename_table('eck_types', 'eck_bundle');
+  
+  //remove the id key from eck_entity_type
+  db_drop_field('eck_entity_type', 'id');
+  
+  //create the index with the right field names
+  db_add_primary_key('eck_entity_type', array('name'));
+
+  //drop the eck_bundle index entity_type
+  db_drop_index('eck_bundle', 'entity_type');
+
+  //change eck_bundle entity field to entity_type
+  db_change_field('eck_bundle', 'entity', 'entity_type',
+  array(
+        'description' => "The entity type this bundle belongs to",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      )
+  );
+
+  //change eck_bundle type field to name
+  db_change_field('eck_bundle', 'type', 'name',
+  array(
+        'description' => "The bundle's name",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      )
+  );
+
+  //create the index with the right field names
+  db_add_index('eck_bundle', 'entity_type_bundle_name', array('entity_type', 'name'));
+}
+
+
+
+
+
+
+
+

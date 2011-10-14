@@ -25,6 +25,11 @@ function eck_features_api() {
       'feature_source' => TRUE,
       'default_hook' => 'eck_info',
     ),
+    'eck_type' => array(
+      'name' => t('Entity types'),
+      'feature_source' => TRUE,
+      'default_hook' => 'eck_type_info',
+    )
   );
 }
 
@@ -39,7 +44,7 @@ function eck_entity_info() {
 
   // Get all the names of all the entity types from the eck table
   // for each of the created entity types add its info to the $info array.
-  foreach (eck__get_entity_types() as $entity_type) {
+  foreach (eck__entity_type__load() as $entity_type) {
     // eck__entity_info creates the entity_info for each entity type.
     $info = array_merge($info, eck__entity_type__info($entity_type));
   }
@@ -54,8 +59,8 @@ function eck_entity_property_info_alter(&$info) {
   module_load_include('inc', 'eck', 'eck.entity_type');
 
   // Create property infos for all defined entites.
-  foreach (eck__get_entity_types () as $entity_type) {
-    eck__entity_type__property_info($info[$entity_type], $entity_type);
+  foreach (eck__entity_type__load() as $entity_type_object) {
+    eck__entity_type__property_info($info[$entity_type_object->name], $entity_type_object);
   }
 }
 
@@ -98,20 +103,19 @@ function eck_permission() {
     'restrict access' => TRUE
   );
 
-  foreach (eck__get_entity_types() as $entity_type) {
-    $entity_type_label = eck__get_entity_type_label($entity_type);
+  foreach (eck__entity_type__load() as $entity_type) {
 
     foreach (array('administer' => 'Administer', 'add' => "Add") as $op => $op_label) {
-      $perms["{$op} {$entity_type} bundles"] = array(
-        'title' => "{$op_label} {$entity_type_label} Bundles"
+      $perms["{$op} {$entity_type->name} bundles"] = array(
+        'title' => "{$op_label} {$entity_type->label} Bundles"
       );
     }
 
-    foreach (eck__get_bundles($entity_type) as $bundle) {
-      $bundle_label = eck__get_bundle_label($entity_type, $bundle);
+    foreach (eck__bundle__load($entity_type->name) as $bundle) {
+      
       foreach (array('administer' => 'Administer', 'add' => "Add", 'view' => 'View', 'edit' => 'Edit', 'delete' => 'Delete') as $op => $op_label) {
-        $perms["{$op} {$entity_type} {$bundle} entities"] = array(
-          'title' => "{$op_label} {$entity_type_label} {$bundle_label} Entities"
+        $perms["{$op} {$entity_type->name} {$bundle->name} entities"] = array(
+          'title' => "{$op_label} {$entity_type->label} {$bundle->label} Entities"
         );
       }
     }
@@ -121,82 +125,23 @@ function eck_permission() {
 }
 
 /**
- * This function creates and entity
- * @param $entity_type
+ * This function creates an entity
+ * @param $entity_type_name
  *  A string witht the type of entity to be created (node, user, etc)
- * @param $bundle
+ * @param $bundle_name
  *  The bundle for the entity to be created (String)
  */
-function eck__entity_create($entity_type, $bundle) {
+function eck__entity_create($entity_type_name, $bundle_name) {
   global $user;
 
   $values = array(
-    'entity_name' => $entity_type,
-    'type' => $bundle,
+    'entity_type' => $entity_type_name,
+    'type' => $bundle_name,
     'uid' => $user->uid,
     'created' => REQUEST_TIME,
     'changed' => REQUEST_TIME,
   );
-  return entity_create($entity_type, $values);
-}
-
-/**
- * Get all the bundles for a given entity_type.
- */
-function eck__get_bundles($entity_types) {
-  $data = db_select('eck_types', 't')->fields('t', array('type'))->condition('entity', $entity_types)->execute();
-  $bundles = array();
-
-  foreach ($data as $bundle_obj) {
-    $bundles[] = $bundle_obj->type;
-  }
-
-  return $bundles;
-}
-
-/**
- * Get the label for a given entity type.
- */
-function eck__get_bundle_label($entity_type, $bundle) {
-  $data = db_select('eck_types', 'e')->fields('e', array('label'))
-  ->condition('entity', $entity_type, '=')
-  ->condition('type', $bundle, '=')->execute();
-
-  foreach ($data as $bundle_obj) {
-    return $bundle_obj->label;
-  }
-
-  return NULL;
-}
-
-/**
- * Get all defined entity types.
- */
-function eck__get_entity_types() {
-  $data = db_select('eck', 'e')->fields('e', array('name'))->execute();
-
-  $entity_types = array();
-  foreach ($data as $entity_type_obj) {
-    $entity_types[] = $entity_type_obj->name;
-  }
-
-  return $entity_types;
-}
-
-/**
- * Get the label for a given entity type.
- * @param $entity_type
- *  The entity_type that we want the label for (String)
- */
-function eck__get_entity_type_label($entity_type) {
-  $data = db_select('eck', 'e')->fields('e', array('label'))
-  ->condition('name', $entity_type, '=')->execute();
-
-  foreach ($data as $entity_type_obj) {
-    return $entity_type_obj->label;
-  }
-
-  return NULL;
+  return entity_create($entity_type_name, $values);
 }
 
 /**
@@ -208,7 +153,7 @@ function eck__get_entity_type_label($entity_type) {
  *  a boolean value that will determine whether the
  *  table is a select table or a regular table
  */
-function entities_table($entities, $select = FALSE) {
+function entity_table($entities, $select = FALSE) {
   module_load_include('inc', 'eck', 'eck.entity');
   //This is information set up for each bundle in the hook_entity_info
   //look there for more details
@@ -354,8 +299,19 @@ function eck_get_class_name($name, $suffix = '') {
   return implode('', $parts);
 }
 
+function eck_get_parent_classes($class_name){
+    $classes = array($class_name);
+    while (($class_name = get_parent_class($class_name)) !== false) {
+        $classes[] = $class_name;
+    }
+
+    return $classes;
+}
+
 /**
  * Retrieve the entity label
+ * 
+ * @todo Where am I using this??
  */
 function eck_get_entity_label($entity_type, $entity_id) {
   if (!is_numeric($entity_id)) {
@@ -377,6 +333,9 @@ function eck_get_entity_label($entity_type, $entity_id) {
  * Base controller class for ECK entites.
  */
 class EckController extends EntityAPIController {
+
+
+
   public function create(array $values = array()) {
     global $user;
 
@@ -396,6 +355,55 @@ class EckController extends EntityAPIController {
 
     return parent::create($values);
   }
+
+
+
+  public function query($ids, $conditions, $revision_id = FALSE) {
+
+    $result = parent::query($ids, $conditions, $revision_id);
+
+    if (!empty($this->entityInfo['entity class']) && $result->rowCount()) {
+      $row = $result->fetch(PDO::FETCH_ASSOC);
+
+      // Allow to create custom per-bundle specific class implementations.
+      $class_name = eck_get_class_name($row['type'], 'EntityType');
+      if (drupal_autoload_class($class_name)) {
+        $this->entityInfo['entity class'] = $class_name;
+      }
+
+      $result = parent::query($ids, $conditions, $revision_id);
+    }
+
+    return $result;
+  }
+
+
+
+}
+
+
+
+/**
+ * Base class for ECK entites.
+ */
+class EckEntity extends Entity {
+
+  public $id;
+  public $uid;
+  public $changed;
+  public $created;
+  public $type;
+
+
+
+  public function save() {
+    // Update changed timestamp
+    $this->changed = REQUEST_TIME;
+    return parent::save();
+  }
+
+
+
 }
 
 /**
@@ -442,5 +450,9 @@ function eck__entity__uri($entity) {
   $view_path = str_replace('%', $entity->identifier(), $crud_info['view']['path']);
   
   return array('path' => $view_path);
-
 }
+
+
+
+
+

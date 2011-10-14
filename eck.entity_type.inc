@@ -36,7 +36,7 @@ function eck__entity_type__menu() {
     'title' => 'Add Entity Type',
     'description' => 'Add new entity type',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('eck__entity_type__add'),
+    'page arguments' => array('eck__entity_type__form'),
     'access arguments' => array('add entity types'),
     'type' => MENU_LOCAL_ACTION,
     'weight' => 1,
@@ -47,11 +47,45 @@ function eck__entity_type__menu() {
   // Each entity type can have multiple bundles.
   // Now lets create the menus for the bundle administration of each
   // entity type.
-  foreach (eck__get_entity_types () as $entity_type) {
+  foreach (eck__entity_type__load() as $entity_type) {
     $menu = array_merge($menu, eck__bundle__menu($entity_type));
   }
 
   return $menu;
+}
+
+/**
+ * Load an entity type object
+ * @arg $entity_type
+ *  (String) the name of the entity_type object to load
+ * 
+ * if no entity_type is given, all the objects are loaded
+ */
+function eck__entity_type__load($entity_type_name = NULL) {
+  $query = db_select('eck_entity_type', 'e')->fields('e');
+  
+  if($entity_type_name){
+    $query->condition('name', $entity_type_name);
+  }
+  
+  $data = $query->execute();
+  
+  if ($entity_type_name) {
+    $entity_type = $data->fetchObject();
+    // Why the f*ck did I specify the 'serialize' flag in hook_schema() if it's useless anyway?!
+    $entity_type->properties = unserialize($entity_type->properties);
+    $entity_type->custom_properties = unserialize($entity_type->custom_properties);
+    return $entity_type;
+  }
+  else {
+    $entity_types = array();
+    foreach ($data as $entity_type) {
+      $entity_type->properties = unserialize($entity_type->properties);
+      $entity_type->custom_properties = unserialize($entity_type->custom_properties);
+      $entity_types[] = $entity_type;
+    }
+    return $entity_types;
+  }
 }
 
 /**
@@ -61,17 +95,12 @@ function eck__entity_type__overview() {
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
   $rows = array();
 
-  $results = db_select('eck', 'e')->fields('e')->execute();
-
-  foreach ($results as $record) {
-    $id = $record->id;
-    $name = $record->name;
-    $label = $record->label;
+  foreach (eck__entity_type__load() as $entity_type) {
 
     $rows[] = 
     array(
-      l(t("{$id} : {$label}"), "admin/structure/eck/{$name}"),
-      l(t("delete"), "admin/structure/eck/{$name}/delete")
+      l(t("{$entity_type->label}"), "admin/structure/eck/{$entity_type->name}"),
+      l(t("delete"), "admin/structure/eck/{$entity_type->name}/delete")
     );
   }
   $build['entity_table'] = array(
@@ -87,41 +116,153 @@ function eck__entity_type__overview() {
  * Callback for adding entity types functionality.
  * @param $form
  *  Form array provided by the Form API
- * @param $form_state
+ * @param $state
  *  array provided by the Form API
+ * @param $entity_type_name
+ *   (String) the name of an existing entity type
  */
-function eck__entity_type__add($form, &$form_state) {
+function eck__entity_type__form($form, &$state, $entity_type_name = NULL) {
+  
+  if (!isset($entity_type_name)) {
+    $entity_type = (object) array(
+      'is_new' => TRUE,
+      'label' => '',
+      'name' => '',
+      'type_label' => '',
+      'type' => '',
+      'properties' => array(),
+      'custom_properties' => array(),
+    );
+  }
+  else {
+    $entity_type = eck__entity_type__load($entity_type_name);
+  }
+  
+  $form['entity_type'] = array(
+    '#type' => 'value',
+    '#value' => $entity_type,
+  );
+  
   $form['entity_type_label'] = array(
     '#type' => 'textfield',
-    '#title' => 'Entity Type',
-    '#description' => 'A human readable name for the entity type',
-    '#required' => TRUE
+    '#title' => t('Entity Type'),
+    '#default_value' => $entity_type->label,
+    '#description' => t('A human readable name for the entity type'),
+    '#required' => TRUE,
+    '#disabled' => empty($entity_type->is_new),
   );
 
-  $form['entity_type'] = array(
+  $form['entity_type_name'] = array(
     '#type' => 'machine_name',
+    '#default_value' => $entity_type->name,
+    '#disabled' => empty($entity_type->is_new),
     '#machine_name' => array(
       'exists' => '_eck_fake_exists',
       'source' => array('entity_type_label'),
     ),
   );
 
-  $form['bundle_label'] = array(
-    '#type' => 'textfield',
-    '#title' => 'Bundle (optional)',
-    '#description' => 'A bundle with the same name as the entity type is created by default, this will override the default',
+  
+  $form['#validate'][] = 'eck__entity_type__form_validate';
+  
+
+  // Only allow entering the desired bundle name when creating a new entity.
+  if (!empty($entity_type->is_new)) {
+    
+    $form['bundle_label'] = array(
+      '#type' => 'textfield',
+      '#title' => 'Bundle (optional)',
+      '#description' => 'A bundle with the same name as the entity type is created by default, this will override the default',
+    );
+
+    $form['bundle_name'] = array(
+      '#type' => 'machine_name',
+      '#required' => FALSE,
+      '#machine_name' => array(
+        'exists' => '_eck_fake_exists',
+        'source' => array('bundle_label'),
+      ),
+    );
+    
+  }
+
+  // Enable/disable properties.
+  $form['properties'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Properties'),
+    '#description' => t('Note: unchecking will delete the property and all data stored within!'),
+    '#collapsible' => TRUE,
+    '#tree' => TRUE,
+  );
+  
+  module_load_include('inc', 'eck', 'eck.properties');
+  foreach (eck_default_properties() as $property => $label) {
+    $form['properties'][$property] = array(
+      '#type' => 'checkbox',
+      '#title' => $label,
+      '#default_value' => !empty($entity_type->properties[$property]) || !empty($entity_type->is_new) ? 1 : 0,
+    );
+  }
+
+  // Enable/disable custom properties.
+  $form['custom_properties'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Custom properties'),
+    '#description' => t('Note: unchecking will delete the property and all data stored within!'),
+    '#access' => !empty($entity_type->custom_properties),
+    '#collapsible' => TRUE,
+    '#tree' => TRUE,
   );
 
-  $form['bundle'] = array(
+  foreach ($entity_type->custom_properties as $property => $info) {
+    $form['custom_properties'][$property] = array(
+      '#type' => 'checkbox',
+      '#title' => eck__entity_type__custom_property_label($info),
+      '#default_value' => 1,
+    );
+  }
+
+  // Add custom property.
+  $form['add'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Add custom property'),
+    '#access' => empty($entity_type->is_new),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#tree' => TRUE,
+  );
+
+  $types[t('Generic')] = array(
+    'text' => t('Text'),
+    'decimal' => t('Decimal'),
+    'integer' => t('Integer'),
+    'date' => t('Timestamp'),
+  );
+  foreach (entity_get_info() as $name => $data) {
+    $types[t('Entities')][$name] = $data['label'];
+  }
+
+  $form['add']['type'] = array(
+    '#type' => 'select',
+    '#title' => t('Type'),
+    '#options' => array('' => t('- Please choose -')) + $types,
+  );
+
+  $form['add']['label'] = array(
+    '#type' => 'textfield',
+    '#title' => t("Name"),
+    '#description' => t("A human readable name for the property."),
+  );
+
+  $form['add']['name'] = array(
     '#type' => 'machine_name',
     '#required' => FALSE,
     '#machine_name' => array(
+      'label' => t("Database column name"),
       'exists' => '_eck_fake_exists',
-      'source' => array('bundle_label'),
+      'source' => array('add', 'label'),
     ),
   );
-
-  $form['#validate'][] = 'eck__entity_type__add_validate';
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -130,6 +271,7 @@ function eck__entity_type__add($form, &$form_state) {
   );
 
   return $form;
+  
 }
 
 /**
@@ -138,10 +280,10 @@ function eck__entity_type__add($form, &$form_state) {
  *
  * @param $form
  *  Form array provided by the Form API
- * @param $form_state
+ * @param $state
  *  array provided by the Form API
  */
-function eck__entity_type__add_validate($form, &$state) {
+function eck__entity_type__form_validate($form, &$state) {
   $info = entity_get_info();
   $entity_types = array_keys($info);
   $entity_type = $state['values']['entity_type'];
@@ -155,47 +297,62 @@ function eck__entity_type__add_validate($form, &$state) {
  *
  * @param $form
  *  Form array provided by the Form API
- * @param $form_state
+ * @param $state
  *  array provided by the Form API
  */
-function eck__entity_type__add_submit($form, &$form_state) {
+function eck__entity_type__form_submit($form, &$state) {
   // This are required so I don't have to do any checks.
-  $entity_type = $form_state['values']['entity_type'];
-  $entity_type_label = $form_state['values']['entity_type_label'];
-
+  $entity_type = $state['values']['entity_type'];
+  
+  $entity_type_name = $state['values']['entity_type_name'];
+  $entity_type->name = $entity_type_name;
+  
+  $entity_type_label = $state['values']['entity_type_label'];
+  $entity_type->label = $entity_type_label;
+  
+  $properties = array_filter($state['values']['properties']);
+  
+  if(array_key_exists('custom_properties', $state['values'])){
+    $custom_properties = array_filter($state['values']['custom_properties']);
+  }else{
+    $custom_properties =  array();
+  }
+  
   // If the table does not exist, then this is a valid entity name, and we can save it.
-  if (!db_table_exists("eck_{$entity_type}")) {
+  if (!db_table_exists("eck_{$entity_type_name}")) {
     // Let's add the type to the table.
-    if (!empty($form_state['values']['bundle'])) {
-      $bundle = $form_state['values']['bundle'];
-      if (!empty($form_state['values']['bundle_label'])) {
-        $bundle_label = $form_state['values']['bundle_label'];
+    if (!empty($state['values']['bundle_name'])) {
+      $bundle_name = $state['values']['bundle_name'];
+      if (!empty($state['values']['bundle_label'])) {
+        $bundle_label = $state['values']['bundle_label'];
       }
       else {
-        $bundle_label = ucfirst($bundle);
+        $bundle_label = ucfirst($bundle_name);
       }
     }
     else {
-      $bundle = $entity_type;
+      $bundle_name = $entity_type_name;
       $bundle_label = $entity_type_label;
     }
 
-    db_insert('eck_types')
+    db_insert('eck_bundle')
         ->fields(array(
-          'entity' => $entity_type,
-          'type' => $bundle,
+          'entity_type' => $entity_type_name,
+          'name' => $bundle_name,
           'label' => $bundle_label,
         ))
         ->execute();
 
-    db_insert('eck')
+    db_insert('eck_entity_type')
         ->fields(array(
-          'name' => $entity_type,
+          'name' => $entity_type_name,
           'label' => $entity_type_label,
+          'properties' => serialize($properties),
+          'custom_properties' => serialize($custom_properties),
         ))
         ->execute();
-
-    db_create_table("eck_{$entity_type}", eck__entity_type__schema($entity_type));
+        
+    db_create_table("eck_{$entity_type_name}", eck__entity_type__schema($entity_type));
 
     // Clear info caches in order to pick up newly created entities.
     drupal_get_schema(NULL, TRUE);
@@ -205,10 +362,65 @@ function eck__entity_type__add_submit($form, &$form_state) {
 
     drupal_set_message(t('Entity type %entity_type has been created.', array('%entity_type' => $entity_type_label)));
 
-    drupal_goto("admin/structure/eck/{$entity_type}");
+    drupal_goto("admin/structure/eck/{$entity_type->name}");
   }
   else {
-    drupal_set_message(t('Database table %name already exists', array('%name' => $entity_type)), 'error');
+    // @todo Move into validation handler.
+    //drupal_set_message(t('Database table %name already exists', array('%name' => $name)), 'error');
+
+    // Process properties.
+    $removed_properties = array_diff_key($entity_type->properties, $properties);
+    foreach ($removed_properties as $property => $value) {
+      db_drop_field("eck_{$entity_type->name}", $property);
+    }
+
+    $new_properties = array_diff_key($properties, $entity_type->properties);
+    foreach ($new_properties as $property => $value) {
+      $schema = array();
+      // Add property to database schema.
+      eck_add_property_schema($schema, $entity_type, $property);
+      foreach ($schema['fields'] as $field => $spec) {
+        db_add_field("eck_{$entity_type->name}", $field, $spec);
+      }
+      foreach ($schema['indexes'] as $index => $fields) {
+        db_add_index("eck_{$entity_type->name}", $index, $fields);
+      }
+    }
+
+    db_merge('eck_entity_type')
+      ->key(array('name' => $entity_type->name))
+      ->fields(array('properties' => serialize($properties)))
+      ->execute();
+
+    // Process custom properties.
+    $removed_properties = array_diff_key($entity_type->custom_properties, $custom_properties);
+    
+    foreach ($removed_properties as $property => $value) {
+      db_drop_field("eck_{$entity_type_name}", $property);
+      unset($entity_type->custom_properties[$property]);
+    }
+   
+    if (!empty($state['values']['add']['type']) && !empty($state['values']['add']['name'])) {
+      // Add database column.
+      $spec = eck_get_custom_property_schema($state['values']['add']);
+      db_add_field("eck_{$entity_type_name}", $state['values']['add']['name'], $spec);
+
+      $entity_type->custom_properties += array(
+        $state['values']['add']['name'] => array(
+          'type' => $state['values']['add']['type'],
+          'label' => $state['values']['add']['label'],
+        )
+      );
+    }
+
+    db_merge('eck_entity_type')
+      ->key(array('name' => $entity_type_name))
+      ->fields(array('custom_properties' => serialize($entity_type->custom_properties)))
+      ->execute();
+
+    // Clear info caches in order to pick up newly created entities.
+    drupal_get_schema(NULL, TRUE);
+    entity_info_cache_clear();
   }
 }
 /**
@@ -220,19 +432,19 @@ function eck__entity_type__add_submit($form, &$form_state) {
 function eck__entity_type__delete($entity_type){
   module_load_include('inc', 'eck', 'eck.bundle');
   //delete all the bundles from this entity type
-  $bundles = eck__get_bundles($entity_type);
+  $bundles = eck__bundle__load($entity_type->name);
   foreach($bundles as $bundle){
     eck__bundle__delete($entity_type, $bundle);
   }
   
   //delete the entity type record from the eck table
-  db_delete('eck')
-  ->condition('name', $entity_type)
+  db_delete('eck_entity_type')
+  ->condition('name', $entity_type->name)
   ->execute();
   
   // then delete the entity type table
-  db_drop_table('eck_'.$entity_type);
-  drupal_set_message("Entity type '{$entity_type}' has been deleted");
+  db_drop_table('eck_'.$entity_type->name);
+  drupal_set_message("Entity type '{$entity_type->name}' has been deleted");
   //return "<h1>Deletion Completed</h1> <h3>Entity type '{$entity_type}' has been deleted";
 }
 
@@ -249,7 +461,7 @@ function eck__entity_type__delete_form($form, &$state, $entity_type){
     '#value' => "admin/structure/eck",
   );
   
-  $message = t("Are you sure that you want to delete the entity type '{$entity_type}'");
+  $message = t("Are you sure that you want to delete the entity type '{$entity_type->name}'");
 
   $caption = t("All of the data (entities and bundles) from this entity type 
   will be deleted. This action cannot be undone.");
@@ -274,23 +486,16 @@ function eck__entity_type__delete_form_submit($form, &$state){
  * Create the default schema for an entity type.
  *
  * @param $entity_type
- *  (String) entity type
+ *  (Object) entity type as returned by eck__entity_type__load
  *
  * Passthrough for hook_schema().
  */
 function eck__entity_type__schema($entity_type) {
   $schema = array(
-    'description' => "The base table for a(n) {$entity_type}.",
+    'description' => "The base table for a(n) {$entity_type->name}.",
     'fields' => array(
-      'uuid' => array(
-        'type' => 'char',
-        'length' => 36,
-        'not null' => TRUE,
-        'default' => '',
-        'description' => 'The Universally Unique Identifier.'
-      ),
       'id' => array(
-        'description' => "The primary identifier for a(n) {$entity_type}.",
+        'description' => "The primary identifier for a(n) {$entity_type->name}.",
         'type' => 'serial',
         'not null' => TRUE,
       ),
@@ -300,49 +505,25 @@ function eck__entity_type__schema($entity_type) {
         'default' => '',
         'length' => 255,
         'not null' => TRUE,
-      ),
-      'uid' => array(
-        'description' => "The {users}.uid that owns this {$entity_type}; initially, this is the user that created it.",
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'created' => array(
-        'description' => "The Unix timestamp when the {$entity_type} was created.",
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'changed' => array(
-        'description' => "The Unix timestamp when the {$entity_type} was most recently saved.",
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'state' => array(
-         'description' => 'Entity state',
-         'type' => 'int',
-         'unsigned' => TRUE,
-         'not null' => TRUE,
-         'default' => 0
       )
-    ),
-    'indexes' => array(
-      "{$entity_type}_changed" => array('changed'),
-      "{$entity_type}_created" => array('created'),
-      'uid' => array('uid'),
-    ),
-    'foreign keys' =>
-    array(
-      "{$entity_type}_author" =>
-      array(
-        'table' => 'users',
-        'columns' => array('uid' => 'uid'),
-      ),
     ),
     'primary key' => array('id'),
   );
+  
+  // Add properties to schema definition.
+  module_load_include('inc', 'eck', 'eck.properties');
+  foreach (eck_default_properties() as $property => $label) {
+    if (!empty($entity_type->properties[$property])) {
+      eck_add_property_schema($schema, $entity_type, $property);
+    }
+  }
 
+  // Add custom properties.
+  foreach ($entity_type->custom_properties as $name => $info) {
+    $schema['fields'][$name] = eck_get_custom_property_schema($info);
+  }
+
+  // Allow other modules to alter the schema.
   drupal_alter('eck_schema', $schema, $entity_type);
 
   return $schema;
@@ -352,22 +533,23 @@ function eck__entity_type__schema($entity_type) {
  * Generate the entity info for a specific entity
  *
  * @param $entity_type
- *  (String) the machine name of the entiy type
+ *  (Object) as returned by eck__entity_type__load
  */
 function eck__entity_type__info($entity_type) {
+  module_load_include('inc', 'eck', 'eck.bundle');
   $info = array();
-  $entity_type_label = eck__get_entity_type_label($entity_type);
+  $entity_type_label = $entity_type->label;
 
-  if (!drupal_autoload_class($entity_class = eck_get_class_name($entity_type, 'Entity'))) {
-    $entity_class = 'Entity';
+  if (!drupal_autoload_class($entity_class = eck_get_class_name($entity_type->name, 'Entity'))) {
+    $entity_class = 'EckEntity';
   }
-  if (!drupal_autoload_class($controller_class = eck_get_class_name($entity_type, 'Controller'))) {
+  if (!drupal_autoload_class($controller_class = eck_get_class_name($entity_type->name, 'Controller'))) {
     $controller_class = 'EckController';
   }
 
-  $info[$entity_type] = array(
+  $info[$entity_type->name] = array(
     'label' => t($entity_type_label),
-    'base table' => "eck_{$entity_type}",
+    'base table' => "eck_{$entity_type->name}",
     'entity class' => $entity_class,
     'controller class' => $controller_class,
     'module' => 'eck',
@@ -393,10 +575,10 @@ function eck__entity_type__info($entity_type) {
     )
   );
 
-  foreach (eck__get_bundles($entity_type) as $bundle) {
-    $bundle_label = eck__get_bundle_label($entity_type, $bundle);
-    $path = "admin/structure/eck/{$entity_type}/{$bundle}";
-    $info[$entity_type]['bundles'][$bundle] = array(
+  foreach (eck__bundle__load($entity_type->name) as $bundle) {
+    $bundle_label = $bundle->label;
+    $path = "admin/structure/eck/{$entity_type->name}/{$bundle->name}";
+    $info[$entity_type->name]['bundles'][$bundle->name] = array(
       'label' => $bundle_label,
       'admin' => array(
         'path' => $path,
@@ -422,7 +604,7 @@ function eck__entity_type__info($entity_type) {
         ),
         'view' => 
         array(
-          'path' => "{$entity_type}/{$bundle}/%",
+          'path' => "{$entity_type->name}/{$bundle->name}/%",
           'args' => array('entity_type' => 0, 'bundle' => 1, 'id' => 2)
         )
       )
@@ -434,20 +616,41 @@ function eck__entity_type__info($entity_type) {
 }
 
 /**
- * Entity specific implementation of property info alter.
+ * Entity Type specific implementation of property info alter.
  */
-function eck__entity_type__property_info(&$info, $entity_type) {
-  $properties = &$info['properties'];
+function eck__entity_type__property_info(&$info, $entity_type_object) {
+   $properties = &$info['properties'];
+  
+  //@TODO Shouldn't we be checking on the properies array of our entity_type_object.. maybe entity api
+  //is correctly doing this automatically (CHECK)
+  if (isset($properties['uid'])) {
+    $properties['uid']['label'] = t('User');
+    $properties['uid']['type'] = 'user';
+    $properties['uid']['description'] = t('The author of this entity.');
+  }
+  if (isset($properties['created'])) {
+    $properties['created']['label'] = t('Created');
+    $properties['created']['type'] = 'date';
+    $properties['created']['description'] = t('The Unix timestamp when the entity has been created.');
+  }
+  if (isset($properties['changed'])) {
+    $properties['changed']['label'] = t('Changed');
+    $properties['changed']['type'] = 'date';
+    $properties['changed']['description'] = t('The Unix timestamp when the entity was most recently saved.');
+  }
 
-  $properties['uid']['label'] = t('User');
-  $properties['uid']['type'] = 'user';
-  #$properties['uid']['description'] = t('The user this storage belongs to.');
+  // Add custom properties.
+  foreach ($entity_type_object->custom_properties as $name => $property) {
+    $properties[$name]['label'] = t($property['label']);
+    $properties[$name]['type'] = $property['type'];
+    //$properties[$name]['description'] = '';
+  }
+}
 
-  $properties['created']['label'] = t('Created');
-  $properties['created']['type'] = 'date';
-  #$properties['created']['description'] = t('The Unix timestamp when the entity has been created.');
-
-  $properties['changed']['label'] = t('Changed');
-  $properties['changed']['type'] = 'date';
-  #$properties['changed']['description'] = t('The Unix timestamp when the entity was most recently saved.');
+function eck__entity_type__custom_property_label($property) {
+  $type = $property['type'];
+  if (!in_array($type, array('text', 'decimal', 'integer', 'date'))) {
+    $type = l($type, "admin/structure/eck/{$type}");
+  }
+  return $property['label'] . ' (' . t('type: !type', array('!type' => $type)) . ')';
 }
