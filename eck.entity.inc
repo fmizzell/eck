@@ -60,7 +60,7 @@ function eck__entity__menu($entity_type, $bundle) {
       }
     }
     
-    $args = array_merge(array($entity_type, $bundle, $args));
+    $args = array_merge(array($entity_type, $bundle), $args);
     
     $menu[$info['path']] = array(
       'title' => "{$action_label} {$bundle->label} Entity",
@@ -71,6 +71,8 @@ function eck__entity__menu($entity_type, $bundle) {
       'file' => 'eck.entity.inc'
     );
   }
+  
+  //dpm($menu, "Menu");
 
   return $menu;
 }
@@ -137,7 +139,9 @@ function eck__entity__overview($entity_type, $bundle) {
  *  (String) Bundle
  */
 function eck__entity__add($entity_type, $bundle) {
-  $entity = eck__entity_create($entity_type, $bundle);
+  
+  $entity = eck__entity_create($entity_type->name, $bundle->name);
+  
   return drupal_get_form("eck__entity__form", $entity);
 }
 
@@ -151,7 +155,7 @@ function eck__entity__add($entity_type, $bundle) {
  */
 function eck__entity__build($entity_type, $id) {
   if (is_numeric($id)) {
-    $entities = entity_load($entity_type, array($id));
+    $entities = entity_load($entity_type->name, array($id));
   }
 
   return $entities[$id]->view();
@@ -169,7 +173,7 @@ function eck__entity__build($entity_type, $id) {
  */
 function eck__entity__edit($entity_type, $bundle, $id) {
   if (is_numeric($id)) {
-    $entities = entity_load($entity_type, array($id));
+    $entities = entity_load($entity_type->name, array($id));
     $entity = $entities[$id];
   }
 
@@ -201,7 +205,7 @@ function eck__entity__delete($entity_type, $bundle, $id) {
 }
 
 function eck__entity__delete_form($form, &$form_state, $entity_type, $bundle, $id){
-  $entities = entity_load($entity_type, array($id));
+  $entities = entity_load($entity_type->name, array($id));
 
   $form['entity'] =
       array(
@@ -224,7 +228,7 @@ function eck__entity__delete_form($form, &$form_state, $entity_type, $bundle, $i
   $form['submit_redirect'] =
   array(
     '#type' => 'value',
-    '#value' => "admin/structure/eck/{$entity_type}/{$bundle}",
+    '#value' => "admin/structure/eck/{$entity_type->name}/{$bundle->name}",
   );
 
   $message = t("Are you sure that you want to delete %id",
@@ -232,7 +236,7 @@ function eck__entity__delete_form($form, &$form_state, $entity_type, $bundle, $i
 
   $caption = t("This action cannot be undone.");
 
-  return confirm_form($form, $message, "admin/structure/eck/{$entity_type}", $caption, t('Delete'));
+  return confirm_form($form, $message, "admin/structure/eck/{$entity_type->name}", $caption, t('Delete'));
   
 }
 
@@ -323,7 +327,7 @@ function eck__entity__view($entity_type, $bundle, $id) {
 
   $entity_view = eck__entity__build($entity_type, $id);
 
-  $build["{$entity_type}_{$bundle}_page"] = $entity_view;
+  $build["{$entity_type->name}_{$bundle->name}_page"] = $entity_view;
 
   return $build;
 }

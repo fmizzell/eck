@@ -126,22 +126,22 @@ function eck_permission() {
 
 /**
  * This function creates an entity
- * @param $entity_type
+ * @param $entity_type_name
  *  A string witht the type of entity to be created (node, user, etc)
- * @param $bundle
+ * @param $bundle_name
  *  The bundle for the entity to be created (String)
  */
-function eck__entity_create($entity_type, $bundle) {
+function eck__entity_create($entity_type_name, $bundle_name) {
   global $user;
 
   $values = array(
-    'entity_name' => $entity_type,
-    'type' => $bundle,
+    'entity_type' => $entity_type_name,
+    'type' => $bundle_name,
     'uid' => $user->uid,
     'created' => REQUEST_TIME,
     'changed' => REQUEST_TIME,
   );
-  return entity_create($entity_type, $values);
+  return entity_create($entity_type_name, $values);
 }
 
 /**
@@ -299,6 +299,15 @@ function eck_get_class_name($name, $suffix = '') {
   return implode('', $parts);
 }
 
+function eck_get_parent_classes($class_name){
+    $classes = array($class_name);
+    while (($class_name = get_parent_class($class_name)) !== false) {
+        $classes[] = $class_name;
+    }
+
+    return $classes;
+}
+
 /**
  * Retrieve the entity label
  * 
@@ -324,6 +333,9 @@ function eck_get_entity_label($entity_type, $entity_id) {
  * Base controller class for ECK entites.
  */
 class EckController extends EntityAPIController {
+
+
+
   public function create(array $values = array()) {
     global $user;
 
@@ -343,6 +355,55 @@ class EckController extends EntityAPIController {
 
     return parent::create($values);
   }
+
+
+
+  public function query($ids, $conditions, $revision_id = FALSE) {
+
+    $result = parent::query($ids, $conditions, $revision_id);
+
+    if (!empty($this->entityInfo['entity class']) && $result->rowCount()) {
+      $row = $result->fetch(PDO::FETCH_ASSOC);
+
+      // Allow to create custom per-bundle specific class implementations.
+      $class_name = eck_get_class_name($row['type'], 'EntityType');
+      if (drupal_autoload_class($class_name)) {
+        $this->entityInfo['entity class'] = $class_name;
+      }
+
+      $result = parent::query($ids, $conditions, $revision_id);
+    }
+
+    return $result;
+  }
+
+
+
+}
+
+
+
+/**
+ * Base class for ECK entites.
+ */
+class EckEntity extends Entity {
+
+  public $id;
+  public $uid;
+  public $changed;
+  public $created;
+  public $type;
+
+
+
+  public function save() {
+    // Update changed timestamp
+    $this->changed = REQUEST_TIME;
+    return parent::save();
+  }
+
+
+
 }
 
 /**

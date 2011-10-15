@@ -65,6 +65,7 @@ function eck_schema() {
       )      
     ),
     'primary key' => array('name'),
+    'indexes' => array()
   );
 
   $schema['eck_bundle'] = array(
@@ -126,7 +127,7 @@ function eck_schema() {
       array_merge($schema, array("eck_{$entity_type->name}" => eck__entity_type__schema($entity_type)));
     }
   }
-
+  
   return $schema;
 }
 
@@ -285,3 +286,52 @@ function eck_update_7004() {
     'description' => 'A serialized list of custom properties attached to this entity.',
   ));
 }
+
+function eck_update_7005() {
+  //change the name of the eck table to eck_entity_type
+  db_rename_table('eck', 'eck_entity_type');
+  //change the name of the eck_types table to eck_bundle
+  db_rename_table('eck_types', 'eck_bundle');
+  
+  //remove the id key from eck_entity_type
+  db_drop_field('eck_entity_type', 'id');
+  
+  //create the index with the right field names
+  db_add_primary_key('eck_entity_type', array('name'));
+
+  //drop the eck_bundle index entity_type
+  db_drop_index('eck_bundle', 'entity_type');
+
+  //change eck_bundle entity field to entity_type
+  db_change_field('eck_bundle', 'entity', 'entity_type',
+  array(
+        'description' => "The entity type this bundle belongs to",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      )
+  );
+
+  //change eck_bundle type field to name
+  db_change_field('eck_bundle', 'type', 'name',
+  array(
+        'description' => "The bundle's name",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      )
+  );
+
+  //create the index with the right field names
+  db_add_index('eck_bundle', 'entity_type_bundle_name', array('entity_type', 'name'));
+}
+
+
+
+
+
+
+
+
