@@ -89,6 +89,10 @@ function eck_menu() {
  * and for each action of the CRUD
  */
 function eck_permission() {
+  
+  module_load_include('inc', 'eck', 'eck.entity_type');
+  module_load_include('inc', 'eck', 'eck.bundle');
+  
   $perms = array();
 
   $perms['administer entity types'] =
