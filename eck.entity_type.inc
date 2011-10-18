@@ -136,6 +136,7 @@ function eck__entity_type__form($form, &$state, $entity_type_name = NULL) {
   }
   else {
     $entity_type = eck__entity_type__load($entity_type_name);
+    $entity_type->is_new = FALSE;
   }
   
   $form['entity_type'] = array(
@@ -316,6 +317,18 @@ function eck__entity_type__form_submit($form, &$state) {
     $custom_properties = array_filter($state['values']['custom_properties']);
   }else{
     $custom_properties =  array();
+  }
+  
+  $entity_type->new_properties = $properties;
+  $entity_type->new_custom_properties = $custom_properties;
+  
+  if($entity_type->is_new){
+    //if the entity_type is new, we need to set up the properties
+    //in the entity object, this are used to create then entity_type
+    //table which looks at the properties in the entity_type 
+    //to know what the table should look like
+    
+    $entity_type->properties = $properties;
   }
   
   // If the table does not exist, then this is a valid entity name, and we can save it.
