@@ -2,18 +2,19 @@
 
 /**
  * @{
- * ECK entities
+ * ECK Entity Types
  */
 
 /**
  * Implementation of hook_features_export_options().
  */
-function eck_features_export_options() {
-  $entities = array();
-  foreach (eck_get_entities() as $entity) {
-    $entities[$entity->name] = $entity->label;
+function eck_entity_type_features_export_options() {
+  module_load_include('inc', 'eck', 'eck.entity_type');
+  $entity_types = array();
+  foreach (eck__entity_type__load() as $entity_type) {
+    $entity_types[$entity_type->name] = $entity_type->label;
   }
-  return $entities;
+  return $entity_types;
 }
 
 
@@ -21,13 +22,13 @@ function eck_features_export_options() {
 /**
  * Implementation of hook_features_export.
  */
-function eck_features_export($data, &$export, $module_name = '') {
+function eck_entity_type_features_export($data, &$export, $module_name = '') {
   $pipe = array();
 
-  foreach ($data as $entity) {
+  foreach ($data as $entity_type) {
     // Export the entity
-    $export['features']['eck'][$entity] = $entity;
-    $export['dependencies']['eck'] = 'eck';
+    $export['features']['eck_entity_type'][$entity_type] = $entity_type;
+    $export['dependencies']['eck_entity_type'] = 'eck';
     $export['dependencies']['features'] = 'features';
   }
 
@@ -39,7 +40,8 @@ function eck_features_export($data, &$export, $module_name = '') {
 /**
  * Implementation of hook_features_export_render().
  */
-function eck_features_export_render($module, $data, $export = NULL) {
+function eck_entity_type_features_export_render($module, $data, $export = NULL) {
+  module_load_include('inc', 'eck', 'eck.entity_type');
   $elements = array(
     'name' => FALSE,
     'label' => TRUE,
@@ -50,22 +52,22 @@ function eck_features_export_render($module, $data, $export = NULL) {
   $output = array();
   $output[] = '  $items = array(';
 
-  foreach ($data as $entity) {
+  foreach ($data as $entity_type_name) {
     // Get the entity definition.
-    $entity = eck__entity__load($entity);
+    $entity_type = eck__entity_type__load($entity_type_name);
 
-    $output[] = "    '{$entity->name}' => array(";
+    $output[] = "    '{$entity_type->name}' => array(";
     foreach ($elements as $key => $t) {
       if ($t) {
-        $text = str_replace("'", "\'", $entity->$key);
+        $text = str_replace("'", "\'", $entity_type->$key);
         $text = !empty($text) ? "t('{$text}')" : "''";
         $output[] = "      '{$key}' => {$text},";
       }
-      else if (is_array($entity->$key)) {
-        $output[] = "      '{$key}' => '" . serialize($entity->$key) . "',";
+      else if (is_array($entity_type->$key)) {
+        $output[] = "      '{$key}' => '" . serialize($entity_type->$key) . "',";
       }
       else {
-        $output[] = "      '{$key}' => '{$entity->$key}',";
+        $output[] = "      '{$key}' => '{$entity_type->$key}',";
       }
     }
     $output[] = "    ),";
@@ -74,7 +76,7 @@ function eck_features_export_render($module, $data, $export = NULL) {
   $output[] = '  );';
   $output[] = '  return $items;';
 
-  return array('eck_info' => implode("\n", $output));
+  return array('eck_entity_type_info' => implode("\n", $output));
 }
 
 
@@ -82,7 +84,7 @@ function eck_features_export_render($module, $data, $export = NULL) {
 /**
  * Implementation of hook_features_revert().
  */
-function eck_features_revert($module) {
+function eck_entity_type_features_revert($module) {
   eck_features_rebuild($module);
 }
 
@@ -93,24 +95,25 @@ function eck_features_revert($module) {
  *
  * Rebuilds eck entities from code defaults.
  */
-function eck_features_rebuild($module) {
-  if ($default_entities = features_get_default('eck', $module)) {
-    foreach ($default_entities as $entity_name => $entity_info) {
-      $entity = array(
-        'name' => $entity_name,
-        'label' => $entity_info['label'],
-        'properties' => $entity_info['properties'],
-        'custom_properties' => $entity_info['custom_properties'],
+function eck_entity_type_features_rebuild($module) {
+ module_load_include('inc', 'eck', 'eck.entity_type');
+  if ($default_entities = features_get_default('eck_entity_type', $module)) {
+    foreach ($default_entities as $entity_type_name => $entity_type_info) {
+      $entity_type = array(
+        'name' => $entity_type_name,
+        'label' => $entity_type_info['label'],
+        'properties' => $entity_type_info['properties'],
+        'custom_properties' => $entity_type_info['custom_properties'],
       );
-      db_merge('eck')
-        ->key(array('name' => $entity_name))
-        ->fields($entity)
+      db_merge('eck_entity_type')
+        ->key(array('name' => $entity_type_name))
+        ->fields($entity_type)
         ->execute();
 
-      if (!db_table_exists("eck_{$entity_name}")) {
-        $entity['properties'] = unserialize($entity['properties']);
-        $entity['custom_properties'] = unserialize($entity['custom_properties']);
-        db_create_table("eck_{$entity_name}", eck__entity__schema((object) $entity));
+      if (!db_table_exists("eck_{$entity_type_name}")) {
+        $entity_type['properties'] = unserialize($entity_type['properties']);
+        $entity_type['custom_properties'] = unserialize($entity_type['custom_properties']);
+        db_create_table("eck_{$entity_type_name}", eck__entity_type__schema((object) $entity_type));
       }
     }
 
@@ -121,31 +124,32 @@ function eck_features_rebuild($module) {
 }
 
 /**
- * @} End of ECK entities.
+ * @} End of ECK Entity Types.
  */
 
 /**
  * @{
- * ECK entity types
+ * ECK Bundles
  */
 
 /**
  * Implementation of hook_features_export_options().
  */
-function eck_type_features_export_options() {
-  $types = array();
-  foreach (eck_get_types() as $type) {
-    $types[$type->type] = $type->label;
+/*function eck_bundle_features_export_options() {
+  module_load_include('inc', 'eck', 'eck.bundle');
+  $bundles = array();
+  foreach (eck__bundle__load() as $bundle) {
+    $bundles[$bundle->name] = $bundle->label;
   }
-  return $types;
-}
+  return $bundles;
+}*/
 
 
 
 /**
  * Implementation of hook_features_export.
  */
-function eck_type_features_export($data, &$export, $module_name = '') {
+/*function eck_bundle_features_export($data, &$export, $module_name = '') {
   $pipe = array();
   $map = features_get_default_map('eck');
 
@@ -181,14 +185,14 @@ function eck_type_features_export($data, &$export, $module_name = '') {
   }
 
   return $pipe;
-}
+}*/
 
 
 
 /**
  * Implementation of hook_features_export_render().
  */
-function eck_type_features_export_render($module, $data, $export = NULL) {
+/*function eck_bundle_features_export_render($module, $data, $export = NULL) {
   $elements = array(
     'entity' => FALSE,
     'type' => FALSE,
@@ -224,16 +228,16 @@ function eck_type_features_export_render($module, $data, $export = NULL) {
   $output[] = '  return $items;';
 
   return array('eck_type_info' => implode("\n", $output));
-}
+}*/
 
 
 
 /**
  * Implementation of hook_features_revert().
  */
-function eck_type_features_revert($module) {
+/*function eck_bundle_features_revert($module) {
   eck_type_features_rebuild($module);
-}
+}*/
 
 
 
@@ -242,7 +246,7 @@ function eck_type_features_revert($module) {
  *
  * Rebuilds eck entities from code defaults.
  */
-function eck_type_features_rebuild($module) {
+/*function eck_bundle_features_rebuild($module) {
   if ($default_types = features_get_default('eck_type', $module)) {
     foreach ($default_types as $type_name => $type_info) {
       $type = array(
@@ -260,8 +264,8 @@ function eck_type_features_rebuild($module) {
     entity_info_cache_clear();
     menu_rebuild();
   }
-}
+}*/
 
 /**
- * @} End of ECK entity types
+ * @} End of ECK Bundles
  */

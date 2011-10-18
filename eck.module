@@ -20,16 +20,16 @@
  */
 function eck_features_api() {
   return array(
-    'eck' => array(
-      'name' => t('Entity types'),
+    'eck_entity_type' => array(
+      'name' => t('Entity Types'),
       'feature_source' => TRUE,
-      'default_hook' => 'eck_info',
+      'default_hook' => 'eck_entity_type_info',
     ),
-    'eck_type' => array(
-      'name' => t('Entity types'),
+    /*'eck_bundle' => array(
+      'name' => t('Bundles'),
       'feature_source' => TRUE,
-      'default_hook' => 'eck_type_info',
-    )
+      'default_hook' => 'eck_bundle_info',
+    )*/
   );
 }
 

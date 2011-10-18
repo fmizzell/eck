@@ -82,8 +82,14 @@ function eck__bundle__menu($entity_type) {
  * @param $entity_type_name
  *   (String) the name of an entity type
  */
-function eck__bundle__load($entity_type_name) {
-  $data = db_select('eck_bundle', 't')->fields('t')->condition('entity_type', $entity_type_name)->execute();
+function eck__bundle__load($entity_type_name = NULL) {
+  $query = db_select('eck_bundle', 't')->fields('t');
+  
+  if($entity_type_name){
+    $query->condition('entity_type', $entity_type_name);
+  }
+  
+  $data = $query->execute();
   $bundles = array();
 
   foreach ($data as $bundle) {
