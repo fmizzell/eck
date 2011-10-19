@@ -148,6 +148,19 @@ function eck__entity_create($entity_type_name, $bundle_name) {
   return entity_create($entity_type_name, $values);
 }
 
+
+function eck_forms($form_id, $args){
+  $forms = array();
+  if (strpos($form_id, 'entity_table_select_') === 0) {
+    $forms[$form_id] = array(
+      'callback' => 'entity_table_select'
+    );
+  }
+
+  return $forms;
+}
+
+
 /**
  * Creates a table showing a group of entities.
  *
@@ -165,8 +178,10 @@ function entity_table($entities, $select = FALSE) {
   
   $rows = array();
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
+  
 
   foreach ($entities as $entity) {
+    $info = array();
     $entity_type = $entity->entityType();
     $bundle = $entity->type;
     $id = $entity->id;
@@ -180,18 +195,31 @@ function entity_table($entities, $select = FALSE) {
     $uri = entity_uri($entity_type, $entity);
     $row = array(l(entity_label($entity_type, $entity), $uri['path'], $uri['options']));
     $row[] = array('data' => l(t('edit'), $edit_path)."<br>".l(t('delete'), $delete_path)); //"admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
-
-    drupal_alter("entity_tr", $row, $entity_type, $entity);
-    drupal_alter("entity_{$entity_type}_tr", $row, $entity);
+    
+    $info['entity'] = $entity;
+    drupal_alter("entity_{$entity_type}_{$bundle}_tr", $row, $info);
+    $info['bundle'] = $bundle;
+    drupal_alter("entity_{$entity_type}_tr", $row, $info);
+    $info['entity_type'] = $entity_type;
+    drupal_alter("entity_tr", $row, $info);
+    
+    
     $rows[$id] = $row;
   }
+  
+  unset($info['entity']);
+  drupal_alter("entity_th", $header, $info);
+  unset($info['entity_type']);
+  drupal_alter("entity_{$entity_type}_th", $header, $info);
+  unset($info['bundle']);
+  drupal_alter("entity_{$entity_type}_{$bundle}_th", $header, $info);
 
   if ($select) {
     if (!isset($entity_type)) {
       return array('#theme' => 'table', '#header' => $header, '#rows' => $rows);
     }
     else {
-      return drupal_get_form("entity_table_select", $entity_type, $bundle, $header, $rows);
+      return drupal_get_form("entity_table_select_{$entity_type}_{$bundle}", $entity_type, $bundle, $header, $rows);
     }
   }
   else {
@@ -222,11 +250,6 @@ function entity_table_select($form, &$state, $entity_type, $bundle, $header, $ro
   $form['entity_type'] = array('#type' => 'value', '#value' => $entity_type);
   $form['bundle'] = array('#type' => 'value', '#value' => $bundle);
 
-  $form['do'] = array(
-    '#type' => 'submit',
-    '#value' => t('Do'),
-  );
-
   $form['entity_table'] = array(
     // '#theme' => 'table',
     '#type' => 'tableselect',
@@ -235,16 +258,6 @@ function entity_table_select($form, &$state, $entity_type, $bundle, $header, $ro
   );
 
   return $form;
-}
-
-/**
- * The submit callback for the select table
- * This function simply implements an alter hook
- * so other modules can define the functionality of the
- * select table
- */
-function entity_table_select_submit($form, &$state) {
-  drupal_alter('entity_table_select_submit', $state);
 }
 
 /**

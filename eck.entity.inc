@@ -106,19 +106,26 @@ function get_bundle_crud_info($entity_type, $bundle){
  *  (String) Bundle
  */
 function eck__entity__overview($entity_type, $bundle) {
+  $info['entity_type'] = $entity_type->name;
+  $info['bundle'] = $bundle->name;
 
   $table = "eck_{$entity_type->name}";
 
   // @todo Mabye I should use entity field query
   // Get all entity instances of this type
-  $results = db_select($table, 't')->fields('t')->condition('type', $bundle->name, '=')->execute();
+  $query = new EntityFieldQuery();
+  $query
+  ->entityCondition('entity_type', $entity_type->name, '=')
+  ->entityCondition('bundle', $bundle->name, '=');
+  
+  drupal_alter('entity_overview_query', $query, $info);
+  unset($info['entity_type']);
+  drupal_alter("entity_{$entity_type->name}_overview_query", $query, $info);
+  drupal_alter("entity_{$entity_type->name}_{$bundle->name}_overview_query", $query);
+  
+  $results = $query->execute();
 
-  $ids = array();
-  foreach ($results as $record) {
-    $ids[] = $record->id;
-  }
-
-  $entities = entity_load($entity_type->name, $ids);
+  $entities = entity_load($entity_type->name, array_keys($results[$entity_type->name]));
   
   //Because of the flexible paths capabilities, we are not guaranteed to see a local action for the add here,
   //so lets add a link ourselves until we figure out whether there is a better solution
