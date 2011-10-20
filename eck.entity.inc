@@ -124,8 +124,11 @@ function eck__entity__overview($entity_type, $bundle) {
   drupal_alter("entity_{$entity_type->name}_{$bundle->name}_overview_query", $query);
   
   $results = $query->execute();
-
-  $entities = entity_load($entity_type->name, array_keys($results[$entity_type->name]));
+  if(!empty($results)){
+    $entities = entity_load($entity_type->name, array_keys($results[$entity_type->name]));
+  }else{
+    $entities = array();
+  }
   
   //Because of the flexible paths capabilities, we are not guaranteed to see a local action for the add here,
   //so lets add a link ourselves until we figure out whether there is a better solution

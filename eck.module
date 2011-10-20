@@ -179,7 +179,7 @@ function entity_table($entities, $select = FALSE) {
   $rows = array();
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
   
-
+  $info = NULL;
   foreach ($entities as $entity) {
     $info = array();
     $entity_type = $entity->entityType();
@@ -207,12 +207,14 @@ function entity_table($entities, $select = FALSE) {
     $rows[$id] = $row;
   }
   
-  unset($info['entity']);
-  drupal_alter("entity_th", $header, $info);
-  unset($info['entity_type']);
-  drupal_alter("entity_{$entity_type}_th", $header, $info);
-  unset($info['bundle']);
-  drupal_alter("entity_{$entity_type}_{$bundle}_th", $header, $info);
+  if($info){
+    unset($info['entity']);
+    drupal_alter("entity_th", $header, $info);
+    unset($info['entity_type']);
+    drupal_alter("entity_{$entity_type}_th", $header, $info);
+    unset($info['bundle']);
+    drupal_alter("entity_{$entity_type}_{$bundle}_th", $header, $info);
+  }
 
   if ($select) {
     if (!isset($entity_type)) {
