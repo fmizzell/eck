@@ -595,7 +595,6 @@ function eck__entity_type__info($entity_type) {
       'label' => $bundle_label,
       'admin' => array(
         'path' => $path,
-        'args' => array('entity_type' => 3, 'bundle' => 4),
         'access arguments' => array('administer entities')
       ),
       'crud' =>
@@ -603,22 +602,21 @@ function eck__entity_type__info($entity_type) {
         'add' => 
         array(
           'path' => $path."/add", 
-          'args'=> array('entity_type' => 3, 'bundle' => 4)
         ),
         'edit' => 
         array(
           'path' => $path."/%/edit",
-          'args' => array('entity_type' => 3, 'bundle' => 4, 'id' => 5)
+          'entity_id' => 5
         ),
         'delete' => 
         array(
           'path' => $path."/%/delete",
-          'args' => array('entity_type' => 3, 'bundle' => 4, 'id' => 5)
+          'entity_id' => 5
         ),
         'view' => 
         array(
           'path' => "{$entity_type->name}/{$bundle->name}/%",
-          'args' => array('entity_type' => 0, 'bundle' => 1, 'id' => 2)
+          'entity_id' => 2
         )
       )
     );

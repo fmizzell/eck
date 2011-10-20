@@ -455,8 +455,3 @@ function eck__entity__uri($entity) {
   
   return array('path' => $view_path);
 }
-
-
-
-
-

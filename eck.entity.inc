@@ -26,6 +26,19 @@ function eck__entity__menu($entity_type, $bundle) {
     'file' => 'eck.bundle.inc'
   );
   
+  //The entity autocomplete module does a great job at providing generalize
+  //autocomplete function that will work for any entity that declares the label
+  //property in the entity_info array, but there is not a general solution to
+  //have autocomplete functionality from a field. So I will fill that gap by
+  //declaring a field_autocomplete for all eck entities
+  $menu["admin/structure/eck/{$entity_type->name}/{$bundle->name}/field-autocomplete"] = array(
+    'title' => "Field Autocomplete for {$entity_type->name}:{$bundle->name}",
+    'page callback' => "eck__bundle__field_autocomplete",
+    'page arguments' => array($entity_type, $bundle),
+    'access arguments' => array("autocomplete {$entity_type->name} {$bundle->name} bundle"),
+    'file' => 'eck.bundle.inc'
+  );
+  
   $admin_info = get_bundle_admin_info($entity_type->name, $bundle->name);
   
   // OVERVIEW Entity
@@ -50,14 +63,10 @@ function eck__entity__menu($entity_type, $bundle) {
   foreach($crud_info as $action => $info){
       
     $action_label = ucfirst($action);
-    $arg_labels = array('id');
     $args = array();
     
-    foreach($arg_labels as $arg){
-      
-      if(array_key_exists($arg, $info['args'])){
-        $args[] = $info['args'][$arg];
-      }
+    if(array_key_exists('entity_id', $info)){
+      $args[] = $info['entity_id'];
     }
     
     $args = array_merge(array($entity_type, $bundle), $args);

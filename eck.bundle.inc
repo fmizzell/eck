@@ -316,3 +316,41 @@ function eck__bundle__delete_form_submit($form, &$form_state) {
   // Ok, lets delete the entity
   $form_state['redirect'] = $submit_redirect;
 }
+
+function eck__bundle__field_autocomplete($entity_type, $bundle, $string = ""){
+  $field_label = get_bundle_field_label_info($entity_type, $bundle);
+  $matches = array();
+  
+  if($field_label){
+    $field = $field_label['field'];
+    $language = $field_label['language'];
+    $delta = $field_label['delta'];
+    $column = $field_label['column'];
+    $query = new EntityFieldQuery();
+    
+    $query->entityCondition('entity_type', $entity_type->name, '=')
+    ->entityCondition('bundle', $bundle->name, '=')
+    ->fieldCondition($field, $column, $string, 'CONTAINS');
+    
+    $results = $query->execute();
+    
+    $entities = entity_load($entity_type->name, array_keys($results[$entity_type->name]));
+    foreach($entities as $id => $entity){
+      $matches[$id] = $entity->{$field}[$language][$delta][$column];
+    }
+  }
+  
+  drupal_json_output($matches);
+}
+
+function get_bundle_field_label_info($entity_type, $bundle){
+  
+  $info = entity_get_info();
+  
+  if(array_key_exists('field label', $info[$entity_type->name]['bundles'][$bundle->name])){
+    return $info[$entity_type->name]['bundles'][$bundle->name]['field label'];
+  }
+  else{
+    return NULL;
+  }
+}
