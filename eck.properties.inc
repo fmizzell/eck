@@ -16,26 +16,27 @@ function eck_default_properties() {
 /**
  * Generates schema definition for additional ECK properties.
  *
- * @param $&schema
- *   Schema definition.
- * @param $property
+ * @param $property_name
  *   Property to generate schema definition for.
+ * @param $entity_type
+ *   (Object) An object with and entity types info, as returned by entity_type__load 
+ * This is only use to add stuff to the descriptions of the property, do we really need this?
+ * Well, if people is already using the module it will be a pain in the butt to syncronize their schemas to use
+ * indexes, and so on without the specifics of the entity type, so for the sake of moving forward to more important
+ * things, lets leave the $entity_type as a parameter for this function.
  */
-function eck_add_property_schema(&$schema, $entity_type, $property) {
-  if (!isset($schema['fields'])) {
-    $schema['fields'] = array();
-  }
+function eck__property__schema(&$schema, $entity_type, $property_name) {
 
-  switch ($property) {
+  switch ($property_name) {
     case 'uuid':
       // Prepend UUID field.
-      $schema['fields'] = array('uuid' => array(
+      $schema['fields']['uuid'] = array(
         'type' => 'char',
         'length' => 36,
         'not null' => TRUE,
         'default' => '',
         'description' => 'The Universally Unique Identifier.'
-      )) + $schema['fields'];
+      );
       break;
 
     case 'uid':
@@ -87,11 +88,42 @@ function eck_add_property_schema(&$schema, $entity_type, $property) {
          'default' => 0
       );
       break;
-  }
+    }
 }
 
-function eck_get_custom_property_schema($property) {
-  switch ($property['type']) {
+function eck__property__form($entity_type){
+  $form = array();
+  // Enable/disable properties.
+  $form['properties'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Properties'),
+    '#description' => t('Note: unchecking will delete the property and all data stored within!'),
+    '#collapsible' => TRUE,
+    '#tree' => TRUE,
+  );
+  
+ 
+  foreach (eck_default_properties() as $property => $label) {
+    $form['properties'][$property] = array(
+      '#type' => 'checkbox',
+      '#title' => $label,
+      '#default_value' => 
+      array_key_exists($property, $entity_type->properties) ? $entity_type->properties[$property] : 1
+    );
+  }
+  
+  return $form;
+}
+
+/**
+ * Get the property's schema
+ */
+function eck__custom_property__schema($property_type, $property_name) {
+  $schema = array();
+  $schema[$property_name] = array();
+  $spec = $schema[$property_name];
+  
+  switch ($property_type) {
     case 'text':
       $spec = array(
         //'description' => '',
@@ -123,5 +155,73 @@ function eck_get_custom_property_schema($property) {
       );
       break;
   }
-  return $spec;
+
+  return $schema;
+}
+
+function eck__custom_property__form($entity_type){
+  $form = array();
+  
+  // Enable/disable custom properties.
+  $form['custom_properties'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Custom properties'),
+    '#description' => t('Note: unchecking will delete the property and all data stored within!'),
+    '#access' => !empty($entity_type->custom_properties),
+    '#collapsible' => TRUE,
+    '#tree' => TRUE,
+  );
+
+  foreach ($entity_type->custom_properties as $property => $info) {
+    $form['custom_properties'][$property] = array(
+      '#type' => 'checkbox',
+      '#title' => eck__entity_type__custom_property_label($info),
+      '#default_value' => 1,
+    );
+  }
+
+  // Add custom property.
+  $form['add'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Add custom property'),
+    '#access' => empty($entity_type->is_new),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#tree' => TRUE,
+  );
+
+  $types[t('Generic')] = array(
+    'text' => t('Text'),
+    'decimal' => t('Decimal'),
+    'integer' => t('Integer'),
+    'date' => t('Timestamp'),
+  );
+  foreach (entity_get_info() as $name => $data) {
+    $types[t('Entities')][$name] = $data['label'];
+  }
+
+  $form['add']['type'] = array(
+    '#type' => 'select',
+    '#title' => t('Type'),
+    '#options' => array('' => t('- Please choose -')) + $types,
+  );
+
+  $form['add']['label'] = array(
+    '#type' => 'textfield',
+    '#title' => t("Name"),
+    '#description' => t("A human readable name for the property."),
+  );
+
+  $form['add']['name'] = array(
+    '#type' => 'machine_name',
+    '#required' => FALSE,
+    '#machine_name' => array(
+      'label' => t("Database column name"),
+      'exists' => '_eck_fake_exists',
+      'source' => array('add', 'label'),
+    ),
+  );
+  
+  return $form;
+  
 }

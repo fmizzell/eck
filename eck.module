@@ -380,9 +380,10 @@ class EckController extends EntityAPIController {
   public function query($ids, $conditions, $revision_id = FALSE) {
 
     $result = parent::query($ids, $conditions, $revision_id);
-
+     dpm($result);
     if (!empty($this->entityInfo['entity class']) && $result->rowCount()) {
       $row = $result->fetch(PDO::FETCH_ASSOC);
+     
 
       // Allow to create custom per-bundle specific class implementations.
       $class_name = eck_get_class_name($row['type'], 'EntityType');
@@ -395,9 +396,6 @@ class EckController extends EntityAPIController {
 
     return $result;
   }
-
-
-
 }
 
 
@@ -469,4 +467,12 @@ function eck__entity__uri($entity) {
   $view_path = str_replace('%', $entity->identifier(), $crud_info['view']['path']);
   
   return array('path' => $view_path);
+}
+
+function eck_entity_info_alter(&$info){
+  dpm($info);
+}
+
+function eck_schema_alter(&$schema){
+  dpm($schema);
 }

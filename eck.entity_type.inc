@@ -1,6 +1,8 @@
 <?php
 /**
- *
+ *@TODO Make sure that the schema for custom entities is being generated correctly
+ * Also we need to clean up entity_type__form_submit
+ * 
  * @file
  *
  * ENTITY TYPE
@@ -75,6 +77,7 @@ function eck__entity_type__load($entity_type_name = NULL) {
     // Why the f*ck did I specify the 'serialize' flag in hook_schema() if it's useless anyway?!
     $entity_type->properties = unserialize($entity_type->properties);
     $entity_type->custom_properties = unserialize($entity_type->custom_properties);
+    $entity_type->is_new = FALSE;
     return $entity_type;
   }
   else {
@@ -82,6 +85,7 @@ function eck__entity_type__load($entity_type_name = NULL) {
     foreach ($data as $entity_type) {
       $entity_type->properties = unserialize($entity_type->properties);
       $entity_type->custom_properties = unserialize($entity_type->custom_properties);
+      $entity_type->is_new = FALSE;
       $entity_types[] = $entity_type;
     }
     return $entity_types;
@@ -123,20 +127,13 @@ function eck__entity_type__overview() {
  */
 function eck__entity_type__form($form, &$state, $entity_type_name = NULL) {
   
+  //If this form is being called on a new entity, create a new entity object, otherwise
+  //load the corresponding entity
   if (!isset($entity_type_name)) {
-    $entity_type = (object) array(
-      'is_new' => TRUE,
-      'label' => '',
-      'name' => '',
-      'type_label' => '',
-      'type' => '',
-      'properties' => array(),
-      'custom_properties' => array(),
-    );
+    $entity_type = eck__entity_type__create($entity_type_name);
   }
   else {
     $entity_type = eck__entity_type__load($entity_type_name);
-    $entity_type->is_new = FALSE;
   }
   
   $form['entity_type'] = array(
@@ -150,13 +147,13 @@ function eck__entity_type__form($form, &$state, $entity_type_name = NULL) {
     '#default_value' => $entity_type->label,
     '#description' => t('A human readable name for the entity type'),
     '#required' => TRUE,
-    '#disabled' => empty($entity_type->is_new),
+    '#disabled' => !$entity_type->is_new,
   );
 
   $form['entity_type_name'] = array(
     '#type' => 'machine_name',
     '#default_value' => $entity_type->name,
-    '#disabled' => empty($entity_type->is_new),
+    '#disabled' => !$entity_type->is_new,
     '#machine_name' => array(
       'exists' => '_eck_fake_exists',
       'source' => array('entity_type_label'),
@@ -168,7 +165,7 @@ function eck__entity_type__form($form, &$state, $entity_type_name = NULL) {
   
 
   // Only allow entering the desired bundle name when creating a new entity.
-  if (!empty($entity_type->is_new)) {
+  if ($entity_type->is_new) {
     
     $form['bundle_label'] = array(
       '#type' => 'textfield',
@@ -184,87 +181,15 @@ function eck__entity_type__form($form, &$state, $entity_type_name = NULL) {
         'source' => array('bundle_label'),
       ),
     );
-    
   }
-
-  // Enable/disable properties.
-  $form['properties'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Properties'),
-    '#description' => t('Note: unchecking will delete the property and all data stored within!'),
-    '#collapsible' => TRUE,
-    '#tree' => TRUE,
-  );
   
   module_load_include('inc', 'eck', 'eck.properties');
-  foreach (eck_default_properties() as $property => $label) {
-    $form['properties'][$property] = array(
-      '#type' => 'checkbox',
-      '#title' => $label,
-      '#default_value' => !empty($entity_type->properties[$property]) || !empty($entity_type->is_new) ? 1 : 0,
-    );
-  }
-
-  // Enable/disable custom properties.
-  $form['custom_properties'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Custom properties'),
-    '#description' => t('Note: unchecking will delete the property and all data stored within!'),
-    '#access' => !empty($entity_type->custom_properties),
-    '#collapsible' => TRUE,
-    '#tree' => TRUE,
-  );
-
-  foreach ($entity_type->custom_properties as $property => $info) {
-    $form['custom_properties'][$property] = array(
-      '#type' => 'checkbox',
-      '#title' => eck__entity_type__custom_property_label($info),
-      '#default_value' => 1,
-    );
-  }
-
-  // Add custom property.
-  $form['add'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Add custom property'),
-    '#access' => empty($entity_type->is_new),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#tree' => TRUE,
-  );
-
-  $types[t('Generic')] = array(
-    'text' => t('Text'),
-    'decimal' => t('Decimal'),
-    'integer' => t('Integer'),
-    'date' => t('Timestamp'),
-  );
-  foreach (entity_get_info() as $name => $data) {
-    $types[t('Entities')][$name] = $data['label'];
-  }
-
-  $form['add']['type'] = array(
-    '#type' => 'select',
-    '#title' => t('Type'),
-    '#options' => array('' => t('- Please choose -')) + $types,
-  );
-
-  $form['add']['label'] = array(
-    '#type' => 'textfield',
-    '#title' => t("Name"),
-    '#description' => t("A human readable name for the property."),
-  );
-
-  $form['add']['name'] = array(
-    '#type' => 'machine_name',
-    '#required' => FALSE,
-    '#machine_name' => array(
-      'label' => t("Database column name"),
-      'exists' => '_eck_fake_exists',
-      'source' => array('add', 'label'),
-    ),
-  );
-
+  //add the property section of the form
+  $form = array_merge($form, eck__property__form($entity_type));
+  
+  //add the custom property section of the form
+  $form = array_merge($form, eck__custom_property__form($entity_type));
+  
   $form['submit'] = array(
     '#type' => 'submit',
     '#weight' => 10000,
@@ -526,14 +451,16 @@ function eck__entity_type__schema($entity_type) {
   // Add properties to schema definition.
   module_load_include('inc', 'eck', 'eck.properties');
   foreach (eck_default_properties() as $property => $label) {
+    //if 
     if (!empty($entity_type->properties[$property])) {
-      eck_add_property_schema($schema, $entity_type, $property);
+      //the way it was design is so much easier
+      eck__property__schema($schema, $entity_type, $property);
     }
   }
 
   // Add custom properties.
   foreach ($entity_type->custom_properties as $name => $info) {
-    $schema['fields'][$name] = eck_get_custom_property_schema($info);
+    $schema['fields'] = array_merge($schema['fields'], eck__custom_property__schema($info['type'], $name));
   }
 
   // Allow other modules to alter the schema.
@@ -664,4 +591,23 @@ function eck__entity_type__custom_property_label($property) {
     $type = l($type, "admin/structure/eck/{$type}");
   }
   return $property['label'] . ' (' . t('type: !type', array('!type' => $type)) . ')';
+}
+/**
+ * Generate an empty entity_type object
+ * Should we eventually have a custom class for entity_type (This is starting to look a lot like an entity!!)
+ * Should type be a bundle object instead of having both type, and type_label variables??
+ */
+function eck__entity_type__create($entity_type_name){
+  $label = ucfirst($entity_type_name);
+  $entity_type = (object) array(
+      'is_new' => TRUE,
+      'label' => $label,
+      'name' => $entity_type_name,
+      'type_label' => $label,
+      'type' => $entity_type_name,
+      'properties' => array(),
+      'custom_properties' => array(),
+   );
+   
+   return $entity_type;
 }
