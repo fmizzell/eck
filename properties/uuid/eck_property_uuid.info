@@ -1,0 +1,6 @@
+name = ECK Property UUID
+description = A UUID property for entities
+package = ECK
+core = 7.x
+dependencies[] = eck
+

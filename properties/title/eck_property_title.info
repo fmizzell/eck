@@ -1,0 +1,6 @@
+name = ECK Property Title
+description = A title property for entities
+package = ECK
+core = 7.x
+dependencies[] = eck
+
