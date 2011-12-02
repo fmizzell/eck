@@ -180,28 +180,26 @@ class EntityType extends DBObject{
     $this->changes = array();
   }
   
-  public function addProperty($name){
-    $this->recordFieldChange('add', $name);
-    $p = $this->properties;
-    $p[$name] = array('label' => eck_get_property_label($name));
-    $this->properties = $p;
-  }
-  
-  public function addCustomProperty($name, $label, $type){
-    $this->recordFieldChange('add', $name);
+  public function addProperty($name, $label, $type, $behavior = NULL){
+    if(!$this->is_new){
+      $this->recordFieldChange('add', $name);
+    }
+    
     $p = $this->properties;
     //@todo check that type is an actual type
-    $p[$name] = array('label' => $label, 'custom' => $type);
+    $p[$name] = array('label' => $label, 'type' => $type, 'behavior' => $behavior);
+    
     $this->properties = $p;
   }
   
   public function removeProperty($name){
-    dpm($name, "Remove Property");
     $p = $this->properties;
     if(array_key_exists($name, $p)){
       unset($p[$name]);
       $this->properties = $p;
-      $this->recordFieldChange('remove', $name);
+      if(!$this->is_new){
+        $this->recordFieldChange('remove', $name);
+      }
     }
   }
   

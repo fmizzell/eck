@@ -346,6 +346,10 @@ function eck__entity__form($form, $form_state, $entity) {
     }
   }
   
+  //Now lets create the add form.. to add new properties to the entity type.
+  $plugins = ctools_get_plugins('eck', 'property_behavior');
+  
+  
   $form['properties'] = array('#type' => 'value', '#value' => $properties);
   //End of Property widget handling
 

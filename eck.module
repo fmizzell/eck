@@ -4,6 +4,32 @@ module_load_include('inc', 'eck', 'eck.classes');
 module_load_include('inc', 'eck', 'eck.entity_type');
 module_load_include('inc', 'eck', 'eck.properties');
 
+function eck_eck_default_properties(){
+  $default_properties = array();
+  $default_properties['uid'] =
+  array(
+    'label' => "Author",
+    'type' => "integer",
+    'behavior' => 'eck_uid'
+  );
+  
+  $default_properties['created'] =
+  array(
+    'label' => "Created",
+    'type' => "integer",
+    'behavior' => 'eck_created'
+  );
+  
+  $default_properties['changed'] =
+  array(
+    'label' => "Changed",
+    'type' => "integer",
+    'behavior' => 'eck_changed'
+  );
+  
+  return $default_properties;
+}
+
 /**
  * Implements hook_ctools_plugin_directory() to let the system know
  * where our property_behavior plugins are.
