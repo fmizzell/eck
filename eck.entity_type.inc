@@ -148,7 +148,7 @@ function eck__entity_type__form($form, &$state, $entity_type_name = NULL) {
     );
   }
   
-  $form = eck__properties__form($form, $state, $entity_type);
+  $form = eck__default_properties__form($form, $state, $entity_type);
   
   $form['submit'] = array(
     '#type' => 'submit',
@@ -187,10 +187,6 @@ function eck__entity_type__form_validate($form, &$state) {
  *  array provided by the Form API
  */
 function eck__entity_type__form_submit($form, &$state) {
-  dpm($state, "Entity Type");
-  eck__properties__form_submit($form, $state);
-  
-  dpm($state['values']['entity_type']->properties, "Properties");
   
   if($state['values']['op'] == "Save"){
     // This are required so I don't have to do any checks.
@@ -231,6 +227,9 @@ function eck__entity_type__form_submit($form, &$state) {
       $bundle->label = $bundle_label;
       $bundle->save();
     }
+    
+     //lets handle the default properties
+    eck__default_properties__form_submit($form, $state, $entity_type);
     
     $entity_type->save();
     

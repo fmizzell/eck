@@ -2,6 +2,9 @@
 ctools_include('plugins');
 module_load_include('inc', 'eck', 'eck.classes');
 module_load_include('inc', 'eck', 'eck.entity_type');
+module_load_include('inc', 'eck', 'eck.bundle');
+module_load_include('inc', 'eck', 'eck.entity');
+module_load_include('inc', 'eck', 'eck.default_properties');
 module_load_include('inc', 'eck', 'eck.properties');
 
 function eck_eck_default_properties(){
@@ -381,10 +384,11 @@ function eck_entity_property_info_alter(&$info) {
  */
 function eck_menu() {
   
-  $plugins = ctools_get_plugins('eck', 'property_behavior');
+  /*$plugins = ctools_get_plugins('eck', 'property_behavior');
   dpm($plugins, "Plugins");
   $function = ctools_plugin_get_function($plugins['created'], 'hook_entity_save');
-  dpm($function, "Function");
+  dpm($function, "Function");*/
+ 
   $menu = array();
   
   $menu['admin/structure/script'] = array(

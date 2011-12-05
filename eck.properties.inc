@@ -99,61 +99,28 @@ function eck_property_type_schema($type){
   return $form;
 }*/
 
-function  eck__propeties__form_default_properties($form, &$state, $entity_type){
-   //DEFAULT PROPERTIES
-  //Now we want to display the default properties
-  $default_properties = eck_get_default_properties();
-  $options = array();
-  foreach($default_properties as $property_name => $property_info){
-    $options[$property_name] = $property_info['label'];
-  }
-  
-  $form['default_properties'] = array(
-    '#type' => 'checkboxes',
-    '#options' => $options,
-    '#title' => t('Default Properties')
-  );
-  
-  //Now we need to set the defaults if the entity_type has any
-  $properties = $entity_type->properties;
-  
-  $defaults = array();
-  foreach($properties as $property => $info){
-    $defaults[$property] = $property;
-  }
-  
-  $form['default_properties']['#default_value'] = $defaults;
-  // :S
-  
-  return $form;
-}
 
-function  eck__properties__form_default_properties_submit($form, &$state, $entity_type){
-  
-  $entity_type = $state['values']['entity_type'];
-  $dp = $state['values']['default_properties'];
-  foreach($dp as $property => $active){
-    if($active){
-      $info = eck_get_default_property($property);
-      $entity_type->addProperty($property, $info['label'], $info['type'], $info['behavior']);
-    }else{
-      $entity_type->removeProperty($property);
-    }
+function eck__properties__form($form, &$state, $entity_type_name){
+  if (!isset($entity_type_name)) {
+    $entity_type = new EntityType();
+  }
+  else {
+    $entity_type = EntityType::loadByName($entity_type_name);
   }
   
-  $state['values']['entity_type'] = $entity_type;
-}
-
-function eck__properties__form_add_custom_properties($form, &$state, $entity_type){
+  $form['entity_type'] = array('#type' => 'value', '#value' => $entity_type);
   
   //When the add button is clicked, the submit callback directs the form to be rebuilt. 
    //Here we check to see if a new property was added, and keep it in a a list of new properties
    //to add them to the table on each rebuild 
-   $new_properties = array();
+   $new_properties = eck_get_default_properties();
+   $entity_type_properties = $entity_type->properties;
+   $new_properties = array_merge($new_properties, $entity_type_properties);
+  
    if(!empty($state['values']['property_name'])){
-     if(!empty($state['values']['new_properties'])){
+     /*if(!empty($state['values']['new_properties'])){
        $new_properties = $state['values']['new_properties'];
-     }
+     }*/
      
      $new_properties[$state['values']['property_name']] =
      array(
@@ -161,18 +128,27 @@ function eck__properties__form_add_custom_properties($form, &$state, $entity_typ
        'type' => $state['values']['property_type']
      );
      
-     $form['new_properties'] = array('#type' => 'value', '#value' => $new_properties);
-     
+     if(array_key_exists('property_behavior', $state['values'])){
+       $new_properties[$state['values']['property_name']]['behavior'] = 
+         $state['values']['property_behavior'];
+     }
    }
+   
+   $form['new_properties'] = array('#type' => 'value', '#value' => $new_properties);
   
   //This is the select table where all the new properties are shown.
   $header = array(
+    'machine_name' => t('Machine Name'),
     'name' => t('Name'),
     'type' => t('Type'),
     'behavior' => t('Behaviour')
   );
-    
+  
   $options = array();
+  
+  //@todo can we do this in a better way.. the only way I can think of is, load all defaults,
+  //and then load all the properties in the entity type, while modifying the before added default
+  //properties given the entity type settings
   
   $property_arrays = array('new_properties');
   
@@ -180,6 +156,7 @@ function eck__properties__form_add_custom_properties($form, &$state, $entity_typ
     foreach(${$array_name} as $property_name => $property_info){
       $options[$property_name] = 
       array(
+        'machine_name' => $property_name,
         'name' => $property_info['label'],
         'type' => $property_info['type'],
       );
@@ -197,12 +174,18 @@ function eck__properties__form_add_custom_properties($form, &$state, $entity_typ
     '#markup' => '<h3>New properties</h3>'
   );
   
+  $defaults = array();
+  foreach($entity_type_properties as $property => $info){
+    $defaults[$property] = 1;
+  }
+  
   $form['new_properties_table'] = 
   array(
     '#type' => 'tableselect',
     '#header' => $header,
     '#options' => $options,
-    '#empty' => t('No other properties for this entity type.')
+    '#empty' => t('No other properties for this entity type.'),
+    '#default_value' => $defaults
   );
 
   //Add new property
@@ -216,43 +199,66 @@ function eck__properties__form_add_custom_properties($form, &$state, $entity_typ
     '#type' => 'select',
     '#title' => t('Type'),
     '#options' => array('' => t('- Please choose -')) + $types,
-    '#required' => TRUE
+    '#required' => TRUE,
+    '#after_build' => array('eck_deactivate_on_save')
   );
 
   $form["property_label"] = array(
     '#type' => 'textfield',
     '#title' => t("Name"),
     '#description' => t("A human readable name for the property."),
+    '#required' => TRUE,
+    '#after_build' => array('eck_deactivate_on_save')
   );
 
   $form["property_name"] = array(
     '#type' => 'machine_name',
     '#machine_name' => array(
       'exists' => '_eck_fake_exists',
-      'source' => array('label'),
+      'source' => array('property_label'),
     ),
+   '#after_build' => array('eck_deactivate_on_save')
   );
   
+  $behavior_plugins = ctools_get_plugins('eck', 'property_behavior');
+  $options = array();
+  
+  foreach($behavior_plugins as $behavior => $info){
+    $options[$behavior] = $info['label'];
+  }
+  
+  
+  $form['property_behavior'] = array(
+    '#type' => 'select',
+    '#title' => t('Behavior'),
+    '#options' => array('' => t('- Please choose -')) + $options
+  );
   
   $form['property_add'] = array(
     '#type' => 'submit',
     '#value' => t('Add Property'),
   );
   
-  return $form;
+  $form['line_break'] = array(
+    '#markup' => '<br><hr/><br>'
+  );
   
+  $form['save'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+  
+  return $form;
 }
 
-function eck__properties__form($form, &$state, $entity_type){
-  //put the submit button first so it will be called by multiform;
+function eck_deactivate_on_save($element, &$state){
+  if(array_key_exists('input', $state) && array_key_exists('op', $state['input']) && 
+    $state['input']['op'] == 'Save'){
+    isset($element['#element_validate']) ? $element['#element_validate'] = NULL : NULL;
+    isset($element['#needs_validation']) ? $element['#needs_validation'] = NULL : NULL;
+  }
   
-  $form = eck__propeties__form_default_properties($form, $state, $entity_type);
-  
-  $form = eck__properties__form_add_custom_properties($form, $state, $entity_type);
-  
-  //CUSTOM PROPERTIES
-  
-  return $form;
+  return $element;
 }
 
 function eck__properties__form_submit($form, &$state){
@@ -260,17 +266,23 @@ function eck__properties__form_submit($form, &$state){
     $state['rebuild'] = TRUE;
   }
   else if($state['values']['op'] == "Save"){
-    //Here we set up the entity type and save it.
-    eck__properties__form_default_properties_submit($form, $state);
+    //Here we want to add the properties to the entity type and save it
+    dpm($state, "State");
+    $entity_type = $state['values']['entity_type'];
+    //dpm($entity_type, "Entity Type");
+    
+    foreach($state['values']['new_properties_table'] as $property => $active){
+      if($active){
+        $info = $state['values']['new_properties'][$property];
+        $entity_type->addProperty($property, $info['label'], $info['type'], $info['behavior']);
+      }else{
+        $entity_type->removeProperty($property);
+      }
+    }
+    
+    $entity_type->save();
   }
 }
 
-function eck_get_default_properties(){
-  return module_invoke_all('eck_default_properties');
-}
 
-function eck_get_default_property($name){
-  $default_properties = eck_get_default_properties();
-  return $default_properties[$name];
-}
 

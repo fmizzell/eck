@@ -250,20 +250,11 @@ class EntityType extends DBObject{
           $properties = $this->properties;
           $property = $properties[$name];
           //now we check to see whether it is a default or a custom property
-          if(array_key_exists('custom', $property)){
-            //lets get the type of the custom property so we can get a schema
-            $type = $property['custom'];
-            $schema = eck_general_property_schema($type);
-            //dpm($type, "Custom Type");
-            //dpm($schema, "Custom Schema");
-            db_add_field("eck_{$this->name}", $name, $schema);
-          }else{
-            //it is not custom so lets get the schema and add the field
-            $dp = eck_get_property_info();
-            $schema = $dp[$name]['schema'];
-            //dpm($schema, "Add default property");
-            db_add_field("eck_{$this->name}", $name, $schema);
-          }
+          //it is not custom so lets get the schema and add the field
+          $schema = eck_property_type_schema($property['type']);
+          //dpm($schema, "Add default property");
+          db_add_field("eck_{$this->name}", $name, $schema);
+          
         }
       }
       if(array_key_exists('remove', $this->changes)){

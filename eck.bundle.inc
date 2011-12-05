@@ -30,6 +30,18 @@ function eck__bundle__menu($entity_type) {
     'weight' => 3,
   );
   
+  //MANAGE Entity Type Properties
+  $menu["admin/structure/entity_type/{$entity_type->name}/properties"] = array(
+    'title' => "Manage properties",
+    'description' => "Manage the properties of the {$entity_type->label} entity type",
+    'page callback' => "drupal_get_form",//"eck__entity_type__delete",
+    'page arguments' => array("eck__properties__form", $entity_type->name),
+    'access arguments' => array("manage {$entity_type->name} properties"),
+    'file' => 'eck.properties.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 4,
+  );
+  
   // OVERVIEW Entity types.
   $menu["admin/structure/entity_type/{$entity_type->name}"] = array(
     'title' => "{$entity_type->label}" ,
