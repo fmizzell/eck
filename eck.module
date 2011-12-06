@@ -13,21 +13,21 @@ function eck_eck_default_properties(){
   array(
     'label' => "Author",
     'type' => "integer",
-    'behavior' => 'eck_uid'
+    'behavior' => 'author'
   );
   
   $default_properties['created'] =
   array(
     'label' => "Created",
     'type' => "integer",
-    'behavior' => 'eck_created'
+    'behavior' => 'created'
   );
   
   $default_properties['changed'] =
   array(
     'label' => "Changed",
     'type' => "integer",
-    'behavior' => 'eck_changed'
+    'behavior' => 'changed'
   );
   
   return $default_properties;
@@ -246,11 +246,10 @@ function eck_entity_property_info(){
     foreach($stuff as $key => $property){
       $property['setter callback'] = "entity_property_verbatim_set";
       $property['getter callback'] = 'entity_property_verbatim_get';
-      
+      $property['description'] = $property['label'];
       //A couple of alter hooks so a module can alter the property info
       //of a given property, or even a specific property on a
       //specific entity_type
-      dpm($key, "Key");
       drupal_alter("entity_property_{$key}_info", $property);
       drupal_alter("entity_property_{$entity_type->name}_{$key}_info", $property);
       
@@ -262,64 +261,9 @@ function eck_entity_property_info(){
   return $info;  
 }
 
-function hook_eck_property_info(){
-  return module_invoke_all('eck_property_info');
-}
-
 function eck_get_property_label($name){
   $info = hook_eck_property_info();
   return $info[$name]['label'];
-}
-
-function eck_eck_property_info(){
-  $info = array();
-  //$schema['indexes'] = array('uid');
-  /*$schema['foreign key'] = array(
-    'table' => 'users',
-    'columns' => array('uid' => 'uid'),
-  );*/
- /* $info['created'] =
-  array(
-    'label' => "Created",
-    'schema' =>
-    array(
-      'description' => "The Unix timestamp when this was created.",
-      'type' => 'int',
-      'not null' => TRUE,
-      'default' => 0,
-      'initial' => REQUEST_TIME,
-    )
-  );*/
-  //$schema['indexes']["created"] = array('created');
-
-  /*$info['changed'] =
-  array(
-    'label' => "Changed",
-    'schema' =>
-    array(
-      'description' => "The Unix timestamp when this was most recently saved.",
-      'type' => 'int',
-      'not null' => TRUE,
-      'default' => 0,
-      'initial' => REQUEST_TIME,
-    )
-  );*/
-  //$schema['indexes']["changed"] = array('changed');
-  
-  /*$info['state'] = 
-  array(
-    'label' => 'State',
-    'schema' =>
-    array(
-      'description' => "state",
-      'type' => 'int',
-      'unsigned' => TRUE,
-      'not null' => TRUE,
-      'default' => 0
-    )
-  );*/
-  
-  return $info;
 }
 
 /**
@@ -360,16 +304,16 @@ function eck_eck_property_info(){
 /**
  * Implements hook_entity_property_info_alter().
  */
-function eck_entity_property_info_alter(&$info) {
+/*function eck_entity_property_info_alter(&$info) {
   module_load_include('inc', 'eck', 'eck.entity_type');
   
   dpm($info, "Property Info");
   // Create property infos for all defined entites.
-  /*foreach (eck__entity_type__load() as $entity_type_object) {
+  foreach (eck__entity_type__load() as $entity_type_object) {
     eck__entity_type__property_info($info[$entity_type_object->name], $entity_type_object);
-  }*/
+  }
  
-}
+}*/
 
 /**
  * Implements hook_menu().

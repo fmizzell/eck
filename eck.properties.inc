@@ -11,7 +11,8 @@ function eck_set_properties_schema(&$schema, $entity_type){
 
 function eck_property_types(){
   //Alll types: serial, int, float, numeric, varchar, char, text, blob, datetime
-  return array('text' => 'Text', 'integer' => "Interger");
+  return array('text' => 'Text', 'integer' => "Integer", 'decimal' => "Decimal", 
+    'positive_integer' => "Positive Integer", 'uuid' => 'UUID');
 }
 
 function eck_property_type_schema($type){
@@ -38,9 +39,6 @@ function eck_property_type_schema($type){
       break;
 
     case 'integer':
-    //case 'date':
-    //default:
-    // Integer, date, and entities are all of type 'int'.
       $schema = array(
         'type' => 'int',
         'description' => "Integer",
@@ -48,7 +46,26 @@ function eck_property_type_schema($type){
         'default' => 0,
       );
       break;
-    
+    case 'positive_integer':
+      $schema = array(
+        'type' => 'int',
+        'description' => "Integer",
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+      );
+      break;
+      
+      
+      case 'uuid':
+      $schema = array(
+        'type' => 'int',
+        'description' => "UUID",
+        'not null' => TRUE,
+        'default' => 0,
+      );
+      break;
+      
     default:
       $schema = NULL;
       break;
@@ -113,24 +130,38 @@ function eck__properties__form($form, &$state, $entity_type_name){
   //When the add button is clicked, the submit callback directs the form to be rebuilt. 
    //Here we check to see if a new property was added, and keep it in a a list of new properties
    //to add them to the table on each rebuild 
-   $new_properties = eck_get_default_properties();
    $entity_type_properties = $entity_type->properties;
-   $new_properties = array_merge($new_properties, $entity_type_properties);
+   
+   if(!array_key_exists('values', $state) || !array_key_exists('new_properties', $state['values'])){
+     $new_properties = eck_get_default_properties();
+     $new_properties = array_merge($new_properties, $entity_type_properties);
+   }else{
+     $new_properties = $state['values']['new_properties'];
+   }
   
    if(!empty($state['values']['property_name'])){
-     /*if(!empty($state['values']['new_properties'])){
-       $new_properties = $state['values']['new_properties'];
-     }*/
+     $property_name = $state['values']['property_name'];
+     $property_type = $state['values']['property_type'];
+     //OK we need to do a little bit of filtering do the oddity of modifying existing
+     //properties through the add Property form #fail @todo need to get a better interface.
+     //But until then, we need to keep the form from changing the property_type or property_name of the already
+     //existing properties
      
-     $new_properties[$state['values']['property_name']] =
-     array(
-       'label' => $state['values']['property_label'],
-       'type' => $state['values']['property_type']
-     );
+     if(!array_key_exists($property_name, $new_properties) || 
+       $new_properties[$property_name]['type'] == $property_type){
      
-     if(array_key_exists('property_behavior', $state['values'])){
-       $new_properties[$state['values']['property_name']]['behavior'] = 
-         $state['values']['property_behavior'];
+       $new_properties[$property_name] =
+       array(
+         'label' => $state['values']['property_label'],
+         'type' => $state['values']['property_type']
+       );
+       
+       if(array_key_exists('property_behavior', $state['values'])){
+         $new_properties[$state['values']['property_name']]['behavior'] = 
+           $state['values']['property_behavior'];
+       }
+     }else{
+       drupal_set_message("Can not modify the type of {$property_name}", "error");
      }
    }
    

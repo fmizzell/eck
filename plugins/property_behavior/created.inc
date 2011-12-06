@@ -2,10 +2,10 @@
 // Plugin definition
 $plugin = array(
   'label' => 'Created',
-  'hook_entity_save' => 'eck_created_property_entity_save'
+  'entity_insert' => 'eck_created_property_entity_insert'
 );
 
 
-function eck_created_property_entity_save(){
-  dpm('Created Entity Save');
+function eck_created_property_entity_insert($entity, $property, $value = NULL){
+  $entity->{$property} = time();
 }

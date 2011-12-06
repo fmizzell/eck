@@ -16,11 +16,12 @@ module_load_include('inc', 'eck', 'eck.classes');
  */
 function eck__bundle__menu($entity_type) {
   // Create the menus relavant to types.
+  $path = eck__entity_type__path();
   $menu = array();
 
   // DELETE ENTITY TYPE
-  $menu["admin/structure/entity_type/{$entity_type->name}/delete"] = array(
-    'title' => "Delete {$entity_type->label}",
+  $menu["{$path}/{$entity_type->name}/delete"] = array(
+    'title' => "Delete",
     'description' => "Delete the '{$entity_type->label}' Entity Type",
     'page callback' => "drupal_get_form",//"eck__entity_type__delete",
     'page arguments' => array("eck__entity_type__delete_form", $entity_type->name),
@@ -31,7 +32,7 @@ function eck__bundle__menu($entity_type) {
   );
   
   //MANAGE Entity Type Properties
-  $menu["admin/structure/entity_type/{$entity_type->name}/properties"] = array(
+  $menu["{$path}/{$entity_type->name}/properties"] = array(
     'title' => "Manage properties",
     'description' => "Manage the properties of the {$entity_type->label} entity type",
     'page callback' => "drupal_get_form",//"eck__entity_type__delete",
@@ -43,7 +44,7 @@ function eck__bundle__menu($entity_type) {
   );
   
   // OVERVIEW Entity types.
-  $menu["admin/structure/entity_type/{$entity_type->name}"] = array(
+  $menu["{$path}/{$entity_type->name}"] = array(
     'title' => "{$entity_type->label}" ,
     'description' => "View all the bundles for '{$entity_type->label}'",
     'page callback' => "eck__bundle__list",
@@ -52,15 +53,15 @@ function eck__bundle__menu($entity_type) {
     'file' => 'eck.bundle.inc'
   );
   
-  $menu["admin/structure/entity_type/{$entity_type->name}/list"] = array(
+  $menu["{$path}/{$entity_type->name}/list"] = array(
     'title' => 'Bundle List',
     'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => 1,
+    'weight' => 100,
   );
   
   
-  $menu["admin/structure/entity_type/{$entity_type->name}/edit"] = array(
-    'title' => "Edit $entity_type->label",
+  $menu["{$path}/{$entity_type->name}/edit"] = array(
+    'title' => "Edit",
     'description' => "Edit the '{$entity_type->label}' entity type",
     'page callback' => 'drupal_get_form',
     'page arguments' => array("eck__entity_type__form", $entity_type->name),
@@ -71,8 +72,8 @@ function eck__bundle__menu($entity_type) {
   );
 
 
-  $menu["admin/structure/entity_type/{$entity_type->name}/add"] = array(
-    'title' => "Add a Bundle ",
+  $menu["{$path}/{$entity_type->name}/add"] = array(
+    'title' => "Add bundle ",
     'description' => "Add a(n) new '{$entity_type->label} Bundle'",
     'page callback' => "drupal_get_form",
     'page arguments' => array('eck__bundle__add', 3),
@@ -98,6 +99,7 @@ function eck__bundle__menu($entity_type) {
  *  (String) entity type
  */
 function eck__bundle__list($entity_type) {
+  $path = eck__entity_type__path();
   $entity_type = entity_type_load($entity_type);
   module_load_include('inc', 'eck', 'eck.entity');
   $header = array(t('Type'), array('data' => t('Operations'), 'colspan' => '1'));
@@ -108,7 +110,7 @@ function eck__bundle__list($entity_type) {
     
     //$admin_info = get_bundle_admin_info($entity_type->name, $bundle->name);
     
-    $uri = "admin/structure/entity_type/{$entity_type->name}/{$bundle->name}";//$admin_info['path'];
+    $uri = "{$path}/{$entity_type->name}/{$bundle->name}";//$admin_info['path'];
     $rows[] = 
     array(
       l($bundle_label, url($uri, array('absolute' => TRUE))),
@@ -187,14 +189,14 @@ function eck__bundle__add($form, &$form_state, $entity_type) {
  */
 function eck__bundle__add_validate($form, &$form_state) {
   $entity_type = $form_state['values']['entity_type'];
-  dpm($entity_type->name, "Entity type");
+ 
 
   // The type does not have to be unique in the table, but it should be unique
   // to its entity so we will check that here.
   foreach (Bundle::loadByEntityType($entity_type) as $bundle) {
-    dpm($bundle->name);
+    
     if ($bundle->name == $form_state['values']['bundle_name']) {
-      form_set_error('bundle', t("bundle '{$bundle->name} already exists for this entity type"));
+      form_set_error('bundle', t("bundle {$bundle->label} already exists for this entity type"));
     }
   }
 }

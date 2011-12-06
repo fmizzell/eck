@@ -22,11 +22,11 @@ class DBObject implements Iterator{
     
     $data = array();
     //is this a real table, check it
-    //dpm($table, "Table");
+ 
     
     $schemas = drupal_get_schema();
     $tables = array_keys($schemas);
-    //dpm($tables, "Tables");
+
     
     if(in_array($table, $tables)){
       $this->table = $table;
@@ -77,11 +77,11 @@ class DBObject implements Iterator{
     
     //before we save, lets serialize the properties that require it
     foreach($this->serialize as $property){
-      //dpm("In Serialize: {$property}");
+   
       $this->{$property} = drupal_json_encode($this->{$property});
     }
     
-    //dpm($this->serialize, "Serialize after");
+   
     
     if($this->is_new){
       return 
@@ -100,7 +100,6 @@ class DBObject implements Iterator{
     //now that we are done saving lets deserialize in case that for some
     //reason we will continue manipulating the properties
     foreach($this->serialize as $property){
-      //dpm("In Unserialize: {$property}");
       $this->{$property} = drupal_json_decode($this->{$property});
     }
     
@@ -130,7 +129,6 @@ class DBObject implements Iterator{
     if(!$this->is_new){
       $query = db_delete($this->table);
       $primary_key = $this->primary_keys[0];
-      dpm($primary_key, "PK Delete");
       $query->condition($primary_key, $this->{$primary_key}, '=');
       $query->execute();
       //Should we delete the data from the object.. not sure.
@@ -241,8 +239,6 @@ class EntityType extends DBObject{
       db_create_table("eck_{$this->name}", $schema);
       
     }else{
-      //dpm($this->properties, "Properties");
-      //dpm($this->changes, "Changes");
       //modify the already existing table in accordance with the recorded changes
       if(array_key_exists('add', $this->changes)){
         foreach($this->changes['add'] as $name){
@@ -252,7 +248,6 @@ class EntityType extends DBObject{
           //now we check to see whether it is a default or a custom property
           //it is not custom so lets get the schema and add the field
           $schema = eck_property_type_schema($property['type']);
-          //dpm($schema, "Add default property");
           db_add_field("eck_{$this->name}", $name, $schema);
           
         }
@@ -282,8 +277,6 @@ class EntityType extends DBObject{
     $results = db_select('eck_entity_type', 't')
     ->fields('t', array('name'))
     ->execute();
-    
-    //dpm($results);
     
     $entity_types = array();
     
@@ -371,10 +364,9 @@ class Bundle extends DBObject{
     
     foreach($results as $result){
       $name = $result->name;
-      //dpm($name, "loadByEntity");
+   
       $bundles[] = Bundle::loadByMachineName("{$entity_type->name}_{$name}");
     }
-    //dpm($bundles, "loadByEntity");
     return $bundles;
   }
 }

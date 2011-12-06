@@ -2,5 +2,10 @@
 // Plugin definition
 $plugin = array(
   'label' => "Author",
-  'hook_entity_save' => 'eck_author_property_entity_save'
+  'entity_insert' => 'eck_author_property_entity_insert'
 );
+
+function eck_author_property_entity_insert($entity, $property, $value = NULL){
+  global $user;
+  $entity->{$property} = $user->uid;
+}

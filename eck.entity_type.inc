@@ -1,5 +1,4 @@
 <?php
-module_load_include('inc', 'eck', 'eck.classes');
 /**
  *@TODO Make sure that the schema for custom entities is being generated correctly
  * Also we need to clean up entity_type__form_submit
@@ -23,10 +22,11 @@ module_load_include('inc', 'eck', 'eck.classes');
  */
 function eck__entity_type__menu() {
   $menu = array();
+  $path = eck__entity_type__path();
 
   // OVERVIEW Entity Type.
   // View all of the created entity types.
-  $menu['admin/structure/entity_type'] = array(
+  $menu[$path] = array(
     'title' => 'Entity types',
     'description' => 'A centralized administrative section for entity types',
     'page callback' => 'eck__entity_type__list',
@@ -35,7 +35,7 @@ function eck__entity_type__menu() {
   );
 
   // ADD Entity.
-  $menu['admin/structure/entity_type/add'] = array(
+  $menu["{$path}/add"] = array(
     'title' => 'Add entity type',
     'description' => 'Add a new entity type',
     'page callback' => 'drupal_get_form',
@@ -60,14 +60,15 @@ function eck__entity_type__menu() {
  * Callback for the entity_type overview.
  */
 function eck__entity_type__list() {
+  $path = eck__entity_type__path();
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
   $rows = array();
 
   foreach (EntityType::loadAll() as $entity_type) {
     $rows[] = 
     array(
-      l(t("{$entity_type->label}"), "admin/structure/entity_type/{$entity_type->name}"),
-      l(t("delete"), "admin/structure/entity_type/{$entity_type->name}/delete")
+      l(t("{$entity_type->label}"), "{$path}/{$entity_type->name}"),
+      l(t("delete"), "{$path}/{$entity_type->name}/delete")
     );
   }
   $build['entity_table'] = array(
@@ -170,12 +171,12 @@ function eck__entity_type__form($form, &$state, $entity_type_name = NULL) {
  *  array provided by the Form API
  */
 function eck__entity_type__form_validate($form, &$state) {
-  /*$info = entity_get_info();
+  $info = entity_get_info();
   $entity_types = array_keys($info);
-  $entity_type = $state['values']['entity_type'];
+  $entity_type = $state['values']['entity_type_name'];
   if (in_array($entity_type, $entity_types)) {
-    form_set_error('name', t("Entity {$entity_type} already exists"));
-  }*/
+    form_set_error('name', t("Entity Type {$entity_type} already exists"));
+  }
 }
 
 /**
@@ -381,10 +382,12 @@ function eck__entity_type__info($entity_type) {
       )
     )
   );
-
+  
+  $eck_path = eck__entity_type__path();
   foreach (Bundle::loadByEntityType($entity_type) as $bundle) {
     $bundle_label = $bundle->label;
-    $path = "admin/structure/entity_type/{$entity_type->name}/{$bundle->name}";
+    $path = "{$eck_path}/{$entity_type->name}/{$bundle->name}";
+    
     $info[$entity_type->name]['bundles'][$bundle->name] = array(
       'label' => $bundle_label,
       'admin' => array(
@@ -416,9 +419,16 @@ function eck__entity_type__info($entity_type) {
     );
   }
   
-
   return $info;
 }
+
+/**
+ * Returns the path to the ECK admin section
+ */
+function eck__entity_type__path(){
+  return "admin/structure/entity-type";
+}
+
 
 /**
  * Entity Type specific implementation of property info alter.

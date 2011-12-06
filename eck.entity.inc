@@ -18,16 +18,17 @@ function eck__entity__menu($entity_type, $bundle) {
   /*dpm("Entity Menu");
   dpm($entity_type, "Entity Type");
   dpm($bundle, "Bundle");*/
-  
+  $path = eck__entity_type__path();
   $menu = array();
   
   // DELETE Bundle
-  $menu["admin/structure/entity_type/{$entity_type->name}/{$bundle->name}/delete"] = array(
-    'title' => "Delete {$entity_type->name}'s Bundle: {$bundle->name}",
+  $menu["{$path}/{$entity_type->name}/{$bundle->name}/delete"] = array(
+    'title' => "Delete",
     'page callback' => "drupal_get_form",//"eck__bundle__delete",
     'page arguments' => array('eck__bundle__delete_form', 3, 4),
     'access arguments' => array("delete {$entity_type->name} {$bundle->name} bundle"),
-    'file' => 'eck.bundle.inc'
+    'file' => 'eck.bundle.inc',
+    'type' => MENU_LOCAL_TASK
   );
   
   //The entity autocomplete module does a great job at providing generalize
@@ -47,7 +48,7 @@ function eck__entity__menu($entity_type, $bundle) {
   
   // OVERVIEW Entity
   $menu[$admin_info['path']] = array(
-    'title' => "{$bundle->label} Entities",
+    'title' => "{$bundle->label}",
     'description' => "View all entites of type {$entity_type->label} with bundle {$bundle->label}",
     'page callback' => "eck__entity__list",
     'page arguments' => array($entity_type->name, $bundle->name),
@@ -57,9 +58,9 @@ function eck__entity__menu($entity_type, $bundle) {
   );
 
   $menu[$admin_info['path']."/list"] = array(
-    'title' => "Overview",
+    'title' => "Entity List",
     'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => 0
+    'weight' => 100
   );
   
   $crud_info = get_bundle_crud_info($entity_type->name, $bundle->name);
@@ -76,13 +77,55 @@ function eck__entity__menu($entity_type, $bundle) {
     $args = array_merge(array($entity_type->name, $bundle->name), $args);
     
     $menu[$info['path']] = array(
-      'title' => "{$action_label} {$bundle->label} Entity",
+      'title' => "{$action_label} Entity",
       'description' => "{$action_label} an entity of type {$entity_type->label} with bundle {$bundle->label}",
       'page callback' => "eck__entity__{$action}",
       'page arguments' => $args,
       'access arguments' => array("{$action} {$entity_type->name} {$bundle->name} entities"),
       'file' => 'eck.entity.inc'
     );
+    
+    //I think it would be useful to have the edit, delete, and list tabs at the view also
+    //But lets leave this out for right now
+    /*if($action == 'view'){
+      
+      $menu[$info['path']."/view"] = array(
+        'title' => "View",
+        'type' => MENU_DEFAULT_LOCAL_TASK
+      );
+      
+      $menu[$info['path']."/list"] = array(
+        'title' => "List",
+        'description' => "View all entites of type {$entity_type->label} with bundle {$bundle->label}",
+        'page callback' => "eck__entity__list",
+        'page arguments' => array($entity_type->name, $bundle->name),
+        'access arguments' => array("administer {$entity_type->name} {$bundle->name} entities"),
+        'weight' => 0,
+        'file' => 'eck.entity.inc',
+        'type' => MENU_LOCAL_TASK
+      );
+      
+      
+      foreach($crud_info as $a => $i){
+        if($a != 'view' && $a != 'add'){
+          $al = ucfirst($a);
+          
+          $view_path = $info['path']."/{$a}";
+          //dpm($view_path, "Path");
+          
+          $menu[$view_path] = array(
+            'title' => "{$al}",
+            'description' => "{$action_label} an entity of type {$entity_type->label} with bundle {$bundle->label}",
+            'page callback' => "eck__entity__{$a}",
+            'page arguments' => $args,
+            'access arguments' => array("{$action} {$entity_type->name} {$bundle->name} entities"),
+            'file' => 'eck.entity.inc',
+            'type' => MENU_LOCAL_TASK
+          );
+        }
+      }
+    }*/
+    //Holy Crap What a mess @todo clean up ^^
   }
   
   return $menu;
@@ -346,13 +389,6 @@ function eck__entity__form($form, $form_state, $entity) {
     }
   }
   
-  //Now lets create the add form.. to add new properties to the entity type.
-  $plugins = ctools_get_plugins('eck', 'property_behavior');
-  
-  
-  $form['properties'] = array('#type' => 'value', '#value' => $properties);
-  //End of Property widget handling
-
   $form['submit'] = array(
     '#type' => 'submit',
     '#weight' => 10000,
@@ -372,20 +408,52 @@ function eck__entity__form($form, $form_state, $entity) {
  * @param $form_state
  *  array provided by the Form API
  */
-function eck__entity__form_submit($form, &$form_state) {
-  $entity = $form_state['values']['entity'];
+function eck__entity__form_submit($form, &$state) {
+  $entity = $state['values']['entity'];
   
-  $properties = $form_state['values']['properties'];
-  foreach($properties as $pname => $pcallback){
-    $submit_callback = "{$pcallback}_submit";
-    $submit_callback($entity, $form_state['values'][$pname]);
+  field_attach_form_validate($entity->entityType(), $entity, $form, $state);
+  field_attach_submit($entity->entityType(), $entity, $form, $state);
+  
+  $entity_type = $entity->entityType();
+  $entity_type = EntityType::loadByName($entity_type);
+  $properties = $entity_type->properties;
+  
+  foreach($properties as $property => $info){
+    //If there is a behavior associated with this property we need to call the appropiate hooks
+    if(array_key_exists('behavior', $info) && !empty($info['behavior'])){
+      $behavior = $info['behavior'];
+     
+      $plugin = ctools_get_plugins('eck', 'property_behavior', $behavior);
+      _eck_apply_plugin_function('entity_save', $plugin, $entity, $property, $state);
+      if(isset($entity->is_new) && $entity->is_new){
+        _eck_apply_plugin_function('entity_insert', $plugin, $entity, $property, $state);
+      }else{
+         _eck_apply_plugin_function('entity_update', $plugin, $entity, $property, $state);
+      }
+    }
   }
   
-  field_attach_form_validate($entity->entityType(), $entity, $form, $form_state);
-  field_attach_submit($entity->entityType(), $entity, $form, $form_state);
   $entity->save();
 
   drupal_set_message(t("Entity {$entity->id} - @entity_label has been saved", array("@entity_label" => entity_label($form['#entity_type'], $entity)) ));
+}
+
+function _eck_apply_plugin_function($function_name, $plugin, $entity, $property, $state){
+  
+  //Now we get the funtions from the plugin to handle save, insert and update
+  $function = ctools_plugin_get_function($plugin, $function_name);
+  
+  if($function){
+    $value = _eck_form_property_value($state, $property);
+    $function($entity, $property, $value);
+  }
+}
+
+function _eck_form_property_value($state, $property){
+  if(array_key_exists($property, $state['values'])){
+    return $state['values'][$property];
+  }
+  return NULL;
 }
 
 

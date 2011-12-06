@@ -117,7 +117,7 @@ function eck_schema() {
     ),
     'primary key' => array('id', 'machine_name'),
     'indexes' => array(
-      'entity_type_bundle'      => array('entity_type', 'name'),
+      /*'entity_type_bundle'      => array('entity_type', 'name'),*/ //Nope, Don't need it
     ),
   );
 
@@ -325,6 +325,14 @@ function eck_update_7005() {
 
   //create the index with the right field names
   db_add_index('eck_bundle', 'entity_type_bundle_name', array('entity_type', 'name'));
+}
+
+function eck_update_7006() {
+  //lets start with then entity type table
+  
+  //first lets take the properties and translate them to the new form.
+  
+  
 }
 
 
