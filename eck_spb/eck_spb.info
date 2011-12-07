@@ -1,0 +1,4 @@
+name = ECK Sample Property Behavior
+description =  A module exposing a simple property behavior, that allows us to set a property through an entities input form
+package = ECK
+core = 7.x

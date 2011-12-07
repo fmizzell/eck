@@ -3,6 +3,8 @@
 function eck_set_properties_schema(&$schema, $entity_type){
   $properties = $entity_type->properties;
   
+  //dpm($properties, "Properties in schema");
+  
   foreach($properties as $name => $info){
       $type = $info['type'];
       $schema['fields'][$name] = eck_property_type_schema($type);
@@ -298,14 +300,17 @@ function eck__properties__form_submit($form, &$state){
   }
   else if($state['values']['op'] == "Save"){
     //Here we want to add the properties to the entity type and save it
-    dpm($state, "State");
     $entity_type = $state['values']['entity_type'];
     //dpm($entity_type, "Entity Type");
     
     foreach($state['values']['new_properties_table'] as $property => $active){
       if($active){
         $info = $state['values']['new_properties'][$property];
-        $entity_type->addProperty($property, $info['label'], $info['type'], $info['behavior']);
+        if(array_key_exists('behavior', $info)){
+          $entity_type->addProperty($property, $info['label'], $info['type'], $info['behavior']);
+        }else{
+          $entity_type->addProperty($property, $info['label'], $info['type']);
+        }
       }else{
         $entity_type->removeProperty($property);
       }

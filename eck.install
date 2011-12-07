@@ -115,7 +115,7 @@ function eck_schema() {
         'not null' => TRUE
       )
     ),
-    'primary key' => array('id', 'machine_name'),
+    'primary key' => array('id'/*, 'machine_name'*/), //sad.. taken this out until I figure out how to make it work
     'indexes' => array(
       /*'entity_type_bundle'      => array('entity_type', 'name'),*/ //Nope, Don't need it
     ),
@@ -330,9 +330,134 @@ function eck_update_7005() {
 function eck_update_7006() {
   //lets start with then entity type table
   
-  //first lets take the properties and translate them to the new form.
+  //lets add an id field to the entity_type table, and set it up as a primary key
+  //db_add_primary_key('eck_entity_type', array('id'));
+  db_drop_primary_key('eck_entity_type');
+  
+  db_add_field('eck_entity_type', 'id', array(
+    'description' => "The primary identifier for an entity type",
+    'type' => 'serial',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+  ), array('primary key' => array('id', 'name')));
+  
+  //lets take the properties and translate them to the new form.
+  $results = db_select('eck_entity_type', 't')->fields('t')->execute();
+  
+  foreach ($results as $record) {
+    
+    //@todo for each entity type we want to drop all the indexes.. they will have to be managed dynamically by the
+    //behaviors even though I don't know how to do that yet
+    $entity_table = "eck_{$record->name}";
+    
+    if(db_index_exists($entity_table, 'uid')){
+      db_drop_index($entity_table, 'uid');
+    }
+    if(db_index_exists($entity_table, "{$record->name}_created")){
+      db_drop_index($entity_table, "{$record->name}_created");
+    }
+    if(db_index_exists($entity_table, "{$record->name}_changed")){
+      db_drop_index($entity_table, "{$record->name}_changed");
+    }
+    
+    $new_properties = array();
+    
+    $properties = $record->properties;
+    $properties = unserialize($properties);
+    foreach($properties as $property => $status){
+      switch($property){
+        case 'uuid':
+        $new_properties['uuid'] = array('label' => 'UUID', 'type' => 'uuid');
+        break;
+        
+        case 'uid':
+        $new_properties['uid'] = array('label' => 'Author', 'type' => 'integer', 'behavior' => 'author');
+        break;
+          
+        case 'created':
+        $new_properties['created'] = array('label' => 'Created', 'type' => 'integer', 'behavior' => 'created');
+        break;
+          
+        case 'changed':
+        $new_properties['changed'] = array('label' => 'Changed', 'type' => 'integer', 'behavior' => 'changed');
+        break;
+          
+        case 'state':
+        $new_properties['state'] = array('label' => 'State', 'type' => 'positive_integer');
+        break;
+      }
+    }
+    
+    $custom_properties = $record->custom_properties;
+    $custom_properties = unserialize($custom_properties);
+  
+    foreach($custom_properties as $property => $info){
+      
+      $type = $info['type'];
+      $label = $info['label'];
+      switch($type){
+        case 'text':
+        $new_properties[$property] = array('label' => $label, 'type' => $type);
+        break;
+        
+        case 'decimal':
+        $new_properties[$property] = array('label' => $label, 'type' => $type);
+        break;
+          
+        default:
+        $new_properties[$property] = array('label' => $label, 'type' => 'integer');
+        break;
+      }
+    }
+    
+    $encode_new = drupal_json_encode($new_properties);
+    
+     db_update('eck_entity_type') // Table name no longer needs {}
+    ->fields(array(
+      'properties' => $encode_new
+    ))
+    ->condition('name', $record->name, '=')
+    ->execute();
+  }
+  
+  //Now we can drop the custom_properties field now that everything has been moved
+  db_drop_field('eck_entity_type', 'custom_properties');
+  
+  //now the changes to the eck_bundle table
+  
+  //first lets drop that index
+  db_drop_index('eck_bundle', 'entity_type_bundle_name');
+  
+  db_add_field('eck_bundle', 'machine_name', array(
+    'description' => "A combination of the entity type and the name of
+    this bundle, this combination is unique",
+    'type' => 'varchar',
+    'length' => 128,
+    'default' =>"",
+    'not null' => TRUE
+  ));
+  
+  //
   
   
+}
+
+function eck_update_7007() {
+  
+  //lets generate the machine names for each bundle
+  $results = db_select('eck_bundle', 't')->fields('t')->execute();
+  
+  foreach ($results as $record) {
+    $name = $record->name;
+    $entity_type = $record->entity_type;
+    $record->machine_name = "{$entity_type}_{$name}";
+    db_update('eck_bundle') // Table name no longer needs {}
+    ->fields(array(
+      'machine_name' => $record->machine_name
+    ))
+    ->condition('id', $record->id, '=')
+    ->execute();
+  }
 }
 
 
