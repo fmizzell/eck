@@ -265,6 +265,7 @@ class EntityType extends DBObject{
   public function delete(){
     parent::delete();
     db_drop_table('eck_'.$this->name);
+    drupal_flush_all_caches();
   }
   
   public static function loadByName($name){
