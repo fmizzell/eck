@@ -204,7 +204,7 @@ function eck__properties__form($form, &$state, $entity_type_name){
   }
   
   $form["new_properties_table_label"] = array(
-    '#markup' => '<h3>New properties</h3>'
+    '#markup' => '<h3>Properties</h3>'
   );
   
   $defaults = array();
@@ -317,8 +317,13 @@ function eck__properties__form_submit($form, &$state){
     }
     
     $entity_type->save();
+    
+    //lets flush the cache so new behaviors and properties will get set up correctly
+    drupal_flush_all_caches();
   }
 }
+
+
 
 
 

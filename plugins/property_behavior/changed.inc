@@ -5,6 +5,7 @@ $plugin = array(
   'entity_save' => 'eck_changed_property_entity_save'
 );
 
-function eck_changed_property_entity_save($entity, $property, $value = NULL){
+function eck_changed_property_entity_save($property, $vars){
+  $entity = $vars['entity'];
   $entity->{$property} = time();
 }

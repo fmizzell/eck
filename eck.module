@@ -6,6 +6,7 @@ module_load_include('inc', 'eck', 'eck.bundle');
 module_load_include('inc', 'eck', 'eck.entity');
 module_load_include('inc', 'eck', 'eck.default_properties');
 module_load_include('inc', 'eck', 'eck.properties');
+module_load_include('inc', 'eck', 'eck.property_behavior');
 
 function eck_eck_default_properties(){
   $default_properties = array();
@@ -205,6 +206,22 @@ function eck_entity_info() {
   }
 
   return $info;
+}
+
+function eck_entity_info_alter(&$info){
+  
+  
+  foreach (EntityType::loadAll() as $entity_type) {
+    $entity_type_info = $info[$entity_type->name];
+    
+    $entity_type_info =
+    eck_property_behavior_invoke_plugin_alter($entity_type, 'entity_info',$entity_type_info);
+    
+    if($entity_type_info){
+      $info[$entity_type->name] = $entity_type_info;
+    }
+  }
+  
 }
 
 function entity_type_load($entity_type_name){

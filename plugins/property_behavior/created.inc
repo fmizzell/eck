@@ -6,6 +6,7 @@ $plugin = array(
 );
 
 
-function eck_created_property_entity_insert($entity, $property, $value = NULL){
+function eck_created_property_entity_insert($property, $vars){
+  $entity = $vars['entity'];
   $entity->{$property} = time();
 }

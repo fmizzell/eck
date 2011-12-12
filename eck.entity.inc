@@ -396,20 +396,12 @@ function eck__entity__form($form, $form_state, $entity) {
     //a widget in the property behaviors implemented
     $entity_type = $entity->entityType();
     $entity_type = EntityType::loadByName($entity_type);
-    $properties = $entity_type->properties;
     
-    foreach($properties as $property => $info){
-      //If there is a behavior associated with this property we need to call the appropiate hooks
-      if(array_key_exists('behavior', $info) && !empty($info['behavior'])){
-        $behavior = $info['behavior'];
-       
-        $plugin = ctools_get_plugins('eck', 'property_behavior', $behavior);
-        
-        $widget = _eck_apply_plugin_widget($plugin, $entity, $property);
-        if($widget){
-          $form[$property] = $widget;
-        }
-      }
+    $widgets = eck_property_behavior_invoke_plugin($entity_type, 'default_widget', 
+      array('entity' => $entity));
+    
+    foreach($widgets as $property => $widget){
+      $form[$property] = $widget;
     }
   }
   
@@ -441,68 +433,31 @@ function eck__entity__form_submit($form, &$state) {
   $entity_type = $entity->entityType();
   $entity_type = EntityType::loadByName($entity_type);
   $properties = $entity_type->properties;
-  
+  $form_values = array();
   foreach($properties as $property => $info){
-    //If there is a behavior associated with this property we need to call the appropiate hooks
-    if(array_key_exists('behavior', $info) && !empty($info['behavior'])){
-      $behavior = $info['behavior'];
-     
-      $plugin = ctools_get_plugins('eck', 'property_behavior', $behavior);
-      _eck_apply_plugin_function('entity_save', $plugin, $entity, $property, $state);
-      if(isset($entity->is_new) && $entity->is_new){
-        _eck_apply_plugin_function('entity_insert', $plugin, $entity, $property, $state);
-      }else{
-         _eck_apply_plugin_function('entity_update', $plugin, $entity, $property, $state);
-      }
+    $form_value = _eck_form_property_value($state, $property);
+    if($form_value){
+      $form_values[$property]['form_value'] = $form_value;
     }
   }
-  //dpm($entity, "Before Save");
+  
+  eck_property_behavior_invoke_plugin($entity_type, 'entity_save', 
+    array('entity' => $entity), $form_values);
+  
+  if(isset($entity->is_new) && $entity->is_new){
+    eck_property_behavior_invoke_plugin($entity_type, 'entity_insert', 
+      array('entity' => $entity), $form_values);
+  }else{
+    eck_property_behavior_invoke_plugin($entity_type, 'entity_update', 
+      array('entity' => $entity), $form_values);
+  }
+  
+  //dpm($entity, "Entity");
   
   $entity->save();
 
   drupal_set_message(t("Entity {$entity->id} - @entity_label has been saved", array("@entity_label" => entity_label($form['#entity_type'], $entity)) ));
 }
-
-function _eck_apply_plugin_function($function_name, $plugin, $entity, $property, $state){
-  
-  //Now we get the funtions from the plugin to handle save, insert and update
-  $function = ctools_plugin_get_function($plugin, $function_name);
-  
-  if($function){
-    $value = _eck_form_property_value($state, $property);
-    $function($entity, $property, $value);
-  }
-}
-
-function _eck_form_property_value($state, $property){
-  if(array_key_exists($property, $state['values'])){
-    return $state['values'][$property];
-  }
-  return NULL;
-}
-
-function _eck_apply_plugin_widget($plugin, $entity, $property){
-  
-  //Now we get the funtions from the plugin to handle save, insert and update
-  $function = ctools_plugin_get_function($plugin, 'default_widget');
-  
-  if($function){
-    return $function($entity, $property);
-  }
-  return NULL;
-}
-
-function _eck_apply_plugin_formatter($plugin, $entity, $property){
-  
-  //Now we get the funtions from the plugin to handle save, insert and update
-  $function = ctools_plugin_get_function($plugin, 'default_formatter');
-  
-  if($function){
-    return $function($entity, $property);
-  }
-  return NULL;
-}
-
 
 /**
  * Creates a renderable array to show an entity
@@ -519,30 +474,33 @@ function eck__entity__view($entity_type_name, $bundle_name, $id) {
   $entity = $entity[$id];
   
   $entity_type = entity_type_load($entity_type_name);
+  $properties = $entity_type->properties;
   $bundle = bundle_load($entity_type_name, $bundle_name);
   
   $build = array();
   $entity_view = eck__entity__build($entity_type, $bundle, $id);
-  
-  $properties = $entity_type->properties;
   $property_view = array();
-  foreach($properties as $property => $info){
-    //If there is a behavior associated with this property we need to call the appropiate hooks
-    if(array_key_exists('behavior', $info) && !empty($info['behavior'])){
-      $behavior = $info['behavior'];
-     
-      $plugin = ctools_get_plugins('eck', 'property_behavior', $behavior);
-      $formatter = _eck_apply_plugin_formatter($plugin, $entity, $property);
-      
-      if($formatter){
-        $property_view[$property] = $formatter;
-      }
-    }
+  
+  $formatters = eck_property_behavior_invoke_plugin($entity_type, 'default_formatter', 
+    array('entity' => $entity));
+    
+  foreach($formatters as $property => $formatter){
+    $property_view[$property] = $formatter;
   }
   
   $entity_view[$entity->entityType()][$entity->id] = array_merge($property_view, $entity_view[$entity->entityType()][$entity->id]);
   
+  eck_property_behavior_invoke_plugin($entity_type, 'entity_view',
+    array('entity' => $entity));
+  
   $build["{$entity_type->name}_{$bundle->name}_page"] = $entity_view;
 
   return $build;
+}
+
+function _eck_form_property_value($state, $property){
+  if(array_key_exists($property, $state['values'])){
+    return $state['values'][$property];
+  }
+  return NULL;
 }

@@ -25,13 +25,17 @@
  */
 
 $plugin = array(
-  'label' => "ECK SPB",
-  'entity_save' => 'eck_spb_entity_save',
-  'default_widget' => 'eck_spb_widget',
-  'default_formatter' => 'eck_spb_formatter'
+  'label' => "Title",
+  'entity_save' => 'eck_title_property_entity_save',
+  'entity_view' => 'eck_title_property_entity_view',
+  'entity_info' => 'eck_title_property_entity_info',
+  'default_widget' => 'eck_title_property_widget',
+  'default_formatter' => 'eck_title_property_formatter'
 );
 
-function eck_spb_entity_save($entity, $property, $value = NULL){
+function eck_title_property_entity_save($property, $vars){
+  $value = $vars['form_value'];
+  $entity = $vars['entity'];
   $entity->{$property} = $value;
 }
 
@@ -43,8 +47,9 @@ function eck_spb_entity_save($entity, $property, $value = NULL){
  * 
  * @return a rendarable array use when the input form for this entity is displayed
  */
-function eck_spb_widget($entity, $property){
-  $title = _eck_spb_extract_title($entity, $property);
+function eck_title_property_widget($property, $vars){
+  $entity = $vars['entity'];
+  $title = _eck_title_property_extract_title($entity, $property);
   return array(
     '#type' => 'textfield',
     '#title' => ucfirst($property),
@@ -52,12 +57,31 @@ function eck_spb_widget($entity, $property){
   );
 }
 
-function eck_spb_formatter($entity, $property){
-  $title = _eck_spb_extract_title($entity, $property);
+function eck_title_property_formatter($property, $vars){
+  $entity = $vars['entity'];
+  $title = _eck_title_property_extract_title($entity, $property);
   return array('#markup' => "<h1>{$title}</h1>");
 }
 
-function _eck_spb_extract_title($entity, $property){
+function eck_title_property_entity_view($property, $vars){
+   $entity = $vars['entity'];
+   $title = _eck_title_property_extract_title($entity, $property);
+   if(empty($title)){
+     $title = "{$entity->entityType()} : {$entity->id}";
+   }
+   
+   drupal_set_title($title);
+}
+
+function eck_title_property_entity_info($property, $var){
+  $info = $var;
+  unset($info['label callback']);
+  $info['entity keys']['label'] = $property;
+  
+  return $info;
+}
+
+function _eck_title_property_extract_title($entity, $property){
   $title = "";
   if(isset($entity->{$property})){
     $title = $entity->{$property};
@@ -65,3 +89,4 @@ function _eck_spb_extract_title($entity, $property){
   
   return $title;
 }
+
