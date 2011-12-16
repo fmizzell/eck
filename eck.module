@@ -439,6 +439,12 @@ function eck_forms($form_id, $args){
       'callback' => 'entity_table_select'
     );
   }
+  
+  else if (strpos($form_id, 'eck__entity__form_') === 0) {
+    $forms[$form_id] = array(
+      'callback' => 'eck__entity__form'
+    );
+  }
 
   return $forms;
 }

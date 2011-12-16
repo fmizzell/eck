@@ -222,7 +222,7 @@ function eck__entity__add($entity_type_name, $bundle_name) {
   $entity = entity_create($entity_type->name, array('type' => $bundle->name));
   //dpm($entity);
   //dpm(drupal_get_schema(), "Schema");
-  return drupal_get_form("eck__entity__form", $entity);
+  return drupal_get_form("eck__entity__form_add_{$entity_type_name}_{$bundle_name}", $entity);
 }
 
 /**
@@ -279,7 +279,7 @@ function eck__entity__edit($entity_type_name, $bundle_name, $id) {
 
   global $user;
 
-  return drupal_get_form("eck__entity__form", $entity);
+  return drupal_get_form("eck__entity__form_edit_{$entity_type_name}_{$bundle_name}", $entity);
 }
 
 /**
