@@ -1,0 +1,324 @@
+
+   
+@@ -47,7 +52,19 @@ function eck__entity__menu($entity_type, $bundle) {
+     'description' => "View all entites of type {$entity_type->label} with bundle {$bundle->label}",
+     'page callback' => "eck__entity__overview",
+     'page arguments' => array($entity_type, $bundle),
+-    'access arguments' => array("administer {$entity_type->name} {$bundle->name} entities"),
++    'access callback' => 'eck__multiple_access_check',
++    'access arguments' => array( array( 
++                                        'eck administer bundles',
++                                        'eck add bundles',
++                                        'eck edit bundles',
++                                        "eck administer {$entity_type->name} bundles",
++                                        "eck add {$entity_type->name} bundles",
++                                        "eck edit {$entity_type->name} bundles",
++                                        'eck administer entities', 
++                                        "eck list entities",
++                                        "eck administer {$entity_type->name} {$bundle->name} entities",
++                                        "eck list {$entity_type->name} {$bundle->name} entities"
++                                      ) ),
+     'weight' => 0,
+     'file' => 'eck.entity.inc'
+   );
+@@ -76,7 +93,13 @@ function eck__entity__menu($entity_type, $bundle) {
+       'description' => "{$action_label} an entity of type {$entity_type->label} with bundle {$bundle->label}",
+       'page callback' => "eck__entity__{$action}",
+       'page arguments' => $args,
+-      'access arguments' => array("{$action} {$entity_type->name} {$bundle->name} entities"),
++      'access callback' => 'eck__multiple_access_check',
++      'access arguments' => array( array(
++                                    'eck administer entities',
++                                    "eck {$action} entities",
++                                    "eck administer {$entity_type->name} {$bundle->name} entities",
++                                    "eck {$action} {$entity_type->name} {$bundle->name} entities"
++                                  ), FALSE /*TODO: should auto-load entity author here. */ ),
+       'file' => 'eck.entity.inc'
+     );
+   }
+@@ -133,9 +156,24 @@ function eck__entity__overview($entity_type, $bundle) {
+   //Because of the flexible paths capabilities, we are not guaranteed to see a local action for the add here,
+   //so lets add a link ourselves until we figure out whether there is a better solution
+   $crud_info = get_bundle_crud_info($entity_type->name, $bundle->name);
+-  $build['add'] = array('#markup' => "+ ".l(t('Add Entity'), $crud_info['add']['path']));
+-
+-  $build['table'] = entity_table($entities, TRUE);
++  
++  //Check that the user has permissions to add an entity:
++  if( eck__multiple_access_check(
++      array( 'eck administer entities', 
++             'eck add entities',
++             "eck administer {$entity_type->name} {$bundle->name} entities",
++             "eck add {$entity_type->name} {$bundle->name} entities"
++  ) ) ) 
++    $build['add'] = array('#markup' => "+ ".l(t('Add Entity'), $crud_info['add']['path']));
++
++  //Check that the user has permissions to view entity lists:
++  if( eck__multiple_access_check(
++      array( 'eck administer entities', 
++             'eck list entities',
++             "eck administer {$entity_type->name} {$bundle->name} entities",
++             "eck list {$entity_type->name} {$bundle->name} entities"
++  ) ) )
++    $build['table'] = entity_table($entities, TRUE);
+ 
+   $build['sample_code'] = array(
+     '#theme' => 'form_element',
+diff --git a/eck.entity_type.inc b/eck.entity_type.inc
+index f47da8b..8b261d5 100644
+--- a/eck.entity_type.inc
++++ b/eck.entity_type.inc
+@@ -27,7 +27,8 @@ function eck__entity_type__menu() {
+     'title' => 'Entity Type',
+     'description' => 'A centralized administrative section for entity types',
+     'page callback' => 'eck__entity_type__overview',
+-    'access arguments' => array('administer entity types'),
++    'access callback' => 'eck__multiple_access_check',
++    'access arguments' => array(array('eck administer entity types', 'eck list entity types')),
+     'file' => 'eck.entity_type.inc'
+   );
+ 
+@@ -37,7 +38,8 @@ function eck__entity_type__menu() {
+     'description' => 'Add new entity type',
+     'page callback' => 'drupal_get_form',
+     'page arguments' => array('eck__entity_type__form'),
+-    'access arguments' => array('add entity types'),
++    'access callback' => 'eck__multiple_access_check',
++    'access arguments' => array(array('eck administer entity types', 'eck add entity types')),
+     'type' => MENU_LOCAL_ACTION,
+     'weight' => 1,
+     'file' => 'eck.entity_type.inc'
+@@ -97,10 +99,14 @@ function eck__entity_type__overview() {
+ 
+   foreach (eck__entity_type__load() as $entity_type) {
+ 
+-    $rows[] = 
+-    array(
+-      l(t("{$entity_type->label}"), "admin/structure/eck/{$entity_type->name}"),
+-      l(t("delete"), "admin/structure/eck/{$entity_type->name}/delete")
++    $allowed_operations = '';
++    //Check that the user has permissions to delete:
++    if( eck__multiple_access_check( array( 'eck administer entity types', 'eck delete entity types') ) )
++      $allowed_operations = l(t("delete"), "admin/structure/eck/{$entity_type->name}/delete");    
++        
++    $rows[] = array(
++          l(t("{$entity_type->label}"), "admin/structure/eck/{$entity_type->name}"),
++          $allowed_operations
+     );
+   }
+   $build['entity_table'] = array(
+@@ -294,7 +300,7 @@ function eck__entity_type__form_validate($form, &$state) {
+ }
+ 
+ /**
+- * Submit handler for adding and entity type.
++ * Submit handler for adding an entity type.
+  *
+  * @param $form
+  *  Form array provided by the Form API
+@@ -375,7 +381,7 @@ function eck__entity_type__form_submit($form, &$state) {
+ 
+     drupal_set_message(t('Entity type %entity_type has been created.', array('%entity_type' => $entity_type_label)));
+ 
+-    drupal_goto("admin/structure/eck/{$entity_type->name}");
++    drupal_goto("admin/structure/eck/{$entity_type_name}");
+   }
+   else {
+     // @todo Move into validation handler.
+@@ -595,7 +601,14 @@ function eck__entity_type__info($entity_type) {
+       'label' => $bundle_label,
+       'admin' => array(
+         'path' => $path,
+-        'access arguments' => array('administer entities')
++        'access callback' => 'eck__multiple_access_check',
++        'access arguments' => 
++             array( array( 'eck administer bundles',
++                           'eck edit bundles',
++                           "eck administer {$entity_type->name} bundles", 
++                           "eck edit {$entity_type->name} bundles"
++                         ) 
++                  )
+       ),
+       'crud' =>
+       array(
+diff --git a/eck.module b/eck.module
+index 9279f58..5774439 100644
+--- a/eck.module
++++ b/eck.module
+@@ -93,23 +93,93 @@ function eck_permission() {
+   module_load_include('inc', 'eck', 'eck.entity_type');
+   module_load_include('inc', 'eck', 'eck.bundle');
+   
+-  $perms = array();
+-
+-  $perms['administer entity types'] =
+-  array(
+-    'title' => t('Administer Entity Types'),
+-    'restrict access' => TRUE
++  $perms = array(
++    //Entity Type permissions:
++    'eck administer entity types' => array(
++          'title' => t('Administer Entity Types'),
++          'restrict access' => TRUE,
++          'description' => t('Grants the ability to administer(add/edit/delete/view) any ECK Entity Type.')
++    ),
++    'eck add entity types' => array(
++          'title' => t('Add Entity Types'),
++          'restrict access' => TRUE
++    ),
++    'eck edit entity types' => array(
++          'title' => t('Edit Entity Types'),
++          'restrict access' => TRUE
++    ),
++    'eck delete entity types' => array(
++          'title' => t('Delete Entity Types'),
++          'restrict access' => TRUE
++    ),
++    'eck list entity types' => array(
++          'title' => t('View Entity Type List')
++    ),
++    //Bundle Permissions:
++    'eck administer bundles' => array(
++          'title' => t('Administer Bundles'),
++          'restrict access' => TRUE,
++          'description' => t('Grants the ability to administer(add/edit/delete/list) any ECK Bundle.')
++    ),
++    'eck add bundles' => array(
++          'title' => t('Add Bundles'),
++          'restrict access' => TRUE
++    ),
++    'eck edit bundles' => array(
++          'title' => t('Edit Bundles'),
++          'restrict access' => TRUE
++    ),
++    'eck delete bundles' => array(
++          'title' => t('Delete Bundles'),
++          'restrict access' => TRUE
++    ),
++    'eck list bundles' => array(
++          'title' => t('View Bundle Lists')
++    ),
++    //Entitiy Permissions:
++    'eck administer entities' => array(
++          'title' => t('Administer Entities'),
++          'restrict access' => TRUE
++    ),
++    'eck add entities' => array(
++          'title' => t('Administer Any Entity'),
++          'restrict access' => TRUE
++    ),
++    'eck edit entities' => array(
++          'title' => t('Edit Any Entity'),
++          'restrict access' => TRUE
++    ),
++    'eck delete entities' => array(
++          'title' => t('Delete Any Entity'),
++          'restrict access' => TRUE
++    ),
++    'eck view entities' => array(
++          'title' => t('View Any Entity')
++    ),
++    'eck list entities' => array(
++          'title' => t('View Entity Lists'),
++          'description' => t('Grants the ability to view the list of entities displayed on any bundle page.')
++    ),
++    /*Permissions for Entity Authors:
++    //TODO: implement ownership permission handling. Will
++    //essentially need to check if the author property exists
++    //and see if it matches the current user id.
++    'eck edit entities own' => array(
++          'title' => t('Edit Own Entities')
++    ),
++    'eck delete entities own' => array(
++          'title' => t('Delete Own Entities')
++    ),
++    'eck view entities own' => array(
++          'title' => t('View Own Entities')
++    ),
++*/
+   );
+ 
+-  $perms['add entity types'] =
+-  array(
+-    'title' => t('Add Entity Types'),
+-    'restrict access' => TRUE
+-  );
+ 
+   foreach (eck__entity_type__load() as $entity_type) {
+ 
+-    foreach (array('administer' => 'Administer', 'add' => "Add") as $op => $op_label) {
++    foreach (array('eck administer' => 'Administer', 'eck add' => "Add", 'eck edit' => 'Edit', 'eck delete' => 'Delete', 'eck list' => 'View List of') as $op => $op_label) {
+       $perms["{$op} {$entity_type->name} bundles"] = array(
+         'title' => "{$op_label} {$entity_type->label} Bundles"
+       );
+@@ -117,7 +187,7 @@ function eck_permission() {
+ 
+     foreach (eck__bundle__load($entity_type->name) as $bundle) {
+       
+-      foreach (array('administer' => 'Administer', 'add' => "Add", 'view' => 'View', 'edit' => 'Edit', 'delete' => 'Delete') as $op => $op_label) {
++      foreach (array('eck administer' => 'Administer', 'eck add' => "Add", 'eck edit' => 'Edit', 'eck delete' => 'Delete', 'eck list' => 'View List of', 'eck view' => 'View') as $op => $op_label) {
+         $perms["{$op} {$entity_type->name} {$bundle->name} entities"] = array(
+           'title' => "{$op_label} {$entity_type->label} {$bundle->label} Entities"
+         );
+@@ -190,11 +260,33 @@ function entity_table($entities, $select = FALSE) {
+       $crud_info = get_bundle_crud_info($entity_type, $bundle);
+     }
+     
+-    $edit_path = str_replace('%', $id, $crud_info['edit']['path']);
+-    $delete_path = str_replace('%', $id, $crud_info['delete']['path']);
++    $allowed_operations = '';
++    //Check that the user has permissions to edit:
++    if( eck__multiple_access_check( 
++      array( 'eck administer entities', 
++             'eck edit entities',
++             "eck administer {$entity_type} {$bundle} entities",
++             "eck edit {$entity_type} {$bundle} entities"
++            ), FALSE /* TODO: should also check user ownership perms. */ )
++    ){
++      $edit_path = str_replace('%', $id, $crud_info['edit']['path']);
++      $allowed_operations = l(t('edit'), $edit_path);
++    }
++    
++    //Check that the user has permissions to delete:
++    if( eck__multiple_access_check( 
++      array( 'eck administer entities', 
++             'eck delete entities',
++             "eck administer {$entity_type} {$bundle} entities",
++             "eck delete {$entity_type} {$bundle} entities"
++            ), FALSE /* TODO: should also check user ownership perms. */ )
++    ){
++      $delete_path = str_replace('%', $id, $crud_info['delete']['path']);
++      $allowed_operations .= (($allowed_operations)?'<br />':'').l(t('delete'), $delete_path);
++    }
+     $uri = entity_uri($entity_type, $entity);
+     $row = array(l(entity_label($entity_type, $entity), $uri['path'], $uri['options']));
+-    $row[] = array('data' => l(t('edit'), $edit_path)."<br>".l(t('delete'), $delete_path)); //"admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
++    $row[] = array('data' => $allowed_operations); //"admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
+     
+     $info['entity'] = $entity;
+     drupal_alter("entity_{$entity_type}_{$bundle}_tr", $row, $info);
+@@ -470,3 +562,24 @@ function eck__entity__uri($entity) {
+   
+   return array('path' => $view_path);
+ }
++
++/**
++ * Callback for checking multiple permissions
++ * @param $perms
++ *  An array of permissions to be checked against.
++ * @param $b_own
++ *  Flag to indicate if we should also check ownership permissions which
++ *  are the same as the usual permissions, but will be postfixed with ' own'.
++ */
++function eck__multiple_access_check($perms, $b_own = FALSE) {
++  foreach($perms as $perm) {
++    if(user_access($perm)) return TRUE;
++  }
++  if (!$b_own) return FALSE;
++  //check for entity author field and user ownership permissions.
++  foreach($perms as $perm) {
++    if(user_access($perm.' own')) return TRUE;
++  }
++  //the user does not have any of the supplied permissions.
++  return FALSE;
++}
