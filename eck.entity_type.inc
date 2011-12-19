@@ -30,7 +30,9 @@ function eck__entity_type__menu() {
     'title' => 'Entity types',
     'description' => 'A centralized administrative section for entity types',
     'page callback' => 'eck__entity_type__list',
-    'access arguments' => array('administer entity types'),
+    'access callback' => 'eck__multiple_access_check',
+    'access arguments' => array(array('eck administer entity types', 'eck list entity types')),
+     
     'file' => 'eck.entity_type.inc'
   );
 
@@ -40,7 +42,9 @@ function eck__entity_type__menu() {
     'description' => 'Add a new entity type',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('eck__entity_type__form'),
-    'access arguments' => array('add entity types'),
+    'access callback' => 'eck__multiple_access_check',
+    'access arguments' => array(array('eck administer entity types', 'eck add entity types')),
+     
     'type' => MENU_LOCAL_ACTION,
     'weight' => -1,
     'file' => 'eck.entity_type.inc'
@@ -65,11 +69,14 @@ function eck__entity_type__list() {
   $rows = array();
 
   foreach (EntityType::loadAll() as $entity_type) {
-    $rows[] = 
-    array(
-      l(t("{$entity_type->label}"), "{$path}/{$entity_type->name}"),
-      l(t("delete"), "{$path}/{$entity_type->name}/delete")
-    );
+    $allowed_operations = '';
+    //Check that the user has permissions to delete:
+    if( eck__multiple_access_check( array( 'eck administer entity types', 'eck delete entity types') ) )
+      $allowed_operations = l(t("delete"), "{$path}/{$entity_type->name}/delete");    
+        
+    $rows[] = array(
+          l(t("{$entity_type->label}"), "{$path}/{$entity_type->name}"),
+          $allowed_operations);
   }
   $build['entity_table'] = array(
     '#theme' => 'table',
@@ -180,7 +187,7 @@ function eck__entity_type__form_validate($form, &$state) {
 }
 
 /**
- * Submit handler for adding and entity type.
+ * Submit handler for adding an entity type.
  *
  * @param $form
  *  Form array provided by the Form API
@@ -265,6 +272,7 @@ function eck__entity_type__delete($entity_type){
 }
 
 function eck__entity_type__delete_form($form, &$state, $entity_type_name){
+  $path = eck__entity_type__path();  
   $entity_type = entity_type_load($entity_type_name);
   $form['entity_type'] = 
   array(
@@ -275,7 +283,7 @@ function eck__entity_type__delete_form($form, &$state, $entity_type_name){
   $form['submit_redirect'] =
   array(
     '#type' => 'value',
-    '#value' => "admin/structure/entity_type",
+    '#value' => $path,
   );
   
   $message = t("Are you sure that you want to delete the entity type '{$entity_type->name}'");
@@ -285,7 +293,7 @@ function eck__entity_type__delete_form($form, &$state, $entity_type_name){
 
   return 
   confirm_form($form, $message, 
-  "admin/structure/eck", $caption, t('Delete'));
+  $path, $caption, t('Delete'));
 }
 
 function eck__entity_type__delete_form_submit($form, &$state){
@@ -392,7 +400,14 @@ function eck__entity_type__info($entity_type) {
       'label' => $bundle_label,
       'admin' => array(
         'path' => $path,
-        'access arguments' => array('administer entities')
+        'access callback' => 'eck__multiple_access_check',
+        'access arguments' => 
+         array( array( 'eck administer bundles',
+                       'eck edit bundles',
+                       "eck administer {$entity_type->name} bundles", 
+                       "eck edit {$entity_type->name} bundles"
+                     ) 
+              )
       ),
       'crud' =>
       array(

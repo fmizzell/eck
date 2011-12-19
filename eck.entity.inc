@@ -57,7 +57,21 @@ function eck__entity__menu($entity_type, $bundle) {
     'description' => "View all entites of type {$entity_type->label} with bundle {$bundle->label}",
     'page callback' => "eck__entity__list",
     'page arguments' => array($entity_type->name, $bundle->name),
-    'access arguments' => array("administer {$entity_type->name} {$bundle->name} entities"),
+    'access callback' => 'eck__multiple_access_check',
+    'access arguments' => array( 
+      array( 
+        'eck administer bundles',
+        'eck add bundles',
+        'eck edit bundles',
+        "eck administer {$entity_type->name} bundles",
+        "eck add {$entity_type->name} bundles",
+        "eck edit {$entity_type->name} bundles",
+        'eck administer entities', 
+        "eck list entities",
+        "eck administer {$entity_type->name} {$bundle->name} entities",
+        "eck list {$entity_type->name} {$bundle->name} entities"
+      ) 
+    ),
     'weight' => 0,
     'file' => 'eck.entity.inc'
   );
@@ -86,8 +100,15 @@ function eck__entity__menu($entity_type, $bundle) {
       'description' => "{$action_label} an entity of type {$entity_type->label} with bundle {$bundle->label}",
       'page callback' => "eck__entity__{$action}",
       'page arguments' => $args,
-      'access arguments' => array("{$action} {$entity_type->name} {$bundle->name} entities"),
-      'file' => 'eck.entity.inc'
+      'access callback' => 'eck__multiple_access_check',
+      'access arguments' => array( 
+        array(
+          'eck administer entities',
+          "eck {$action} entities",
+          "eck administer {$entity_type->name} {$bundle->name} entities",
+          "eck {$action} {$entity_type->name} {$bundle->name} entities"
+        ), FALSE /*TODO: should auto-load entity author here. */ ),
+       'file' => 'eck.entity.inc'
     );
     
     //I think it would be useful to have the edit, delete, and list tabs at the view also
@@ -190,24 +211,23 @@ function eck__entity__list($entity_type_name, $bundle_name) {
   //Because of the flexible paths capabilities, we are not guaranteed to see a local action for the add here,
   //so lets add a link ourselves until we figure out whether there is a better solution
   $crud_info = get_bundle_crud_info($entity_type->name, $bundle->name);
-  $build['add'] = 
-  /*array(
-    '#theme'=> 'menu_local_action', 
-    '#link'=>
-      array('title' => 'Add entity', 'href' => $crud_info['add']['path']));*/
-      
-  array('#markup' => "<ul class = 'action-links'><li>".l(t('Add Entity'), $crud_info['add']['path'])."</li></ul>");
+  //Check that the user has permissions to add an entity:
+  if( eck__multiple_access_check(
+      array( 'eck administer entities', 
+             'eck add entities',
+             "eck administer {$entity_type->name} {$bundle->name} entities",
+             "eck add {$entity_type->name} {$bundle->name} entities"
+  ) ) ) 
+    $build['add'] = array('#markup' => "+ ".l(t('Add Entity'), $crud_info['add']['path']));
 
-  $build['table'] = entity_table($entities, TRUE);
-
-  /*$build['sample_code'] = array(
-    '#theme' => 'form_element',
-    '#title' => t('Optional entity type class'),
-    '#description' => t('You may add this custom class for the bundle. To create a new instance of this class programmatically call: %code', array(
-      '%code' => "entity_create('{$entity_type->name}', array('type' => '{$bundle->name}'));"
-    )),
-    '#children' => "<pre>" . check_plain("class " . eck_get_class_name($bundle->name, 'EntityType') . " extends Entity{\n\n}") . "</pre>"
-  );*/
+  //Check that the user has permissions to view entity lists:
+  if( eck__multiple_access_check(
+      array( 'eck administer entities', 
+             'eck list entities',
+             "eck administer {$entity_type->name} {$bundle->name} entities",
+             "eck list {$entity_type->name} {$bundle->name} entities"
+  ) ) )
+    $build['table'] = entity_table($entities, TRUE);
 
   return $build;
 }
@@ -309,6 +329,8 @@ function eck__entity__delete($entity_type_name, $bundle_name, $id) {
 }
 
 function eck__entity__delete_form($form, &$form_state, $entity_type, $bundle, $id){
+  $path = eck__entity_type__path();
+    
   $entities = entity_load($entity_type->name, array($id));
 
   $form['entity'] =
@@ -332,7 +354,7 @@ function eck__entity__delete_form($form, &$form_state, $entity_type, $bundle, $i
   $form['submit_redirect'] =
   array(
     '#type' => 'value',
-    '#value' => "admin/structure/entity_type/{$entity_type->name}/{$bundle->name}",
+    '#value' => "{$path}/{$entity_type->name}/{$bundle->name}",
   );
 
   $message = t("Are you sure that you want to delete %id",
@@ -340,7 +362,7 @@ function eck__entity__delete_form($form, &$form_state, $entity_type, $bundle, $i
 
   $caption = t("This action cannot be undone.");
 
-  return confirm_form($form, $message, "admin/structure/eck/{$entity_type->name}", $caption, t('Delete'));
+  return confirm_form($form, $message, "{$path}/{$entity_type->name}", $caption, t('Delete'));
   
 }
 

@@ -56,7 +56,8 @@ function eck__bundle__menu($entity_type) {
                                        'eck edit entity types',
                                        'eck administer bundles', 
                                        'eck list bundles', 
-                                       "eck administer {$entity_type->name} bundles"
+                                       "eck administer {$entity_type->name} bundles",
+                                       "eck list {$entity_type->name} bundles"
                                        ) ),
     'file' => 'eck.bundle.inc'
   );
@@ -125,7 +126,7 @@ function eck__bundle__list($entity_type) {
     $header = array(t('Type'), array('data' => t('Operations'), 'colspan' => '1'));
     $rows = array();
 
-    foreach (eck__bundle__load($entity_type->name) as $bundle) {
+    foreach (Bundle::loadByEntityType($entity_type) as $bundle) {
       $bundle_label =  $bundle->label;
 
       $admin_info = get_bundle_admin_info($entity_type->name, $bundle->name);
@@ -235,6 +236,8 @@ function eck__bundle__add_validate($form, &$form_state) {
  *  array provided by the Form API
  */
 function eck__bundle__add_submit($form, &$form_state) {
+  $path = eck__entity_type__path();
+  
   $entity_type = $form_state['values']['entity_type'];
   $bundle_name = $form_state['values']['bundle_name'];
   $bundle_label = $form_state['values']['bundle_label'];
@@ -252,7 +255,7 @@ function eck__bundle__add_submit($form, &$form_state) {
   entity_info_cache_clear();
   menu_rebuild();
 
-  drupal_goto("admin/structure/entity_type/{$entity_type->name}");
+  drupal_goto("{$path}/{$entity_type->name}");
 }
 
 /**
@@ -288,10 +291,7 @@ function eck__bundle__delete($entity_type, $bundle){
 }
 
 function eck__bundle__delete_form($form, &$form_state, $entity_type_name, $bundle_name) {
-    /*dpm("Delete Form");
-    dpm($entity_type_name);
-    dpm($bundle_name);*/
-      
+    $path = eck__entity_type__path();
     $entity_type = entity_type_load($entity_type_name);
     $bundle = bundle_load($entity_type_name, $bundle_name);
     
@@ -313,7 +313,7 @@ function eck__bundle__delete_form($form, &$form_state, $entity_type_name, $bundl
   $form['submit_redirect'] =
   array(
     '#type' => 'value',
-    '#value' => "admin/structure/entity_type/{$entity_type->name}",
+    '#value' => "{$path}/{$entity_type->name}",
   );
 
   $message = t("Are you sure that you want to delete the bundle '{$bundle->name}'");
@@ -321,7 +321,7 @@ function eck__bundle__delete_form($form, &$form_state, $entity_type_name, $bundl
   $caption = t("All of the data (entities) associated with this bundle
   will be deleted. This action cannot be undone.");
 
-  return confirm_form($form, $message, "admin/structure/eck/{$entity_type->name}", $caption, t('Delete'));
+  return confirm_form($form, $message, "{$path}/{$entity_type->name}", $caption, t('Delete'));
 }
 
 /**
