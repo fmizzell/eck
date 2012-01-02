@@ -1,4 +1,23 @@
 <?php
+
+function eck_requirements($phase){
+  if($phase == 'update'){
+    //I guess we just need to check whether the module exists, and then the update can enable it
+    //if it is not enabled
+    $requirements['ctools'] =
+    array(
+      'title' => 'CTools Module Required',
+      'description' => "ECK uses the plugin implementation offered by the CTools module"
+    );
+    if(module_exists('ctools')){
+      $requirement['ctools']['severity'] = REQUIREMENT_OK;
+    }else{
+      $requirement['ctools']['severity'] = REQUIREMENT_ERROR;
+    }
+  }
+  
+  return $requirements;
+}
 /**
  * @file
  * This install file creates a table for the this module to store information
@@ -328,6 +347,10 @@ function eck_update_7005() {
 }
 
 function eck_update_7006() {
+  //we already made sure in hook_requirements that the module ctools exists in the system,
+  //so now we can safely enable it
+  module_enable(array('ctools'));
+  
   //lets start with then entity type table
   
   //lets add an id field to the entity_type table, and set it up as a primary key
