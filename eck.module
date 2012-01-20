@@ -374,13 +374,6 @@ function eck_menu() {
  
   $menu = array();
   
-  $menu['admin/structure/script'] = array(
-    'title' => 'Script',
-    'description' => 'Script',
-    'page callback' => 'eck_script',
-    'access arguments' => array('run script'),
-  );
-  
   module_load_include('inc', 'eck', 'eck.entity_type');
   $menu = array_merge(eck__entity_type__menu(), $menu);
   return $menu;
