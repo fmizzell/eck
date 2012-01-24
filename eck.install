@@ -483,6 +483,20 @@ function eck_update_7007() {
   }
 }
 
+function eck_update_7008() {
+  //well it seems that the way to fix the menu display problems is by deleting the offending
+  //links and letting them get repopulated when the cache is flushed
+  module_load_include('inc', 'eck', 'classes');
+  
+  foreach(EntityType::loadAll() as $entity_type){
+    foreach(Bundle::loadByEntityType($entity_type) as $bundle){
+        $query = db_delete('menu_links');
+        $query->condition('link_path', "admin/structure/entity-type/{$entity_type->name}/{$bundle->name}/delete");
+        $query->execute();
+    }
+  }
+}
+
 
 
 

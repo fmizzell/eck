@@ -61,10 +61,11 @@ function eck_property_type_schema($type){
       
       case 'uuid':
       $schema = array(
-        'type' => 'int',
-        'description' => "UUID",
+        'type' => 'char',
+        'length' => 36,
         'not null' => TRUE,
-        'default' => 0,
+        'default' => '',
+        'description' => 'The Universally Unique Identifier.',
       );
       break;
       
