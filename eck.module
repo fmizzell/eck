@@ -10,6 +10,14 @@ module_load_include('inc', 'eck', 'eck.property_behavior');
 
 function eck_eck_default_properties(){
   $default_properties = array();
+  
+  $default_properties['title'] =
+  array(
+    'label' => "Title",
+    'type' => "text",
+    'behavior' => 'title'
+  );
+  
   $default_properties['uid'] =
   array(
     'label' => "Author",
@@ -232,7 +240,6 @@ function eck_entity_info() {
 
 function eck_entity_info_alter(&$info){
   
-  
   foreach (EntityType::loadAll() as $entity_type) {
     $entity_type_info = $info[$entity_type->name];
     
@@ -243,7 +250,6 @@ function eck_entity_info_alter(&$info){
       $info[$entity_type->name] = $entity_type_info;
     }
   }
-  
 }
 
 function entity_type_load($entity_type_name){
@@ -298,6 +304,20 @@ function eck_entity_property_info(){
   }
   
   return $info;  
+}
+
+function eck_entity_property_info_alter(&$info){
+  
+  foreach (EntityType::loadAll() as $entity_type) {
+    $entity_property_info = $info[$entity_type->name];
+    
+    $entity_property_info =
+    eck_property_behavior_invoke_plugin_alter($entity_type, 'property_info',$entity_property_info);
+    
+    if($entity_property_info){
+      $info[$entity_type->name] = $entity_property_info;
+    }
+  }
 }
 
 function eck_get_property_label($name){
@@ -367,11 +387,6 @@ function eck_get_property_label($name){
  */
 function eck_menu() {
   
-  /*$plugins = ctools_get_plugins('eck', 'property_behavior');
-  dpm($plugins, "Plugins");
-  $function = ctools_plugin_get_function($plugins['created'], 'hook_entity_save');
-  dpm($function, "Function");*/
- 
   $menu = array();
   
   module_load_include('inc', 'eck', 'eck.entity_type');
@@ -457,21 +472,7 @@ function eck_permission() {
     'eck list entities' => array(
           'title' => t('View Entity Lists'),
           'description' => t('Grants the ability to view the list of entities displayed on any bundle page.')
-    ),
-    /*Permissions for Entity Authors:
-    //TODO: implement ownership permission handling. Will
-    //essentially need to check if the author property exists
-    //and see if it matches the current user id.
-    'eck edit entities own' => array(
-          'title' => t('Edit Own Entities')
-    ),
-    'eck delete entities own' => array(
-          'title' => t('Delete Own Entities')
-    ),
-    'eck view entities own' => array(
-          'title' => t('View Own Entities')
-    ),
-*/
+    )
   );
 
   foreach (EntityType::loadAll() as $entity_type) {
