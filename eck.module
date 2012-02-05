@@ -285,10 +285,13 @@ function eck_entity_property_info(){
   //$properties = &$info['entity_type']['properties'];
   foreach(EntityType::loadAll() as $entity_type){
     
-    //@todo we should connect the label to the label set up for the 
-    //property
+    $properties = $entity_type->properties;
     $stuff = entity_metadata_convert_schema("eck_{$entity_type->name}");
     foreach($stuff as $key => $property){
+      // Use user defined label for property
+      if (isset($properties[$key])) {
+        $property['label'] = $properties[$key]['label'];
+      }
       $property['setter callback'] = "entity_property_verbatim_set";
       $property['getter callback'] = 'entity_property_verbatim_get';
       $property['description'] = $property['label'];

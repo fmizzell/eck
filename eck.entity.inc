@@ -424,8 +424,11 @@ function eck__entity__form($form, $form_state, $entity) {
     $entity_type = $entity->entityType();
     $entity_type = EntityType::loadByName($entity_type);
     
+    $vars = array('entity' => $entity);
+    $vars += $property_info;
+    
     $widgets = eck_property_behavior_invoke_plugin($entity_type, 'default_widget', 
-      array('entity' => $entity));
+      $vars);
     
     foreach($widgets as $property => $widget){
       $form[$property] = $widget;

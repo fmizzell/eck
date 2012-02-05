@@ -52,7 +52,7 @@ function eck_title_property_widget($property, $vars){
   $title = _eck_title_property_extract_title($entity, $property);
   return array(
     '#type' => 'textfield',
-    '#title' => ucfirst($property),
+    '#title' => $vars['properties'][$property]['label'],
     '#default_value' => $title,
     '#required' => TRUE
   );
