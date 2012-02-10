@@ -8,6 +8,16 @@ module_load_include('inc', 'eck', 'eck.default_properties');
 module_load_include('inc', 'eck', 'eck.properties');
 module_load_include('inc', 'eck', 'eck.property_behavior');
 
+/**
+ * Implements hook_views_api().
+ */
+function eck_views_api() {
+  return array(
+    'api'   => '3',
+    'path'  => drupal_get_path('module', 'eck') . '/views',
+  );
+}
+
 function eck_eck_default_properties(){
   $default_properties = array();
   

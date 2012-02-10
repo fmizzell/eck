@@ -5,3 +5,7 @@ core = 7.x
 dependencies[] = entity
 dependencies[] = ctools
 
+files[] = views/handlers/eck_views_handler_field_link.inc
+files[] = views/handlers/eck_views_handler_field_link_edit.inc
+files[] = views/handlers/eck_views_handler_field_link_delete.inc
+
