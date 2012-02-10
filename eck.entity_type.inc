@@ -196,7 +196,7 @@ function eck__entity_type__form_validate($form, &$state) {
  */
 function eck__entity_type__form_submit($form, &$state) {
   
-  if($state['values']['op'] == "Save"){
+  if($state['values']['op'] == t("Save")){
     // This are required so I don't have to do any checks.
     $entity_type = $state['values']['entity_type'];
     
