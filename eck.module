@@ -311,6 +311,13 @@ function eck_entity_property_info(){
       drupal_alter("entity_property_{$key}_info", $property);
       drupal_alter("entity_property_{$entity_type->name}_{$key}_info", $property);
       
+      if ($key == 'type') {
+        $property['label'] = t('!entity_type type', array('!entity_type' => $entity_type->name));
+        $property['type']  = 'token';
+        $property['description'] = t('The type of this :entity_type entity.', array(':entity_type' => $entity_type->name));
+        $property['options list'] = 'EntityDefaultMetadataController::bundleOptionsList';
+        $property['required'] = TRUE;
+      }
       $stuff[$key] = $property;
     }
     $info[$entity_type->name]['properties'] = $stuff;
