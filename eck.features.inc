@@ -87,24 +87,18 @@ function eck_entity_type_features_revert($module) {
  * Rebuilds eck entities from code defaults.
  */
 function eck_entity_type_features_rebuild($module) {
- module_load_include('inc', 'eck', 'eck.entity_type');
+ 
   if ($default_entities = features_get_default('eck_entity_type', $module)) {
     foreach ($default_entities as $entity_type_name => $entity_type_info) {
-      $entity_type = array(
-        'name' => $entity_type_name,
-        'label' => $entity_type_info['label'],
-        'properties' => serialize($entity_type_info['properties']),
-        // @TODO: How should custom properties be handled? They aren't described in the DB.
-      );
-      db_merge('eck_entity_type')
-        ->key(array('name' => $entity_type_name))
-        ->fields($entity_type)
-        ->execute();
-
-      if (!db_table_exists("eck_{$entity_type_name}")) {
-        $entity_type['properties'] = unserialize($entity_type['properties']);
-        db_create_table("eck_{$entity_type_name}", eck__entity_type__schema((object) $entity_type));
+      
+      //dpm($entity_type_info, $entity_type_name);
+      
+      $entity_type = new EntityType();
+      foreach($entity_type_info as $key => $value){
+        $entity_type->{$key} = $value; 
       }
+      
+      $entity_type->save();
     }
 
     drupal_get_schema(NULL, TRUE);
@@ -228,17 +222,14 @@ function eck_bundle_features_revert($module) {
  * Rebuilds eck entities from code defaults.
  */
 function eck_bundle_features_rebuild($module) {
-  if ($default_types = features_get_default('eck_type', $module)) {
-    foreach ($default_types as $type_name => $type_info) {
-      $type = array(
-        'entity' => $type_info['entity'],
-        'type' => $type_name,
-        'label' => $type_info['label'],
-      );
-      db_merge('eck_types')
-        ->key(array('type' => $type_name))
-        ->fields($type)
-        ->execute();
+  if ($default_types = features_get_default('eck_bundle', $module)) {
+    foreach ($default_types as $bundle_machine_name => $bundle_info) {
+      
+      $bundle = new Bundle();
+      foreach($bundle_info as $key=>$value){
+        $bundle->{$key} = $value;
+      }
+      $bundle->save();
     }
 
     drupal_get_schema(NULL, TRUE);
