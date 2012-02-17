@@ -169,6 +169,7 @@ function entity_table($entities, $select = FALSE) {
     }
     
     $allowed_operations = '';
+    $destination = drupal_get_destination();
     //Check that the user has permissions to edit:
     if( eck__multiple_access_check( 
       array( 'eck administer entities', 
@@ -178,7 +179,7 @@ function entity_table($entities, $select = FALSE) {
             ), FALSE /* TODO: should also check user ownership perms. */ )
     ){
       $edit_path = str_replace('%', $id, $crud_info['edit']['path']);
-      $allowed_operations = l(t('edit'), $edit_path);
+      $allowed_operations = l(t('edit'), $edit_path, array('query' => $destination));
     }
     
     //Check that the user has permissions to delete:
@@ -190,7 +191,7 @@ function entity_table($entities, $select = FALSE) {
             ), FALSE /* TODO: should also check user ownership perms. */ )
     ){
       $delete_path = str_replace('%', $id, $crud_info['delete']['path']);
-      $allowed_operations .= (($allowed_operations)?'<br />':'').l(t('delete'), $delete_path);
+      $allowed_operations .= (($allowed_operations)?'<br />':'').l(t('delete'), $delete_path, array('query' => $destination));
     }
     $uri = entity_uri($entity_type, $entity);
     $row = array(l(entity_label($entity_type, $entity), $uri['path'], $uri['options']));

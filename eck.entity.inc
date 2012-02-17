@@ -15,9 +15,6 @@
  * @see eck_menu()
  */
 function eck__entity__menu($entity_type, $bundle) {
-  /*dpm("Entity Menu");
-  dpm($entity_type, "Entity Type");
-  dpm($bundle, "Bundle");*/
   $path = eck__entity_type__path();
   $menu = array();
   
@@ -113,14 +110,15 @@ function eck__entity__menu($entity_type, $bundle) {
     
     //I think it would be useful to have the edit, delete, and list tabs at the view also
     //But lets leave this out for right now
-    /*if($action == 'view'){
+    if($action == 'view'){
       
       $menu[$info['path']."/view"] = array(
         'title' => "View",
-        'type' => MENU_DEFAULT_LOCAL_TASK
+        'type' => MENU_DEFAULT_LOCAL_TASK,
+        'weight' => 0
       );
       
-      $menu[$info['path']."/list"] = array(
+     /* $menu[$info['path']."/list"] = array(
         'title' => "List",
         'description' => "View all entites of type {$entity_type->label} with bundle {$bundle->label}",
         'page callback' => "eck__entity__list",
@@ -129,15 +127,15 @@ function eck__entity__menu($entity_type, $bundle) {
         'weight' => 0,
         'file' => 'eck.entity.inc',
         'type' => MENU_LOCAL_TASK
-      );
+      );*/
       
-      
+       $weight = 1;
       foreach($crud_info as $a => $i){
-        if($a != 'view' && $a != 'add'){
+       
+        if($a != 'view' && $a != 'add' && $a !="list"){
           $al = ucfirst($a);
           
           $view_path = $info['path']."/{$a}";
-          //dpm($view_path, "Path");
           
           $menu[$view_path] = array(
             'title' => "{$al}",
@@ -146,11 +144,13 @@ function eck__entity__menu($entity_type, $bundle) {
             'page arguments' => $args,
             'access arguments' => array("{$action} {$entity_type->name} {$bundle->name} entities"),
             'file' => 'eck.entity.inc',
-            'type' => MENU_LOCAL_TASK
+            'type' => MENU_LOCAL_TASK,
+            'weight' => $weight
           );
+          $weight++;
         }
       }
-    }*/
+    }
     //Holy Crap What a mess @todo clean up ^^
   }
   
@@ -160,13 +160,10 @@ function eck__entity__menu($entity_type, $bundle) {
 //a few helper function to get data our of the info array
 function get_bundle_admin_info($entity_type, $bundle){
   $info = entity_get_info();
-  //dpm($info, "Info");
   
   return $info[$entity_type]['bundles'][$bundle]['admin'];
 }
 function get_bundle_crud_info($entity_type_name, $bundle_name){
-  //dpm($entity_type_name);
-  //dpm($bundle_name);
   $info = entity_get_info();
   return $info[$entity_type_name]['bundles'][$bundle_name]['crud'];
 }
@@ -208,6 +205,8 @@ function eck__entity__list($entity_type_name, $bundle_name) {
     $entities = array();
   }
   
+  $destination = drupal_get_destination();
+  
   //Because of the flexible paths capabilities, we are not guaranteed to see a local action for the add here,
   //so lets add a link ourselves until we figure out whether there is a better solution
   $crud_info = get_bundle_crud_info($entity_type->name, $bundle->name);
@@ -218,7 +217,7 @@ function eck__entity__list($entity_type_name, $bundle_name) {
              "eck administer {$entity_type->name} {$bundle->name} entities",
              "eck add {$entity_type->name} {$bundle->name} entities"
   ) ) ) 
-    $build['add'] = array('#markup' => "+ ".l(t('Add Entity'), $crud_info['add']['path']));
+    $build['add'] = array('#markup' => "+ ".l(t('Add Entity'), $crud_info['add']['path'], array('query' => $destination)));
 
   //Check that the user has permissions to view entity lists:
   if( eck__multiple_access_check(
@@ -245,8 +244,6 @@ function eck__entity__add($entity_type_name, $bundle_name) {
   $bundle = bundle_load($entity_type_name, $bundle_name);
   
   $entity = entity_create($entity_type->name, array('type' => $bundle->name));
-  //dpm($entity);
-  //dpm(drupal_get_schema(), "Schema");
   return drupal_get_form("eck__entity__form_add_{$entity_type_name}_{$bundle_name}", $entity);
 }
 
@@ -482,11 +479,11 @@ function eck__entity__form_submit($form, &$state) {
       array('entity' => $entity), $form_values);
   }
   
-  //dpm($entity, "Entity");
-  
   $entity->save();
 
   drupal_set_message(t("Entity {$entity->id} - @entity_label has been saved", array("@entity_label" => entity_label($form['#entity_type'], $entity)) ));
+  $uri = eck__entity__uri($entity);
+  $state['redirect'] = $uri['path'];
 }
 
 /**
