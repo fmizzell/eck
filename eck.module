@@ -364,20 +364,20 @@ function eck_get_property_label($name){
 /**
  * Implements hook_features_api().
  */
-/*function eck_features_api() {
+function eck_features_api() {
   return array(
     'eck_entity_type' => array(
       'name' => t('Entity Types'),
       'feature_source' => TRUE,
       'default_hook' => 'eck_entity_type_info',
     ),
-    //'eck_bundle' => array(
-    //  'name' => t('Bundles'),
-    //  'feature_source' => TRUE,
-    //  'default_hook' => 'eck_bundle_info',
-    //)
+    'eck_bundle' => array(
+      'name' => t('Bundles'),
+      'feature_source' => TRUE,
+      'default_hook' => 'eck_bundle_info',
+    )
   );
-}*/
+}
 
 
 

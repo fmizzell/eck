@@ -1,4 +1,13 @@
 <?php
+/**
+ * @file
+ * Handles properties attached to entites created through ECK.
+ */
+
+/**
+ * Assigns fields to the db schema for an entity type.
+ * @param $schema
+ */
 
 function eck_set_properties_schema(&$schema, $entity_type){
   $properties = $entity_type->properties;
@@ -11,13 +20,27 @@ function eck_set_properties_schema(&$schema, $entity_type){
   }
 }
 
-function eck_property_types(){
-  //Alll types: serial, int, float, numeric, varchar, char, text, blob, datetime
-  return array('text' => 'Text', 'integer' => "Integer", 'decimal' => "Decimal", 
-    'positive_integer' => "Positive Integer", 'uuid' => 'UUID');
+function eck_property_types() {
+  //All types: serial, int, float, numeric, varchar, char, text, blob, datetime
+  $default_types = array(
+    'text' => t('Text'),
+    'integer' => t('Integer'), 
+    'decimal' => t('Decimal'), 
+    'positive_integer' => t('Unsigned Integer'),
+  );
+
+  drupal_alter('eck_property_types', $default_types);
+
+  // @TODO: As modules start to implement ECK hooks, this should be removed.
+  if (module_exists('uuid') && !array_key_exists('uuid', $default_types)) {
+    $default_types['uuid'] = t('UUID');
+  }
+
+  return $default_types;
 }
 
-function eck_property_type_schema($type){
+
+function eck_property_type_schema($type) {
   $schema = array();
   
   switch ($type) {
@@ -59,7 +82,7 @@ function eck_property_type_schema($type){
       break;
       
       
-      case 'uuid':
+    case 'uuid':
       $schema = array(
         'type' => 'char',
         'length' => 36,
@@ -73,6 +96,9 @@ function eck_property_type_schema($type){
       $schema = NULL;
       break;
   }
+  
+  drupal_alter('eck_property_type_schema', $schema);
+  
   return $schema;
 }
 

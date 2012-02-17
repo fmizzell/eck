@@ -342,14 +342,14 @@ class Bundle extends DBObject{
   public static function loadAll(){
     //@todo move this to a general function
     $results = db_select('eck_bundle', 't')
-    ->fields('t', array('name'))
+    ->fields('t', array('machine_name'))
     ->execute();
     
     $bundles = array();
     
     foreach($results as $result){
-      $name = $result->name;
-      $bundles[] = Bundle::loadByName($name);
+      $name = $result->machine_name;
+      $bundles[] = Bundle::loadByMachineName($name);
     }
     return $bundles;
   }
