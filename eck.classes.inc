@@ -114,11 +114,13 @@ class DBObject implements Iterator{
     ->execute()
     ->fetchAssoc();
     
-    foreach($result as $property => $value){
-      if(in_array($property, $this->serialize)){
-        $value = drupal_json_decode($value);
+    if($result){
+      foreach($result as $property => $value){
+        if(in_array($property, $this->serialize)){
+          $value = drupal_json_decode($value);
+        }
+        $this->{$property} = $value;
       }
-      $this->{$property} = $value;
     }
     
     $this->is_new = FALSE;

@@ -65,7 +65,7 @@ function eck_entity_type_features_export_render($module, $data, $export = NULL) 
     $elements['name'] = $entity_type->name;
     $elements['label'] = $entity_type->label;
     $elements['properties'] = $entity_type->properties;
-    $output[] = '       ' . "'{$entity_type->name}' => " . features_var_export($elements);
+    $output[] = '       ' . "'{$entity_type->name}' => " . features_var_export($elements).",";
   }
 
   $output[] = '  );';
