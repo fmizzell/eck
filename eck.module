@@ -758,3 +758,45 @@ function eck_entity_info_alter(&$info){
 function eck_schema_alter(&$schema){
   dpm($schema);
 }*/
+
+
+//Entity Hooks
+function eck_entity_presave($entity, $entity_type){
+  $entity_type = EntityType::loadByName($entity_type);
+  
+  //this is an eck entity
+  if($entity_type){
+    eck_property_behavior_invoke_plugin($entity_type, 'entity_save', 
+      array('entity' => $entity));
+  }
+}
+
+function eck_entity_insert($entity, $entity_type){
+  $entity_type = EntityType::loadByName($entity_type);
+  
+  //this is an eck entity
+  if($entity_type){
+    eck_property_behavior_invoke_plugin($entity_type, 'entity_insert', 
+      array('entity' => $entity));
+  }
+}
+
+function eck_entity_udpate($entity, $entity_type){
+  $entity_type = EntityType::loadByName($entity_type);
+  
+  //this is an eck entity
+  if($entity_type){
+    eck_property_behavior_invoke_plugin($entity_type, 'entity_update', 
+      array('entity' => $entity));
+  }
+}
+
+function eck_entity_delete($entity, $entity_type){
+  $entity_type = EntityType::loadByName($entity_type);
+  
+  //this is an eck entity
+  if($entity_type){
+    eck_property_behavior_invoke_plugin($entity_type, 'entity_delete', 
+      array('entity' => $entity));
+  }
+}

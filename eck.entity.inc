@@ -460,11 +460,13 @@ function eck__entity__form_submit($form, &$state) {
   $entity_type = $entity->entityType();
   $entity_type = EntityType::loadByName($entity_type);
   $properties = $entity_type->properties;
-  $form_values = array();
+  
+  //If we find a value set for a property lets just set it
   foreach($properties as $property => $info){
     $form_value = _eck_form_property_value($state, $property);
     if($form_value){
-      $form_values[$property]['form_value'] = $form_value;
+      $wrapper = entity_metadata_wrappery($entity_type->name, $entity);
+      $wrapper->{$property}->set($form_value);
     }
   }
   
