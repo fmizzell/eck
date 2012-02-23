@@ -142,7 +142,14 @@ function eck__entity__menu($entity_type, $bundle) {
             'description' => "{$action_label} an entity of type {$entity_type->label} with bundle {$bundle->label}",
             'page callback' => "eck__entity__{$a}",
             'page arguments' => $args,
-            'access arguments' => array("{$action} {$entity_type->name} {$bundle->name} entities"),
+            'access callback' => 'eck__multiple_access_check',
+            'access arguments' => array( 
+              array(
+                'eck administer entities',
+                "eck {$a} entities",
+                "eck administer {$entity_type->name} {$bundle->name} entities",
+                "eck {$a} {$entity_type->name} {$bundle->name} entities"
+              ), FALSE /*TODO: should auto-load entity author here. */ ),
             'file' => 'eck.entity.inc',
             'type' => MENU_LOCAL_TASK,
             'weight' => $weight
