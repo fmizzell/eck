@@ -472,20 +472,12 @@ function eck__entity__form_submit($form, &$state) {
   foreach($properties as $property => $info){
     $form_value = _eck_form_property_value($state, $property);
     if($form_value){
-      $wrapper = entity_metadata_wrappery($entity_type->name, $entity);
+      //@todo maybe we should do this in the form validation step. 
+      //that way we can catch entity wrapper validation exceptions
+      //and set a form error message appropiately
+      $wrapper = entity_metadata_wrapper($entity_type->name, $entity);
       $wrapper->{$property}->set($form_value);
     }
-  }
-  
-  eck_property_behavior_invoke_plugin($entity_type, 'entity_save', 
-    array('entity' => $entity), $form_values);
-  
-  if(isset($entity->is_new) && $entity->is_new){
-    eck_property_behavior_invoke_plugin($entity_type, 'entity_insert', 
-      array('entity' => $entity), $form_values);
-  }else{
-    eck_property_behavior_invoke_plugin($entity_type, 'entity_update', 
-      array('entity' => $entity), $form_values);
   }
   
   $entity->save();
