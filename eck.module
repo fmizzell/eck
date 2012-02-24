@@ -335,11 +335,22 @@ function eck_entity_property_info_alter(&$info){
     $entity_property_info =
     eck_property_behavior_invoke_plugin_alter($entity_type, 'property_info',$entity_property_info);
     
+    foreach($entity_type->properties as $property => $stuff){
+      foreach(array('setter', 'getter', 'validation') as $function_name){
+        if(eck_property_behavior_implements($entity_type, $property, $function_name)){
+          $entity_property_info['properties'][$property] ["{$function_name} callback"] 
+            = "eck_property_behavior_{$function_name}";
+        }
+      }
+    }
+    
     if($entity_property_info){
       $info[$entity_type->name] = $entity_property_info;
     }
   }
 }
+
+
 
 function eck_get_property_label($name){
   $info = hook_eck_property_info();
