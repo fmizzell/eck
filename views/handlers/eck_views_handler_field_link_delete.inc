@@ -9,7 +9,7 @@ class eck_views_handler_field_link_delete extends eck_views_handler_field_link {
     $entity_type = $entity->entityType();
     $bundle = $entity->type;
     
-    if (!user_access('eck administer entities') || !user_access('eck edit entities') || !user_access("eck administer {$entity_type} {$bundle} entities") || !user_access("eck edit {$entity_type} {$bundle} entities")) {
+    if (!user_access('eck administer entities') && !user_access('eck edit entities') && !user_access("eck administer {$entity_type} {$bundle} entities") && !user_access("eck edit {$entity_type} {$bundle} entities")) {
       return;
     }
     
