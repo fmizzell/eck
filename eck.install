@@ -1,6 +1,7 @@
 <?php
 
 function eck_requirements($phase){
+  $requirements = array();
   if($phase == 'update'){
     //I guess we just need to check whether the module exists, and then the update can enable it
     //if it is not enabled
