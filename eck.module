@@ -380,11 +380,13 @@ function eck_features_api() {
     'eck_entity_type' => array(
       'name' => t('Entity Types'),
       'feature_source' => TRUE,
+      'file' => drupal_get_path('module', 'eck') .'/eck.features.inc',
       'default_hook' => 'eck_entity_type_info',
     ),
     'eck_bundle' => array(
       'name' => t('Bundles'),
       'feature_source' => TRUE,
+      'file' => drupal_get_path('module', 'eck') .'/eck.features.inc',
       'default_hook' => 'eck_bundle_info',
     )
   );
