@@ -368,6 +368,7 @@ function eck__entity_type__info($entity_type) {
     'base table' => "eck_{$entity_type->name}",
     'entity class' => $entity_class,
     'controller class' => $controller_class,
+    'access callback' => "user_access",
     'module' => 'eck',
     'fieldable' => TRUE,
     'entity keys' => array(
