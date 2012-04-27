@@ -261,9 +261,13 @@ function eck__bundle__add_submit($form, &$form_state) {
 /**
  * Delete the bundle of a given entity type
  * @param $entity_type
- *  (String) The entity type of the bundle that will be deleted
+ *  (EntityType) The entity type of the bundle that will be deleted
+ *  the entity type object can be loaded by using EntityType::loadByName($entity_type_name)
  * @param  $bundle
- *  (String) The bundle to be deleted
+ *  (Bundle) The bundle to be deleted, the Bundle object can be loaded by using 
+ *  Bundle::loadByMachingName($bundle_machine_name)
+ * 
+ * for more information on the EntityType and Bundle classes look at eck.classes.inc
  */
 function eck__bundle__delete($entity_type, $bundle){
   //first delete all of the entities of this bundle

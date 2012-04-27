@@ -254,7 +254,10 @@ function eck__entity_type__form_submit($form, &$state) {
  * Delete the entity type
  * 
  * @param $entity_type 
- *  (String) entity type to be deleted 
+ *  (EntityType) entity type to be deleted, the $entity_type object can be loaded by using the 
+ *  method EntityType::loadByName($entity_type_name).
+ * 
+ * for more information on the EntityType class look at eck.classes.inc 
  */
 function eck__entity_type__delete($entity_type){
   

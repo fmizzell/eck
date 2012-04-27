@@ -335,6 +335,12 @@ class Bundle extends DBObject{
     }
   }
   
+  /**
+   * This method returns a bundle object
+   * @param $machine_name
+   *  (String) A string composed of the entity type name and the bundle name
+   *  "{$entity_type_name}_{$bundle_name}"
+   */
   public static function loadByMachineName($machine_name){
     $self = new Bundle();
     $self->load('machine_name', $machine_name);
