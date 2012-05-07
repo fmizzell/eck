@@ -813,3 +813,16 @@ function eck_entity_delete($entity, $entity_type){
       array('entity' => $entity));
   }
 }
+
+/**
+ * Access callback for ECK entities
+ * 
+ * TODO: turn this into a proper access callback. For now we just
+ * return true so other modules calling the entity_access will be
+ * able to display ECK entities and their fields.
+ * 
+ * Examples that require this are rules, views, entityreference...
+ */
+function eck__entity_access($op, $entity = NULL, $account = NULL, $entity_type = NULL) {
+  return TRUE;
+}
