@@ -74,7 +74,7 @@ function eck_property_behavior_invoke_plugin_alter($entity_type, $function_name,
       $function = ctools_plugin_get_function($plugin, $function_name);
   
       if($function){
-        $return = $function($property, $var);
+        $return = $function($property, $return);
       }
     }
   }
@@ -102,7 +102,7 @@ function eck_property_behavior_getter($data, array $options, $name, $type, $info
   $entity_type = EntityType::loadByName($entity_type_name);
   $property = $name;
   
-  $function = eck_property_behavior_implements($entity_type, $property, 'setter');
+  $function = eck_property_behavior_implements($entity_type, $property, 'getter');
   
   if($function){
     return $function($property, array('entity'=> $entity));
