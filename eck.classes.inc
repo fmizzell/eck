@@ -203,6 +203,25 @@ class EntityType extends DBObject{
     }
   }
   
+  public function changeBehavior($name, $behavior){
+    $p = $this->properties;
+    //@todo check that type is an actual type
+    if(array_key_exists($name, $p)){
+      $p[$name]['behavior'] = $behavior;
+      //@todo look at this more closelly, does the behavior change really affect the property
+      //cache?
+      entity_property_info_cache_clear();
+    }else{
+      //@Todo add exception.. the property does not exist
+    }
+    
+    $this->properties = $p;
+  }
+  
+  public function removeBehavior($name){
+    $this->changeBehavior($name, NULL);
+  }
+  
   private function recordFieldChange($op, $name){
     //If it is not new we need to keep track of stuff
     if(!$this->is_new){
