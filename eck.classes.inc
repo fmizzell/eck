@@ -281,6 +281,7 @@ class EntityType extends DBObject{
     }
     
     parent::save();
+    drupal_get_schema(NULL, TRUE);
   }
   
   public function delete(){
