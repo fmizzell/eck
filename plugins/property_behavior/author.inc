@@ -8,7 +8,7 @@ $plugin = array(
 
 function eck_author_property_entity_save($property, $vars){
   $entity = $vars['entity'];
-  if(isset($entity->is_new) && $entity->is_new){
+  if(isset($entity->is_new) && $entity->is_new && empty($entity->{$property})){
     global $user;
     $entity->{$property} = $user->uid;
   }
@@ -16,6 +16,5 @@ function eck_author_property_entity_save($property, $vars){
 
 function eck_author_property_property_info($property, $vars){
   $vars['properties'][$property]['type'] = 'user';
-  
   return $vars;
 }
