@@ -794,7 +794,7 @@ function eck_entity_insert($entity, $entity_type){
   }
 }
 
-function eck_entity_udpate($entity, $entity_type){
+function eck_entity_update($entity, $entity_type){
   $entity_type = EntityType::loadByName($entity_type);
   
   //this is an eck entity
