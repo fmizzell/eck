@@ -357,7 +357,9 @@ function eck__bundle__field_autocomplete($entity_type, $bundle, $string = ""){
     $delta = $field_label['delta'];
     $column = $field_label['column'];
     $query = new EntityFieldQuery();
-    
+    //TODO: Remove the addmetadata() call below once http://drupal.org/node/997394 is fixed.
+    $query->addMetadata('account', user_load(1));
+
     $query->entityCondition('entity_type', $entity_type->name, '=')
     ->entityCondition('bundle', $bundle->name, '=')
     ->fieldCondition($field, $column, $string, 'CONTAINS');
