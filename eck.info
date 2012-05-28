@@ -2,6 +2,8 @@ name = Entity Construction Kit
 description = ECK (Entity Construction Kit) Allows users to create and administer entity types, bundles, and entities from an easy to use UI
 package = ECK
 core = 7.x
+configure = admin/structure/entity-type
+
 dependencies[] = entity
 dependencies[] = ctools
 
