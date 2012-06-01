@@ -834,8 +834,8 @@ function eck_entity_view_alter(&$view){
   
   foreach($entity_types as $et){
     if($et->name == $this_entity_type){
-      $this_bundle = $view['#bundle'];
       $entity = $view['#entity'];
+      $this_bundle = $entity->type;
       //lets add contextual links to our entities
       //In eck you can change the paths of any of the possible operations, 
       //since contextual links are dependent on the hierarchy of those paths,
