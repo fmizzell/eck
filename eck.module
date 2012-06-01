@@ -826,3 +826,25 @@ function eck_entity_delete($entity, $entity_type){
 function eck__entity_access($op, $entity = NULL, $account = NULL, $entity_type = NULL) {
   return TRUE;
 }
+
+function eck_entity_view_alter(&$view){
+  $entity_types = EntityType::loadAll();
+  
+  $this_entity_type = $view['#entity_type'];
+  
+  foreach($entity_types as $et){
+    if($et->name == $this_entity_type){
+      $this_bundle = $view['#bundle'];
+      $entity = $view['#entity'];
+      //lets add contextual links to our entities
+      //In eck you can change the paths of any of the possible operations, 
+      //since contextual links are dependent on the hierarchy of those paths,
+      //changing the paths could cause of contextual links not to work correctly
+      $view['#contextual_links']['eck'] =
+      array(
+        "{$this_entity_type}/{$this_bundle}",
+        array($entity->id)
+      );
+    }
+  }
+}
