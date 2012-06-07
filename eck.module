@@ -343,7 +343,7 @@ function eck_entity_property_info_alter(&$info){
         }
       }
     }
-    
+
     if($entity_property_info){
       $info[$entity_type->name] = $entity_property_info;
     }
@@ -470,7 +470,8 @@ function eck_permission() {
     ),
     'eck add bundles' => array(
           'title' => t('Add Bundles'),
-          'restrict access' => TRUE
+          'restrict access' => TRUE,
+          'description' => t('Grants the ability to add new bundles to any Entity type.')
     ),
     'eck edit bundles' => array(
           'title' => t('Edit Bundles'),
@@ -489,8 +490,9 @@ function eck_permission() {
           'restrict access' => TRUE
     ),
     'eck add entities' => array(
-          'title' => t('Administer Any Entity'),
-          'restrict access' => TRUE
+          'title' => t('Add Entities'),
+          'restrict access' => TRUE,
+          'description' => t('Grants the ability to add new entities of any Entity type.')
     ),
     'eck edit entities' => array(
           'title' => t('Edit Any Entity'),
@@ -511,6 +513,10 @@ function eck_permission() {
 
   foreach (EntityType::loadAll() as $entity_type) {
 
+    $perms["manage {$entity_type->name} properties"] = array(
+      'title' => "Manage {$entity_type->label} Properties"
+    );
+
     foreach (array('eck administer' => 'Administer', 'eck add' => "Add", 'eck edit' => 'Edit', 'eck delete' => 'Delete', 'eck list' => 'View List of') as $op => $op_label) {
        $perms["{$op} {$entity_type->name} bundles"] = array(
         'title' => "{$op_label} {$entity_type->label} Bundles"
@@ -518,7 +524,7 @@ function eck_permission() {
     }
 
     foreach (Bundle::loadByEntityType($entity_type) as $bundle) {
-      
+
       foreach (array('eck administer' => 'Administer', 'eck add' => "Add", 'eck edit' => 'Edit', 'eck delete' => 'Delete', 'eck list' => 'View List of', 'eck view' => 'View') as $op => $op_label) {
          $perms["{$op} {$entity_type->name} {$bundle->name} entities"] = array(
           'title' => "{$op_label} {$entity_type->label} {$bundle->label} Entities"
