@@ -33,7 +33,7 @@ class eck_views_handler_field_link extends views_handler_field_entity {
   function render_link($entity, $values) {
     $crud_info = get_bundle_crud_info($entity->entityType(), $entity->type);
     $this->options['alter']['make_link'] = TRUE;
-    $this->options['alter']['path'] = str_replace('%', $values->id, $crud_info['view']['path']);
+    $this->options['alter']['path'] = str_replace('%', $entity->id, $crud_info['view']['path']);
     $text = !empty($this->options['text']) ? $this->options['text'] : t('view');
     
     return $text;
