@@ -152,7 +152,7 @@ function eck__entity__menu($entity_type, $bundle) {
               ), FALSE /*TODO: should auto-load entity author here. */ ),
             'file' => 'eck.entity.inc',
             'type' => MENU_LOCAL_TASK,
-            'context' => MENU_CONTEXT_INLINE, 
+            'context' => (MENU_CONTEXT_PAGE|MENU_CONTEXT_INLINE), 
             'weight' => $weight
           );
           $weight++;

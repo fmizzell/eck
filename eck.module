@@ -840,11 +840,10 @@ function eck_entity_view_alter(&$view){
       //In eck you can change the paths of any of the possible operations, 
       //since contextual links are dependent on the hierarchy of those paths,
       //changing the paths could cause of contextual links not to work correctly
+      
       $view['#contextual_links']['eck'] =
       array(
-        "{$this_entity_type}/{$this_bundle}",
-        array($entity->id)
-      );
+        "{$this_entity_type}/{$this_bundle}",array($entity->id));
     }
   }
 }
