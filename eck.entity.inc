@@ -199,7 +199,9 @@ function eck__entity__list($entity_type_name, $bundle_name) {
   $query = new EntityFieldQuery();
   $query
   ->entityCondition('entity_type', $entity_type->name, '=')
-  ->entityCondition('bundle', $bundle->name, '=');
+  ->entityCondition('bundle', $bundle->name, '=')
+  ->pager(20);
+  
   
   drupal_alter('entity_overview_query', $query, $info);
   unset($info['entity_type']);
@@ -234,7 +236,9 @@ function eck__entity__list($entity_type_name, $bundle_name) {
              "eck administer {$entity_type->name} {$bundle->name} entities",
              "eck list {$entity_type->name} {$bundle->name} entities"
   ) ) )
-    $build['table'] = entity_table($entities, TRUE);
+  
+  $build['table'] = entity_table($entities, TRUE);
+  $build['pager'] = array('#theme' => 'pager');
 
   return $build;
 }
