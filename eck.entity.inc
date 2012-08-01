@@ -93,7 +93,7 @@ function eck__entity__menu($entity_type, $bundle) {
     $args = array_merge(array($entity_type->name, $bundle->name), $args);
     
     $menu[$info['path']] = array(
-      'title' => "{$action_label} Entity",
+      'title' => "{$action_label} {$bundle->label}",
       'description' => "{$action_label} an entity of type {$entity_type->label} with bundle {$bundle->label}",
       'page callback' => "eck__entity__{$action}",
       'page arguments' => $args,
