@@ -227,7 +227,7 @@ function eck__entity__list($entity_type_name, $bundle_name) {
              "eck administer {$entity_type->name} {$bundle->name} entities",
              "eck add {$entity_type->name} {$bundle->name} entities"
   ) ) ) 
-    $build['add'] = array('#markup' => "+ ".l(t('Add Entity'), $crud_info['add']['path'], array('query' => $destination)));
+    $build['add'] = array('#markup' => "+ ".l(t("Add {$bundle->label}"), $crud_info['add']['path'], array('query' => $destination)));
 
   //Check that the user has permissions to view entity lists:
   if( eck__multiple_access_check(
