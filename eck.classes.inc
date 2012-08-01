@@ -30,7 +30,6 @@ class DBObject implements Iterator{
     
     if(in_array($table, $tables)){
       $this->table = $table;
-      
       $this->primary_keys = $schemas[$table]["primary key"];
       $this->vars = array_keys($schemas[$table]['fields']);
       
@@ -42,7 +41,9 @@ class DBObject implements Iterator{
         }
       }
       foreach($this->vars as $var){
-        $this->data[$var] = NULL;
+        if($schemas[$table]['fields'][$var]['type'] != "serial"){
+          $this->data[$var] = NULL;
+        }
       };
     }else{
       //@todo throw an exception
