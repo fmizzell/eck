@@ -8,7 +8,9 @@ $plugin = array(
 
 function eck_changed_property_entity_save($property, $vars){
   $entity = $vars['entity'];
-  $entity->{$property} = time();
+  if (empty($entity->is_new) || empty($entity->{$property})) {
+    $entity->{$property} = time();
+  }
 }
 
 function eck_changed_property_property_info($property, $vars){
