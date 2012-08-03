@@ -456,6 +456,19 @@ function eck__entity__form($form, $form_state, $entity) {
 }
 
 /**
+ * Validation function for entity form for validating the fields
+ *
+ * @param $form
+ *  Form array provided by the Form API
+ * @param $form_state
+ *  array provided by the Form API
+ */
+function eck__entity__form_validate($form, &$state) {
+  $entity = $state['values']['entity'];
+  field_attach_form_validate($entity->entityType(), $entity, $form, $state);
+}
+
+/**
  * Submit function for entity form
  *
  * @param $form
@@ -466,7 +479,6 @@ function eck__entity__form($form, $form_state, $entity) {
 function eck__entity__form_submit($form, &$state) {
   $entity = $state['values']['entity'];
   
-  field_attach_form_validate($entity->entityType(), $entity, $form, $state);
   field_attach_submit($entity->entityType(), $entity, $form, $state);
   
   $entity_type = $entity->entityType();
