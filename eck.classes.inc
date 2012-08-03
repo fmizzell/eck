@@ -399,4 +399,77 @@ class Bundle extends DBObject{
     }
     return $bundles;
   }
+
+ /**
+  * Adds a field to this bundle.
+  *
+  *
+  * @param $field_type
+  *   The type of field to add. One of the keys as defined by any field module using hook_field_info.
+  * 
+  * @param $options
+  *   This is an optional array. Its properties can include:
+  *   - use existing: If TRUE and if a 'field_name' property is specified in the 'field'
+  *     property below and the field already exists, then a new instance will be created
+  *     using the existing field. All specified 'field' options provided other then the field
+  *     name will be ignored. If FALSE, and an existing field is found then a new field_name
+  *     will be generated. TRUE by default.
+  *   - field: all options accepted by field_create_field(). Defaults will be used for each
+  *     property that is omitted. Most defaults come from field_create_field().
+  *     Default 'field_name' generation:
+  *     - field_name: 'field_' + field type + #, where # is one more then the number of fields
+  *       of that type that already exist active or inactive.
+  *   - instance: all options accepted by field_create_instance(). Defaults will be used for
+  *     each property that is omitted. 'bundle' and 'entity_type' properties are ignored because
+  *     they come from the bundle info. The field_name property is either generated or taken from
+  *     the field properties. 
+  *
+  * @return
+  *   The $instance array with the id property filled in as returned by field_create_instance().
+  *
+  * @throws FieldException
+  *
+  * See: @link field Field API data structures @endlink.
+  */
+  public function addField($field_type, $options = array()) {
+    // Check that the field type is known.
+    $field_info = field_info_field_types($field_type);
+    if (!$field_info) {
+      throw new FieldException(t('Attempt to add a field of unknown type %type.', array('%type' => $field_type)));
+    }
+
+    // By default use an existing field if one is found.
+    $options += array('use existing' => TRUE);
+    // Set field options and merge in any provided field settings.
+    $field = array('type' => $field_type);
+    if (!empty($options['field'])) {
+      $field += $options['field'];
+    }
+
+    // Retrieve existing fields of this type.
+    $field_type_fields = field_read_fields(array('type' => $field_type), array('include_inactive' => TRUE));
+
+    // Formulate a default field name.
+    if (empty($field['field_name']) || (isset($field_type_fields[$field['field_name']]) && !$options['use existing'])) {
+      $iter = count($field_type_fields) + 1;
+      $field += array('field_name' => substr('field_' . $field_type, 0, 28) . '_' . $iter);
+    }
+
+    // Create a new field if the field name is unique over active and disabled fields.
+    if (!isset($field_type_fields[$field['field_name']])) {
+      field_create_field($field);
+    }
+
+    // Add an instance of the field to this bundle.
+    $instance = array(
+      'field_name' => $field['field_name'],
+      'entity_type' => $this->entity_type,
+      'bundle' => $this->name,
+    );
+    // Merge any provided properties and settings.
+    if(array_key_exists('instance', $options)){
+      $instance += $options['instance'];
+    }
+    return field_create_instance($instance);
+  }
 }
