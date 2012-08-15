@@ -122,9 +122,10 @@ class DBObject implements Iterator{
         }
         $this->{$property} = $value;
       }
+      //we should only set the is_new flag as false if we loaded something
+      $this->is_new = FALSE;
     }
     
-    $this->is_new = FALSE;
   }
   
   public function delete(){
@@ -336,6 +337,8 @@ class Bundle extends DBObject{
   public function save(){
     //Lets do some checks before the bundle is saved
     if(isset($this->entity_type) && isset($this->name)){
+     
+      $save = TRUE;
       //we are good
       //@todo we should check that the entity type is a proper
       //entity type object
@@ -343,11 +346,24 @@ class Bundle extends DBObject{
       //Lets set the machine name
       $this->createMachineName();
       
+      //if this bundle is_new we need to check that it does not exist
+      //@todo we just need to change the field in the db to be unique
+      if($this->is_new){
+        $bundle = Bundle::loadByMachineName($this->machine_name);
+        if(!$bundle->is_new){
+          $save = FALSE;
+        }
+      }
+      
       if(!isset($this->label)){
         $this->createLabel();
       }
       
-      parent::save();
+      if($save){
+        parent::save();
+      }else{
+        //@todo throw some error
+      }
       
     }else{
       //if the name an entity type are not set, we can not save
