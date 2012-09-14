@@ -178,11 +178,13 @@ function eck__entity_type__form($form, &$state, $entity_type_name = NULL) {
  *  array provided by the Form API
  */
 function eck__entity_type__form_validate($form, &$state) {
-  $info = entity_get_info();
-  $entity_types = array_keys($info);
-  $entity_type = $state['values']['entity_type_name'];
-  if (in_array($entity_type, $entity_types)) {
-    form_set_error('name', t("Entity Type {$entity_type} already exists"));
+  if ($form['entity_type']['#value']->is_new) {
+    $info = entity_get_info();
+    $entity_types = array_keys($info);
+    $entity_type = $state['values']['entity_type_name'];
+    if (in_array($entity_type, $entity_types)) {
+      form_set_error('name', t("Entity Type {$entity_type} already exists"));
+    }
   }
 }
 
@@ -245,8 +247,11 @@ function eck__entity_type__form_submit($form, &$state) {
     drupal_get_schema(NULL, TRUE);
     entity_info_cache_clear();
     menu_rebuild();
-  
-    drupal_set_message(t('Entity type %entity_type has been created.', array('%entity_type' => $entity_type->label)));
+    if($entity_type->is_new){
+      drupal_set_message(t('Entity type %entity_type has been created.', array('%entity_type' => $entity_type->label)));
+    } else {
+      drupal_set_message(t('Entity type %entity_type has been updated.', array('%entity_type' => $entity_type->label)));
+    }
     //drupal_goto("admin/structure/entity_type");
   }
 }
