@@ -90,14 +90,46 @@ function eck_entity_type_features_rebuild($module) {
  
   if ($default_entities = features_get_default('eck_entity_type', $module)) {
     foreach ($default_entities as $entity_type_name => $entity_type_info) {
-      
-      //dpm($entity_type_info, $entity_type_name);
-      
-      $entity_type = new EntityType();
-      foreach($entity_type_info as $key => $value){
-        $entity_type->{$key} = $value; 
+
+      // db_delete('eck_entity_type')
+      //   ->condition('name', $entity_type_name)
+      //   ->execute();
+
+      // Load the existing entity type, if one exists.
+      $entity_type = EntityType::loadByName($entity_type_name);
+      if (empty($entity_type->id)) {
+        $entity_type = new EntityType();
       }
-      
+
+      // Look at all of the existing entities properties, and if one exists
+      // that does not exist in the code definition, delete it.
+      foreach ($entity_type->properties as $property_key => $property) {
+        if (!isset($entity_type_info['properties'][$property_key])) {
+          $entity_type->removeProperty($property_key);
+        }
+      }
+
+      // Look at all properties as defined in code, and add or change them
+      // Depending on wether they already exist or not.
+      foreach($entity_type_info as $key => $value){
+        if ($key == 'properties') {
+          // loop through the new properties.
+          foreach ($entity_type_info['properties'] as $property_key => $property) {
+            // If the property already exists, update the behavior.
+            if (isset($entity_type->properties[$property_key])) {
+              $entity_type->changeBehavior($property_key, $property['behavior']);
+            }
+            else {
+              // Property didn't already exist, so lets create it.
+              $entity_type->addProperty($property_key, $property['label'], $property['type'], $property['behavior']);
+            }
+          }
+        }
+        else {
+          $entity_type->{$key} = $value;
+        }
+      }
+
       $entity_type->save();
     }
 
@@ -224,9 +256,12 @@ function eck_bundle_features_revert($module) {
 function eck_bundle_features_rebuild($module) {
   if ($default_types = features_get_default('eck_bundle', $module)) {
     foreach ($default_types as $bundle_machine_name => $bundle_info) {
-      
-      $bundle = new Bundle();
-      foreach($bundle_info as $key=>$value){
+
+      $bundle = Bundle::loadByMachineName($bundle_machine_name);
+      if (empty($bundle->id)) {
+        $bundle = new Bundle();
+      }
+      foreach($bundle_info as $key => $value){
         $bundle->{$key} = $value;
       }
       $bundle->save();
