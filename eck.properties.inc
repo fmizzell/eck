@@ -156,6 +156,9 @@ function eck__properties__form($form, &$state, $entity_type_name){
   
   $form['entity_type'] = array('#type' => 'value', '#value' => $entity_type);
   
+  $form['info'] = array('#markup' => "<p><strong>HELP:</strong> The add property button will temporarily add a property to the
+    entity type, to finalize adding the property, click the checkbox on the left and click save </p>");
+  
   //When the add button is clicked, the submit callback directs the form to be rebuilt. 
    //Here we check to see if a new property was added, and keep it in a a list of new properties
    //to add them to the table on each rebuild 
