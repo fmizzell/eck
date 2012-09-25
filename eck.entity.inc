@@ -33,6 +33,20 @@ function eck__entity__menu($entity_type, $bundle) {
     'type' => MENU_LOCAL_TASK
   );
   
+  $menu["{$path}/{$entity_type->name}/{$bundle->name}/edit"] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('eck__bundle__edit_form', $entity_type->name, $bundle->name),
+    'access callback' => 'eck__multiple_access_check',
+    'access arguments' => array( array( 'eck administer bundles',
+                                        'eck edit bundles',
+                                        "eck administer {$entity_type->name} bundles",
+                                        "eck edit {$entity_type->name} bundles",
+                                      ) ),
+    'file' => 'eck.bundle.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
   //The entity autocomplete module does a great job at providing generalize
   //autocomplete function that will work for any entity that declares the label
   //property in the entity_info array, but there is not a general solution to

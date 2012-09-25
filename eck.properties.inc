@@ -27,6 +27,7 @@ function eck_property_types() {
     'integer' => t('Integer'), 
     'decimal' => t('Decimal'), 
     'positive_integer' => t('Unsigned Integer'),
+    'language' => t('Language'),
   );
 
   drupal_alter('eck_property_types', $default_types);
@@ -92,6 +93,16 @@ function eck_property_type_schema($type) {
       );
       break;
       
+    case 'language':
+      $schema = array(
+        'description' => 'Language',
+        'type' => 'varchar',
+        'length' => 12,
+        'not null' => TRUE,
+        'default' => '',
+      );
+      break;
+
     default:
       $schema = NULL;
       break;
@@ -322,6 +333,23 @@ function eck_deactivate_on_save($element, &$state){
   }
   
   return $element;
+}
+
+function eck__properties__form_validate($form, &$state){
+  if($state['values']['op'] == t('Add Property')){
+    if (isset($state['values']['property_behavior'])) {
+      $property_behavior = $state['values']['property_behavior'];
+      $behavior_plugins = ctools_get_plugins('eck', 'property_behavior');
+      if (isset($behavior_plugins[$property_behavior]['unique']) && $behavior_plugins[$property_behavior]['unique']) {
+        foreach ($state['values']['new_properties'] as $property_name => $property_info) {
+          if ($property_info['behavior'] == $property_behavior) {
+            form_set_error('property_behavior', t('There can be only one property with \'@name\' behavior per entity.',
+              array('@name' => $behavior_plugins[$property_behavior]['label'])));
+          }
+        }
+      }
+    }
+  }
 }
 
 function eck__properties__form_submit($form, &$state){

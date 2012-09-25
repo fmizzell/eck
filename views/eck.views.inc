@@ -30,5 +30,7 @@
         'handler' => 'eck_views_handler_field_link_delete',
       ),
     );
-  }  
+    $vars = eck_property_behavior_invoke_plugin_alter($entity_type, 'views_data_alter', array('entity_type' => $entity_type, 'data' => $data));
+    $data = $vars['data'];
+  }
 }

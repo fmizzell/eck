@@ -133,7 +133,14 @@ function eck_schema() {
         'type' => 'varchar',
         'length' => 128,
         'not null' => TRUE
-      )
+      ),
+      'config' => array(
+        'description' => 'A serialized list of the bundle settings.',
+        'type' => 'text',
+        'serialize' => TRUE,
+        'initial' => serialize(array()),
+        'not null' => TRUE,
+      ),
     ),
     'primary key' => array('id'/*, 'machine_name'*/), //sad.. taken this out until I figure out how to make it work
     'indexes' => array(
@@ -498,10 +505,17 @@ function eck_update_7008() {
   }
 }
 
-
-
-
-
-
-
+/**
+ * Add 'config' field to eck_bundle table.
+ */
+function eck_update_7009() {
+  // Add config field for bundles
+  db_add_field('eck_bundle', 'config', array(
+    'description' => 'A serialized list of the bundle settings.',
+    'type' => 'text',
+    'serialize' => TRUE,
+    'initial' => serialize(array()),
+    'not null' => TRUE,
+  ));
+}
 

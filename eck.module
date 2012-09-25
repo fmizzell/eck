@@ -48,6 +48,12 @@ function eck_eck_default_properties(){
     'type' => "integer",
     'behavior' => 'changed'
   );
+  $default_properties['language'] =
+  array(
+    'label' => "Entity language",
+    'type' => "language",
+    'behavior' => 'language'
+  );
   
   return $default_properties;
 }

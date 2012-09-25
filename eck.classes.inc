@@ -257,7 +257,7 @@ class EntityType extends DBObject{
   
   public function save(){
     if($this->is_new){
-      module_load_include('inc', 'eck', 'eck.enttiy_type');
+      module_load_include('inc', 'eck', 'eck.entity_type');
       $schema = eck__entity_type__schema($this);
       db_create_table("eck_{$this->name}", $schema);
       
@@ -317,6 +317,7 @@ class Bundle extends DBObject{
   
   public function __construct(){
     parent::__construct('eck_bundle');
+    $this->config = array();
   }
   
   private function createMachineName(){
