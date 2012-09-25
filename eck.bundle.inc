@@ -185,7 +185,7 @@ function eck__bundle__add($form, &$form_state, $entity_type) {
 
   $form['bundle_label'] = array(
     '#type' => 'textfield',
-    '#title' => "Type",
+    '#title' => t('Type'),
     '#description' => "A Human readable name for the bundle",
   );
 

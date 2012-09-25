@@ -316,7 +316,7 @@ function eck__properties__form($form, &$state, $entity_type_name){
 
 function eck_deactivate_on_save($element, &$state){
   if(array_key_exists('input', $state) && array_key_exists('op', $state['input']) && 
-    $state['input']['op'] == 'Save'){
+    $state['input']['op'] == t('Save')) {
     isset($element['#element_validate']) ? $element['#element_validate'] = NULL : NULL;
     isset($element['#needs_validation']) ? $element['#needs_validation'] = NULL : NULL;
   }
@@ -325,10 +325,10 @@ function eck_deactivate_on_save($element, &$state){
 }
 
 function eck__properties__form_submit($form, &$state){
-  if($state['values']['op'] == "Add Property"){
+  if($state['values']['op'] == t('Add Property')) {
     $state['rebuild'] = TRUE;
   }
-  else if($state['values']['op'] == "Save"){
+  else if($state['values']['op'] == t('Save')) {
     //Here we want to add the properties to the entity type and save it
     $entity_type = $state['values']['entity_type'];
     //dpm($entity_type, "Entity Type");
