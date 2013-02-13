@@ -397,7 +397,9 @@ function eck__entity_type__info($entity_type) {
           'label' => t('Teaser'),
           'custom settings' => TRUE,
       )
-    )
+    ),
+    // Inline entity form module integration.
+    'inline entity form' => array('controller' => 'EckInlineEntityFormController'),
   );
   
   $eck_path = eck__entity_type__path();
