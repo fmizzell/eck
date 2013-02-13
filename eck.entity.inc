@@ -421,7 +421,7 @@ function eck__entity__delete_form_submit($form, &$form_state) {
  * @param $entity
  *  an object as returned by entity_load()
  */
-function eck__entity__form($form, $form_state, $entity) {
+function eck__entity__form($form, &$form_state, $entity) {
   $form['entity'] = array(
     '#type' => 'value',
     '#value' => $entity
