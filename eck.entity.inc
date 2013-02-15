@@ -325,8 +325,6 @@ function eck__entity__edit($entity_type_name, $bundle_name, $id) {
     $entity = $entities[$id];
   }
 
-  global $user;
-
   return drupal_get_form("eck__entity__form_edit_{$entity_type_name}_{$bundle_name}", $entity);
 }
 
