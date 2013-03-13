@@ -497,6 +497,7 @@ function eck__entity__form_submit($form, &$state) {
   $entity_type = EntityType::loadByName($entity_type);
   $properties = $entity_type->properties;
   
+  $wrapper = NULL;
   //If we find a value set for a property lets just set it
   foreach($properties as $property => $info){
     $form_value = _eck_form_property_value($state, $property);
@@ -504,8 +505,11 @@ function eck__entity__form_submit($form, &$state) {
       //@todo maybe we should do this in the form validation step. 
       //that way we can catch entity wrapper validation exceptions
       //and set a form error message appropiately
-      $wrapper = entity_metadata_wrapper($entity_type->name, $entity);
-      $wrapper->{$property}->set($form_value);
+      if(!$wrapper){
+        $wrapper = entity_metadata_wrapper($entity_type->name, $entity);
+      }
+      
+      //$wrapper->{$property}->set($form_value);
     }
   }
   
