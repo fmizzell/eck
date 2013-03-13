@@ -501,15 +501,25 @@ function eck__entity__form_submit($form, &$state) {
   //If we find a value set for a property lets just set it
   foreach($properties as $property => $info){
     $form_value = _eck_form_property_value($state, $property);
-    if(isset($form_value)){
+    if(isset($form_value) && !empty($form_value)){
       //@todo maybe we should do this in the form validation step. 
       //that way we can catch entity wrapper validation exceptions
       //and set a form error message appropiately
+      
+      //lets give the behavior a chance to manipulate the data before it is set
+      $vars = array('data' => $form_value);
+      $data = eck_property_behavior_invoke_plugin($entity_type, 'pre_set', 
+      $vars);
+      
+      if(array_key_exists($property, $data)){
+        $form_value = $data[$property];
+      }
+      
       if(!$wrapper){
         $wrapper = entity_metadata_wrapper($entity_type->name, $entity);
       }
       
-      //$wrapper->{$property}->set($form_value);
+      $wrapper->{$property}->set($form_value);
     }
   }
   
