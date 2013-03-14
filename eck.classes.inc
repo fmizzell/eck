@@ -85,7 +85,7 @@ class DBObject implements Iterator{
    
     
     if($this->is_new){
-      return 
+      $this->id =
       db_insert($this->table)
       ->fields($this->data)
       ->execute();
