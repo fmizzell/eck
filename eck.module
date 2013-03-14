@@ -90,9 +90,9 @@ function eck_ctools_plugin_type() {
  */
 function eck__entity__label($entity) {
   $hook_names = array(
-    "entity_label",
-    "entity_{$entity->entityType()}_label",
-    "entity_{$entity->entityType()}_{$entity->type}_label",
+    "eck_entity_label",
+    "eck_entity_{$entity->entityType()}_label",
+    "eck_entity_{$entity->entityType()}_{$entity->type}_label",
   );
 
   foreach ($hook_names as $hook_name) {
