@@ -118,10 +118,12 @@ function eck__entity__label($entity) {
  *  an object as returned by entity_load()
  */
 function eck__entity__uri($entity) {
+  
+  $ids = entity_extract_ids($entity->entityType(), $entity);
 
   module_load_include('inc', 'eck', 'eck.entity');
   $crud_info = get_bundle_crud_info($entity->entityType(), $entity->type);
-  $view_path = str_replace('%', $entity->identifier(), $crud_info['view']['path']);
+  $view_path = str_replace('%', $ids[0], $crud_info['view']['path']);
   
   return array('path' => $view_path);
 }
