@@ -24,24 +24,20 @@ class DBObject implements Iterator{
     //is this a real table, check it
  
     
-    $schemas = drupal_get_schema();
-    $tables = array_keys($schemas);
-
-    
-    if(in_array($table, $tables)){
+    if($schema = drupal_get_schema($table)){
       $this->table = $table;
-      $this->primary_keys = $schemas[$table]["primary key"];
-      $this->vars = array_keys($schemas[$table]['fields']);
+      $this->primary_keys = $schema["primary key"];
+      $this->vars = array_keys($schema['fields']);
       
       //do we want to handle searialized variables by default? let's do it
       //and wait for some critizism
-      foreach($schemas[$table]['fields'] as $name => $field){
+      foreach($schema['fields'] as $name => $field){
         if(array_key_exists('serialize', $field) && $field['serialize']){
           $this->serialize[] = $name;
         }
       }
       foreach($this->vars as $var){
-        if($schemas[$table]['fields'][$var]['type'] != "serial"){
+        if($schema['fields'][$var]['type'] != "serial"){
           $this->data[$var] = NULL;
         }
       };
