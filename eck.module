@@ -8,6 +8,9 @@ module_load_include('inc', 'eck', 'eck.default_properties');
 module_load_include('inc', 'eck', 'eck.properties');
 module_load_include('inc', 'eck', 'eck.property_behavior');
 
+//Integration with references dialog
+module_load_include('inc', 'eck', 'includes/eck.references_dialog');
+
 /**
  * Implements hook_views_api().
  */
