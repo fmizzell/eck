@@ -179,25 +179,13 @@ function entity_table($entities, $select = FALSE) {
     $allowed_operations = '';
     $destination = drupal_get_destination();
     //Check that the user has permissions to edit:
-    if( eck__multiple_access_check( 
-      array( 'eck administer entities', 
-             'eck edit entities',
-             "eck administer {$entity_type} {$bundle} entities",
-             "eck edit {$entity_type} {$bundle} entities"
-            ), FALSE /* TODO: should also check user ownership perms. */ )
-    ){
+    if (eck__entity_menu_access('edit', $entity_type, $bundle, $id)) {
       $edit_path = str_replace('%', $id, $crud_info['edit']['path']);
       $allowed_operations = l(t('edit'), $edit_path, array('query' => $destination));
     }
     
     //Check that the user has permissions to delete:
-    if( eck__multiple_access_check( 
-      array( 'eck administer entities', 
-             'eck delete entities',
-             "eck administer {$entity_type} {$bundle} entities",
-             "eck delete {$entity_type} {$bundle} entities"
-            ), FALSE /* TODO: should also check user ownership perms. */ )
-    ){
+    if (eck__entity_menu_access('delete', $entity_type, $bundle, $id)) {
       $delete_path = str_replace('%', $id, $crud_info['delete']['path']);
       $allowed_operations .= (($allowed_operations)?'<br />':'').l(t('delete'), $delete_path, array('query' => $destination));
     }
@@ -546,21 +534,29 @@ function eck_permission() {
 
 
 /**
-+ * Callback for checking multiple permissions
-+ * @param $perms
-+ *  An array of permissions to be checked against.
-+ * @param $b_own
-+ *  Flag to indicate if we should also check ownership permissions which
-+ *  are the same as the usual permissions, but will be postfixed with ' own'.
-+ */
-function eck__multiple_access_check($perms, $b_own = FALSE) {
+ * Callback for checking multiple permissions.
+ *
+ * @param $perms
+ *   An array of permissions to be checked against.
+ * @param $b_own
+ *   (optional) Flag to indicate if we should also check ownership permissions
+ *   which are the same as the usual permissions, but will be postfixed with
+ *   ' own'. Defaults to FALSE.
+ * @param $account
+ *   (optional) The account to check permissions against. Defaults to the
+ *   current user.
+ */
+function eck__multiple_access_check($perms, $b_own = FALSE, $account = NULL) {
+  if (!isset($account)) {
+    $account = $GLOBALS['user'];
+  }
   foreach($perms as $perm) {
-    if(user_access($perm)) return TRUE;
+    if(user_access($perm, $account)) return TRUE;
   }
   if (!$b_own) return FALSE;
   //check for entity author field and user ownership permissions.
   foreach($perms as $perm) {
-    if(user_access($perm.' own')) return TRUE;
+    if(user_access($perm.' own', $account)) return TRUE;
   }
   //the user does not have any of the supplied permissions.
   return FALSE;
@@ -829,16 +825,120 @@ function eck_entity_delete($entity, $entity_type){
 }
 
 /**
- * Access callback for ECK entities
- * 
- * TODO: turn this into a proper access callback. For now we just
- * return true so other modules calling the entity_access will be
- * able to display ECK entities and their fields.
- * 
- * Examples that require this are rules, views, entityreference...
+ * Menu access callback for ECK entities.
+ *
+ * As much as possible, this function is a simple wrapper around the Entity
+ * module's entity_access() function (so that it respects changes made by other
+ * modules which alter the Entity module's access callbacks using
+ * hook_entity_info_alter()).
+ *
+ * @param $action
+ *   The CRUD action to check on the entity ("add", "edit", "delete", or
+ *   "view").
+ * @param $entity_type_name
+ *   A string representing the entity type to check.
+ * @param $bundle_name
+ *   A string representing the entity bundle to check.
+ * @param $entity_id
+ *   (optional) The ID of the entity to check. This should be passed whenever
+ *   it is available (i.e., for any action besides "add", since in that case
+ *   there is no existing entity to check).
+ *
+ * @return
+ *   TRUE if access is granted, FALSE otherwise.
  */
-function eck__entity_access($op, $entity = NULL, $account = NULL, $entity_type = NULL) {
-  return TRUE;
+function eck__entity_menu_access($action, $entity_type_name, $bundle_name, $entity_id = NULL) {
+  // Either pass the full entity along, or the bundle if no entity ID was
+  // provided. (The latter is to allow eck__entity_access() to work similarly
+  // to node_access() in the case of the "add" operation.)
+  if (isset($entity_id)) {
+    $entities = entity_load($entity_type_name, array($entity_id));
+    if (isset($entities[$entity_id])) {
+      $entity_or_bundle = $entities[$entity_id];
+    }
+    else {
+      // Deny access if the requested entity doesn't exist.
+      return FALSE;
+    }
+  }
+  else {
+    $entity_or_bundle = $bundle_name;
+  }
+
+  // @todo This module uses different CRUD terminology than is normally used in
+  //   Drupal, so we need to convert it so that entity_access() will understand
+  //   it.
+  $crud_map = array(
+    'add' => 'create',
+    'edit' => 'update',
+  );
+  if (isset($crud_map[$action])) {
+    $action = $crud_map[$action];
+  }
+
+  // Check access for the current user to the requested action on the entity or
+  // bundle.
+  return entity_access($action, $entity_type_name, $entity_or_bundle);
+}
+
+/**
+ * Default access callback for ECK entities.
+ *
+ * This is used as the default behavior when entity_access() is called to check
+ * access on an entity provided by ECK. Note that in addition to calls from
+ * within this own module, entity_access() is also called by other modules such
+ * as Rules, Entity Reference, etc. (although it is not consistently called
+ * throughout Drupal).
+ *
+ * @param $action
+ *   The operation being performed. One of 'view', 'update', 'create' or
+ *   'delete'.
+ * @param $entity_or_bundle
+ *   Normally, an entity to check access for. If this is NULL, we are checking
+ *   access for all entities of the given type. If this is a string
+ *   (representing the bundle to check access for; see parallel example in
+ *   node_access()) we are checking access for all entities of the given type
+ *   and bundle.
+ * @param $account
+ *   The user to check access for. If this is NULL, access will be checked for
+ *   the current user.
+ * @param $entity_type_name
+ *   A string representing the type of entity to check access for.
+ *
+ * @return
+ *   TRUE if access is granted, FALSE otherwise.
+ *
+ * @see entity_access()
+ */
+function eck__entity_access($op, $entity_or_bundle, $account, $entity_type_name) {
+  // @todo This module uses different CRUD terminology than is normally used in
+  //   Drupal, so we need to convert what entity_access() sent us back to
+  //   something this module will understand.
+  $crud_map = array(
+    'create' => 'add',
+    'update' => 'edit',
+  );
+  if (isset($crud_map[$op])) {
+    $op = $crud_map[$op];
+  }
+
+  // Check the relevant permissions. If an entity or bundle is provided, use
+  // that to get the bundle-specific permissions and check those too.
+  $permissions = array(
+    'eck administer entities',
+    "eck {$op} entities",
+  );
+  if (isset($entity_or_bundle)) {
+    if (is_object($entity_or_bundle)) {
+      list(, , $bundle_name) = entity_extract_ids($entity_type_name, $entity_or_bundle);
+    }
+    else {
+      $bundle_name = $entity_or_bundle;
+    }
+    $permissions[] = "eck administer {$entity_type_name} {$bundle_name} entities";
+    $permissions[] = "eck {$op} {$entity_type_name} {$bundle_name} entities";
+  }
+  return eck__multiple_access_check($permissions, FALSE /*TODO: should auto-load entity author here. */, $account);
 }
 
 function eck_entity_view_alter(&$view){
