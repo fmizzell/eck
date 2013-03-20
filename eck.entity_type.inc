@@ -67,8 +67,11 @@ function eck__entity_type__list() {
   $path = eck__entity_type__path();
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
   $rows = array();
-
-  foreach (EntityType::loadAll() as $entity_type) {
+  
+  $entity_types = EntityType::loadAll();
+  usort($entity_types,'eck_alphabetical_cmp');
+  
+  foreach ($entity_types as $entity_type) {
     $allowed_operations = '';
     //Check that the user has permissions to delete:
     if( eck__multiple_access_check( array( 'eck administer entity types', 'eck delete entity types') ) )
@@ -495,4 +498,8 @@ function eck__entity_type__custom_property_label($property) {
   }
   return $property['label'] . ' (' . t('type: !type', array('!type' => $type)) . ')';
 }*/
+
+
+
+
 

@@ -129,8 +129,11 @@ function eck__bundle__list($entity_type) {
     
     $header = array(t('Type'), array('data' => t('Operations'), 'colspan' => '1'));
     $rows = array();
-
-    foreach (Bundle::loadByEntityType($entity_type) as $bundle) {
+    
+    $bundles = Bundle::loadByEntityType($entity_type);
+    usort($bundles,'eck_alphabetical_cmp');
+    
+    foreach ($bundles as $bundle) {
       $bundle_label =  $bundle->label;
 
       $admin_info = get_bundle_admin_info($entity_type->name, $bundle->name);
