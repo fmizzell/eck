@@ -1,0 +1,8 @@
+name = "ECK - Entitycache"
+description = "Integrates the ECK module with the Entitycache module"
+
+package = Performance and scalability
+core = 7.x
+
+dependencies[] = eck
+dependencies[] = entitycache

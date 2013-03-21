@@ -256,7 +256,10 @@ class EntityType extends DBObject{
       module_load_include('inc', 'eck', 'eck.entity_type');
       $schema = eck__entity_type__schema($this);
       db_create_table("eck_{$this->name}", $schema);
-      
+
+      // Allow other modules to respond to the creation of entity types.
+      module_invoke_all('eck_entity_type_insert', $this);
+
     }else{
       //modify the already existing table in accordance with the recorded changes
       if(array_key_exists('add', $this->changes)){
@@ -268,7 +271,6 @@ class EntityType extends DBObject{
           //it is not custom so lets get the schema and add the field
           $schema = eck_property_type_schema($property['type']);
           db_add_field("eck_{$this->name}", $name, $schema);
-          
         }
       }
       if(array_key_exists('remove', $this->changes)){
@@ -276,6 +278,9 @@ class EntityType extends DBObject{
           db_drop_field("eck_{$this->name}", $name);
         }
       }
+
+      // Allow other modules to respond to the change of entity types.
+      module_invoke_all('eck_entity_type_update', $this);
     }
     
     parent::save();
@@ -285,6 +290,10 @@ class EntityType extends DBObject{
   public function delete(){
     parent::delete();
     db_drop_table('eck_'.$this->name);
+
+    // Allow other modules to respond to the deletion of entity types.
+    module_invoke_all('eck_entity_type_delete', $this);
+
     drupal_flush_all_caches();
   }
   
