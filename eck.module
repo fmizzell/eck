@@ -1130,32 +1130,35 @@ function eck_form_field_ui_field_overview_form_validate($form, &$form_state) {
 function eck_form_field_ui_field_overview_form_submit($form, &$form_state) {
   if (isset($form_state['values']['fields']['_eck_add_extra_field'])) {
     $extra_field_settings = $form_state['values']['fields']['_eck_add_extra_field'];
-    $entity_type = entity_type_load($form['#entity_type']);
-    $bundle = bundle_load($form['#entity_type'], $form['#bundle']);
-    $property_name = $extra_field_settings['field_name'];
+    // Submit only if information was provided in the 'add existing field' row.
+    if (array_filter(array($extra_field_settings['label'], $extra_field_settings['field_name'], $extra_field_settings['widget_type']))) {
+      $entity_type = entity_type_load($form['#entity_type']);
+      $bundle = bundle_load($form['#entity_type'], $form['#bundle']);
+      $property_name = $extra_field_settings['field_name'];
 
-    // Add extra field configuration for this property to the bundle.
-    $config = (!empty($bundle->config)) ? $bundle->config : array();
-    $widget_info = eck_property_info_widget_types($extra_field_settings['widget_type']);
-    $extra_field = array(
-      'label' => $extra_field_settings['label'],
-      'description' => $widget_info['description'],
-      'widget' => array(
-        'type' => $extra_field_settings['widget_type'],
-        'settings' => $widget_info['settings'],
-      ),
-    );
-    // If the property behavior supplies a default value function then make sure we use it.
-    if($default_function = eck_property_behavior_implements($entity_type, $property_name, 'default_value')){
-      $extra_field['default_value_function'] = $default_function;
+      // Add extra field configuration for this property to the bundle.
+      $config = (!empty($bundle->config)) ? $bundle->config : array();
+      $widget_info = eck_property_info_widget_types($extra_field_settings['widget_type']);
+      $extra_field = array(
+        'label' => $extra_field_settings['label'],
+        'description' => $widget_info['description'],
+        'widget' => array(
+          'type' => $extra_field_settings['widget_type'],
+          'settings' => $widget_info['settings'],
+        ),
+      );
+      // If the property behavior supplies a default value function then make sure we use it.
+      if($default_function = eck_property_behavior_implements($entity_type, $property_name, 'default_value')){
+        $extra_field['default_value_function'] = $default_function;
+      }
+      // Pull in the default..default value from the property type schema.
+      $schema = eck_property_type_schema($entity_type->properties[$property_name]['type']);
+      $extra_field['default_value'] = $schema['default'];
+      $config['extra_fields'][$property_name]['form'] = $extra_field;
+      $bundle->config = $config;
+      // Save the bundle.
+      $bundle->save();
     }
-    // Pull in the default..default value from the property type schema.
-    $schema = eck_property_type_schema($entity_type->properties[$property_name]['type']);
-    $extra_field['default_value'] = $schema['default'];
-    $config['extra_fields'][$property_name]['form'] = $extra_field;
-    $bundle->config = $config;
-    // Save the bundle.
-    $bundle->save();
   }
 }
 
