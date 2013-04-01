@@ -761,3 +761,58 @@ function eck__extra_field_widget_form_submit($form, &$form_state) {
   }
   $form_state['redirect'] = 'admin/structure/entity-type/' . $entity_type->name . '/' . $bundle->name . '/fields';
 }
+
+/**
+ * Form for removing the property from an entity's list of extra fields.
+ * 
+ * @param $form
+ *   The property widget form.
+ * @param $form_state
+ *   The current state of the form.
+ * @param $entity_type
+ *   The machine name of the entity type.
+ * @param $bundle_type
+ *   The machine name of the bundle type.
+ * @param $property_name
+ *   The machine name of the entity property being included as an extra field.
+ * 
+ * @return
+ *   An array comprising the form for changing the property's widget.
+ */
+function eck__remove_extra_field_form($form, &$form_state, $entity_type, $bundle_type, $property_name) {
+  $bundle = bundle_load($entity_type, $bundle_type);
+
+  $form = array (
+    '#entity_type' => $entity_type,
+    '#bundle' => $bundle,
+    '#property_name' => $property_name,
+  );
+  return confirm_form($form, 
+    t('Are you sure you want to remove %title as a property field for the %bundle bundle?', array('%title' => $property_name, '%bundle' => $bundle->label)),
+    'admin/structure/entity-type/' . $entity_type . '/' . $bundle_type . '/properties/' . $property_name,
+    t('This will remove the property as an extra field on the %bundle bundle\'s field management page, but it does not delete the property from the entity type. This cannot be undone.', array('%bundle' => $bundle->label)),
+    t('Remove'),
+    t('Cancel')
+  );
+}
+
+/**
+ * Callback to remove a property field from a bundle's field management form.
+ * The property will no longer show on the entity's creation and edit forms.
+ **/
+function eck__remove_extra_field_form_submit($form, &$form_state) {
+  if ($form_state['values']['confirm']) {
+    $property_name = $form['#property_name'];
+    $entity_type = $form['#entity_type'];
+    $bundle = bundle_load($entity_type, $form['#bundle']->name);
+    if (!empty($bundle->config['extra_fields'][$property_name]['form'])) {
+      $config = $bundle->config;
+      // Unset the extra field form settings for this property to no longer manage it.
+      unset($config['extra_fields'][$property_name]['form']);
+      $bundle->config = $config;
+      // Save the bundle.
+      $bundle->save();
+    }
+  }
+  $form_state['redirect'] = 'admin/structure/entity-type/' . $entity_type . '/' . $bundle->name . '/fields';
+}
