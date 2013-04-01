@@ -262,6 +262,32 @@ function eck_entity_info_alter(&$info){
   }
 }
 
+/**
+ * Implements hook_field_extra_fields().
+ */
+function eck_field_extra_fields() {
+  $extra = array();
+
+  foreach(EntityType::loadAll() as $entity_type){
+    foreach(Bundle::loadByEntityType($entity_type) as $bundle){
+      foreach($entity_type->properties as $property_name => $property_info) {
+        $extra[$entity_type->name][$bundle->name]['form'][$property_name] = array(
+          'label' => $property_info['label'],
+          'description' => t('Entity property'),
+          'weight' => 0,
+        );
+
+        $extra[$entity_type->name][$bundle->name]['display'][$property_name] = array(
+          'label' => $property_info['label'],
+          'description' => t('Entity property'),
+          'weight' => 0,
+        );
+      }
+    }
+  }
+  return $extra;
+}
+
 function entity_type_load($entity_type_name){
   return EntityType::loadByName($entity_type_name);
 }
