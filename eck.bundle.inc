@@ -451,3 +451,208 @@ function get_bundle_field_label_info($entity_type, $bundle){
     return NULL;
   }
 }
+
+/**
+ ********** Properties as extra fields ***********
+ */
+
+/**
+ * Form for managing the extra field settings for a given entity property.
+ * 
+ * @param $form
+ *   The entity property extra field management form. For configuration of extra
+ *   field settings like its label.
+ * @param $form_state
+ *   The current state of the form.
+ * @param $entity_type
+ *   The machine name of the entity type.
+ * @param $bundle_type
+ *   The machine name of the bundle type.
+ * @param $property_name
+ *   The machine name of the entity property being included as an extra field.
+ * 
+ * @return
+ *   An array comprising the form for managing the settings for the extra field.
+ */
+function eck__manage_extra_field_form($form, &$form_state, $entity_type_name, $bundle_type, $property_name) {
+  $entity_type = entity_type_load($entity_type_name);
+  $bundle = bundle_load($entity_type_name, $bundle_type);
+  drupal_set_title($bundle->config['extra_fields'][$property_name]['form']['label']);
+
+  if (empty($bundle->config['extra_fields'][$property_name]['form'])) {
+    $form_state['redirect'] = 'admin/structure/entity-type/' . $entity_type_name . '/' . $bundle->name . '/fields';
+    return array();
+  }
+  $bundle_property_config = $bundle->config['extra_fields'][$property_name]['form'];
+  $widget_type = eck_property_info_widget_types($bundle_property_config['widget']['type']);
+  
+  $form = array (
+    '#entity_type' => $entity_type,
+    '#bundle' => $bundle,
+    '#property_name' => $property_name,
+  );
+  // Build the configurable property extra field form values.
+  $form['label'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Label'),
+    '#default_value' => !empty($bundle_property_config['label']) ? $bundle_property_config['label'] : $property_name,
+    '#required' => TRUE,
+    '#weight' => -20,
+  );
+  $form['required'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Required field'),
+    '#default_value' => !empty($bundle_property_config['required']),
+    '#weight' => -10,
+  );
+
+  $form['description'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Help text'),
+    '#default_value' => !empty($bundle_property_config['description']) ? $bundle_property_config['description'] : '',
+    '#rows' => 5,
+    '#description' => t('Instructions to present to the user below this property field on the editing form.<br />Allowed HTML tags: @tags', array('@tags' => _field_filter_xss_display_allowed_tags())),
+    '#weight' => -5,
+  );
+  
+  // Include external module file dependency if one is required.
+  if (function_exists('drupal_get_path') && $widget_type['file']) {
+    form_load_include($form_state, $widget_type['file type'], $widget_type['module'], $widget_type['file']);
+  }
+  
+  // Add additional widget settings from the property's widget type module.
+  $additions = module_invoke($widget_type['module'], 'eck_property_widget_settings_form', $entity_type, $bundle, $property_name, $bundle_property_config);
+  if (is_array($additions)) {
+    $form['widget'] = array(
+      '#tree' => TRUE,
+      '#type' => 'fieldset',
+      '#title' => t('%type widget settings', array('%type' => $widget_type['label'])),
+    );
+    $form['widget']['settings'] = $additions;
+  }
+  
+  // Add handling for default value if not provided by any other module.
+  if (empty($bundle_property_config['default_value_function'])) {
+    $function = $widget_type['module'] . '_eck_property_widget_form';
+    if (function_exists($function)) {
+      $form['default_value_widget'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Default value'),
+        '#collapsible' => FALSE,
+        '#tree' => TRUE,
+        '#description' => t('The default value for this property field, used when creating new content.'),
+        // Stick to an empty 'parents' on this form in order not to breaks widgets
+        // that do not use field_widget_[field|instance]() and still access
+        // $form_state['field'] directly.
+        '#parents' => array(),
+      );
+      $element = array(
+        '#entity' => NULL,
+        '#entity_type' => $entity_type,
+        '#bundle' => $bundle,
+        '#property_name' => $property_name,
+        '#widget_type' => $widget_type,
+        '#language' => LANGUAGE_NONE,
+        '#title' => check_plain($bundle_property_config['label']),
+        '#description' => field_filter_xss($bundle_property_config['description']),
+        '#required' => (!empty($bundle_property_config['required'])),
+      );
+      // Populate widgets with default values when creating a new entity.
+      if ($element = $function($form, $form_state, $property_name, $bundle_property_config, LANGUAGE_NONE, $bundle_property_config['default_value'], $element)) {
+        // Allow modules to alter the property widget form element.
+        $context = array(
+          'form' => $form,
+          'property_name' => $property_name,
+          'bundle_property_config' => $bundle->config['extra_fields'][$property_name],
+          'langcode' => LANGUAGE_NONE,
+          'value' => $bundle_property_config['default_value'],
+        );
+        drupal_alter(array('eck_property_widget_form', 'eck_property_widget_' . $bundle_property_config['widget']['type'] . '_form'), $element, $form_state, $context);
+      }
+      $form['default_value_widget'][$property_name] = $element;
+    }
+  }
+
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Continue'),
+  );
+  return $form;
+}
+
+/**
+ * Submit callback for editing a property field's settings from a bundle's
+ * field management form.
+ **/
+function eck__manage_extra_field_form_submit($form, &$form_state) {
+  // Load entity_type and bundle in case they have changed since the form was first built.
+  $entity_type = entity_type_load($form['#entity_type']->name);
+  $bundle = bundle_load($entity_type->name, $form['#bundle']->name);
+  // Update the property field settings.
+  if (isset($bundle->config['extra_fields'][$form['#property_name']]['form'])) {
+    $property_settings = $bundle->config['extra_fields'][$form['#property_name']];
+    $widget_info = eck_property_info_widget_types($property_settings['form']['widget']['type']);
+    $property_settings['form']['required'] = !(empty($form_state['values']['required']));
+    $property_settings['form']['label'] = $form_state['values']['label'];
+    $property_settings['form']['description'] = $form_state['values']['description'];
+
+    // Update the widget settings if there are any
+    if (isset($form['widget']['settings'])) {
+      $property_settings['form']['widget']['settings'] = $form_state['values']['widget']['settings'];
+    }
+
+    // Handle the default value.
+    if (isset($form['default_value_widget'])) {
+      $property_settings['form']['default_value'] = eck_property_widget_extract_value($entity_type, $bundle, $form['#property_name'], $widget_info, $form, $form_state);
+    }
+
+    // Now update the bundle config.
+    $config = $bundle->config;
+    $config['extra_fields'][$form['#property_name']] = $property_settings;
+    $bundle->config = $config;
+    // Save the bundle.
+    $bundle->save();
+  } else {
+    // The extra field form setting was not found in the config so it must no longer
+    // be managed. Don't do anything except notify the user.
+    drupal_set_message(t('Could not edit the property field settings. The property %name on the %bundle bundle is no selected for management.', array('%name' => $form['#property_name'], '%bundle' => $bundle->label)), 'error');
+  }
+  $form_state['redirect'] = 'admin/structure/entity-type/' . $entity_type->name . '/' . $bundle->name . '/fields';
+}
+
+/**
+ * Helper function for extracting the value for a property from its widget form.
+ * 
+ * If one is available the 'value callback' function for the widget is called to
+ * processe the values returned.
+ * 
+ * @param $entity_type
+ *   The ECK entity_type object.
+ * @param $bundle
+ *   The ECK bundle object.
+ * @param $property_name
+ *   The machine name of the property for which the value should be returned.
+ * @param $widget
+ *   The widget info array as returned by eck_property_info_widget_types(TYPE).
+ * @param $form
+ *   The submitted form array.
+ * @param $form_state
+ *   The array containing the current state information for the form.
+ * 
+ * @return
+ *   The value that should be saved for this property.
+ */
+function eck_property_widget_extract_value($entity_type, $bundle, $property_name, $widget, $form, &$form_state) {
+  $value = NULL;
+  // If the widget has a callback to extract the value then use it.
+  if (!empty($widget['value callback']) && function_exists($widget['value callback'])) {
+    $value = $widget['value callback']($entity_type, $bundle, $property_name, $widget, $form, $form_state);
+  } else {
+    // By default just take the value matching the property name.
+    if (isset($form_state['values'][$property_name])) {
+      $value = $form_state['values'][$property_name];
+    }
+  }
+  return $value;
+}

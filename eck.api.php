@@ -75,3 +75,85 @@ function hook_eck_property_widget_info(&$widget_types) {
   // Add a newly defined property type to the allowed property types for the text widget. 
   $widget_types['text']['property types'] += array('mycoolnewpropertytype');
 }
+
+/**
+ * Callback to retrieve the form elements for a module's defined property
+ * widgets. This same hook will be called for every property widget type
+ * defined by a given module.
+ * 
+ * This callback operates very similar to that of Drupal's field api hooks.
+ * 
+ * The form may be altered using hook_eck_property_widget_form() and hook_eck_property_widget_WIDGET_TYPE_form().
+ * 
+ * @param $form
+ *   A reference to the parent form. Could be the entity form, the widget
+ *   settings form, etc.
+ * @param form_state
+ *   A reference to the current state of the form.
+ * @param property_name
+ *   The machine name of the property for which to retreive the widget form.
+ * @param bundle_property_config
+ *   The bundle's configuration setting stored for the property. Contains all of
+ *   the widget's settings and default info for the property.
+ * @param langcode
+ *   The current language.
+ * @param $value
+ *   The property's current value to use in the widget.
+ * @param $element
+ *   The form element to use for the property widget. Default info included.
+ *  
+ * @return the form element for a particular widget.
+ * 
+ * @see eck_eck_property_widget_info().
+ * @see hook_eck_property_widget_form().
+ * @see hook_eck_property_widget_settings_form().
+ * @see hook_eck_property_widget_form().
+ * @see hook_eck_property_widget_WIDGET_TYPE_form().
+ */
+function hook_eck_property_widget_form(&$form, &$form_state, $property_name, $bundle_property_config, $langcode, $value, $element)) {
+  if ($bundle_property_config['widget']['type'] == 'text') {
+    $element += array(
+      '#type' => 'textfield',
+      '#default_value' => isset($value) ? $value : NULL,
+      '#size' => $bundle_property_config['widget']['settings']['size'],
+      '#maxlength' => $bundle_property_config['widget']['settings']['max_length'],
+      '#attributes' => array('class' => array('text-full')),
+    );
+  }
+  return $element;
+}
+
+/**
+ * Alters the property widget form. Called for every widget type.
+ * 
+ * @param $element
+ *   A reference to the property widget's form element.
+ * @param form_state
+ *   A reference to the current state of the form.
+ * @param $context
+ *   An array containing contextual information.
+ */
+function hook_eck_property_widget_form(&$element, $form_state, $context) {
+}
+
+/**
+ * Alters the property widget form. Called for the specific WIDGET_TYPE widget.
+ * 
+ * @param $element
+ *   A reference to the property widget's form element.
+ * @param form_state
+ *   A reference to the current state of the form.
+ * @param $context
+ *   An array containing contextual information:
+ *     'form': the parent form. Could be the entity form, the widget
+ *             settings form, etc.
+ *     'property_name': The machine name of the property for which to retreive
+ *                      the widget form.
+ *     'bundle_property_config': The bundle's configuration setting stored for
+ *                               the property. Contains all of the widget's
+ *                               settings and default info for the property.
+ *     'langcode': The current language.
+ *     'value': The property's current value to use in the widget.
+ */
+function hook_eck_property_widget_WIDGET_TYPE_form(&$element, $form_state, $context) {
+}
