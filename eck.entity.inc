@@ -472,35 +472,77 @@ function eck__entity__form($form, &$form_state, $entity) {
     '#value' => $entity
   );
   
-  // Property Widget Handling through property_info by entity api 
+  // Property Widget Handling
+  $entity_type = entity_type_load($entity->entityType());
+  $bundle = bundle_load($entity_type->name, $entity->type);
   $property_info = entity_get_property_info($entity->entityType());
+  $language = entity_language($entity_type->name, $entity);
   $properties = array();
-  $found_widget = FALSE;
-  foreach($property_info['properties'] as $pname => $pi){
-    if(array_key_exists('widget', $pi)){
-      $widget_callback = $pi['widget'];
-      $widget = $widget_callback($entity);
-      $properties[$pname] = $widget_callback;
-      $form[$pname] = $widget_callback($entity);
-      $found_widget = TRUE;
+
+  foreach ($entity_type->properties as $property_name => $info) {
+    if (empty($bundle->config['extra_fields'][$property_name]['form'])) continue;
+
+    $bundle_property_config = $bundle->config['extra_fields'][$property_name]['form'];
+    $widget_type = eck_property_info_widget_types($bundle_property_config['widget']['type']);
+
+    // Get the default value for this property.
+    $value = NULL;
+    if (isset($entity->{$property_name})) {
+      $entity->{$property_name};
+    } elseif (isset($bundle_property_config['default_value_function'])) {
+      $value = $bundle_property_config['default_value_function']($entity_type, $bundle, $entity);
+    } elseif ($bundle_property_config['default_value']) {
+      $value = $bundle_property_config['default_value'];
+    }
+
+    // Include external module file dependency if one is required.
+    if (function_exists('drupal_get_path') && $widget_type['file']) {
+      form_load_include($form_state, $widget_type['file type'], $widget_type['module'], $widget_type['file']);
+    }
+    
+    $function = $widget_type['module'] . '_eck_property_widget_form';
+    if (function_exists($function)) {
+      $element = array(
+        '#entity' => $entity,
+        '#entity_type' => $entity_type,
+        '#bundle' => $bundle,
+        '#property_name' => $property_name,
+        '#widget_type' => $widget_type,
+        '#language' => LANGUAGE_NONE,
+        '#title' => check_plain($bundle_property_config['label']),
+        '#description' => field_filter_xss($bundle_property_config['description']),
+        '#required' => (!empty($bundle_property_config['required'])),
+      );
+      // Call the widget's form hook and load the widget form element.
+      if ($element = $function($form, $form_state, $property_name, $bundle_property_config, $language, $value, $element)) {
+        // Allow modules to alter the property widget form element.
+        $context = array(
+          'form' => $form,
+          'property_name' => $property_name,
+          'bundle_property_config' => $bundle->config['extra_fields'][$property_name],
+          'langcode' => LANGUAGE_NONE,
+          'value' => $value,
+        );
+        drupal_alter(array('eck_property_widget_form', 'eck_property_widget_' . $bundle_property_config['widget']['type'] . '_form'), $element, $form_state, $context);
+      }
+      $properties[$property_name] = $element;
     }
   }
+
+  // Check the property behaviors for widgets too.
+  // TODO: Can probably integrate this with the widget hooks and do away with this.
+  $vars = array('entity' => $entity);
+  $vars += $property_info;
+
+  $widgets = eck_property_behavior_invoke_plugin($entity_type, 'default_widget', $vars);
+  foreach($widgets as $property_name => $widget){
+    //If there was no extra field widget then look for a widget in the property behaviors.
+    if (empty($properties[$property_name])) $properties[$property_name] = $widget;
+  }
   
-  if(!$found_widget){
-    //If there was no widget given through the property_info array, we look for
-    //a widget in the property behaviors implemented
-    $entity_type = $entity->entityType();
-    $entity_type = EntityType::loadByName($entity_type);
-    
-    $vars = array('entity' => $entity);
-    $vars += $property_info;
-    
-    $widgets = eck_property_behavior_invoke_plugin($entity_type, 'default_widget', 
-      $vars);
-    
-    foreach($widgets as $property => $widget){
-      $form[$property] = $widget;
-    }
+  // Add the property forms to the entity form.
+  if (!empty($properties)) {
+    $form += $properties;
   }
   
   $form['submit'] = array(
