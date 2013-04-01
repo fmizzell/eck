@@ -47,6 +47,57 @@ function eck__entity__menu($entity_type, $bundle) {
     'type' => MENU_LOCAL_TASK,
   );
 
+  // Managing a bundle's properties as extra fields
+  
+  $menu["{$path}/{$entity_type->name}/{$bundle->name}/properties/%"] = array(
+    'title arguments' => array(6),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('eck__manage_extra_field_form', $entity_type->name, $bundle->name, 6),
+    'access callback' => 'eck__multiple_access_check',
+    'access arguments' => array( array( 'eck administer bundles',
+                                        'eck edit bundles',
+                                        "eck administer {$entity_type->name} bundles",
+                                        "eck edit {$entity_type->name} bundles",
+                                      ) ),
+    'file' => 'eck.bundle.inc',
+  );
+  
+  $menu["{$path}/{$entity_type->name}/{$bundle->name}/properties/%/edit"] = array(
+    'title' => 'Edit',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+
+  $menu["{$path}/{$entity_type->name}/{$bundle->name}/properties/%/widget-type"] = array(
+    'title' => 'Widget Type',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('eck__extra_field_widget_form', $entity_type->name, $bundle->name, 6),
+    'access callback' => 'eck__multiple_access_check',
+    'access arguments' => array( array( 'eck administer bundles',
+                                        'eck edit bundles',
+                                        "eck administer {$entity_type->name} bundles",
+                                        "eck edit {$entity_type->name} bundles",
+                                      ) ),
+    'file' => 'eck.bundle.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 5,
+  );
+  
+  $menu["{$path}/{$entity_type->name}/{$bundle->name}/properties/%/remove"] = array(
+    'title' => 'Remove',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('eck__remove_extra_field_form', $entity_type->name, $bundle->name, 6),
+    'access callback' => 'eck__multiple_access_check',
+    'access arguments' => array( array( 'eck administer bundles',
+                                        'eck edit bundles',
+                                        "eck administer {$entity_type->name} bundles",
+                                        "eck edit {$entity_type->name} bundles",
+                                      ) ),
+    'file' => 'eck.bundle.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10,
+  );
+
   //The entity autocomplete module does a great job at providing generalize
   //autocomplete function that will work for any entity that declares the label
   //property in the entity_info array, but there is not a general solution to
