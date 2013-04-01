@@ -656,3 +656,108 @@ function eck_property_widget_extract_value($entity_type, $bundle, $property_name
   }
   return $value;
 }
+
+/**
+ * Form for changing the widget type for a given entity property.
+ * 
+ * @param $form
+ *   The property widget form.
+ * @param $form_state
+ *   The current state of the form.
+ * @param $entity_type
+ *   The machine name of the entity type.
+ * @param $bundle_type
+ *   The machine name of the bundle type.
+ * @param $property_name
+ *   The machine name of the entity property being included as an extra field.
+ * 
+ * @return
+ *   An array comprising the form for changing the property's widget.
+ */
+function eck__extra_field_widget_form($form, &$form_state, $entity_type_name, $bundle_type, $property_name) {
+  $entity_type = entity_type_load($entity_type_name);
+  $bundle = bundle_load($entity_type_name, $bundle_type);
+  drupal_set_title($bundle->config['extra_fields'][$property_name]['form']['label']);
+
+  $default_widget = (!empty($bundle->config['extra_fields'][$property_name]['form']['widget']['type'])) ? $bundle->config['extra_fields'][$property_name]['form']['widget']['type'] : '';
+  
+  $form = array (
+    '#entity_type' => $entity_type,
+    '#bundle' => $bundle,
+    '#property_name' => $property_name,
+    '#default_widget' => $default_widget,
+  );
+  $form['widget'] = array(
+    '#type' => 'fieldset', 
+    '#title' => t('Change Widget'), 
+    '#weight' => 5, 
+    '#collapsible' => FALSE, 
+  );
+
+  $form['widget']['widget_type'] = array(
+    '#type' => 'select',
+    '#title' => t('Widget for managed property'),
+    '#options' => eck_property_widget_type_options($entity_type->properties[$property_name]['type']),
+    '#empty_option' => t('- Select a widget -'),
+    '#description' => t('The type of form element you would like to present to the user when managing this property for the %bundle type.', array('%type' => $bundle->label)),
+    '#default_value' => $default_widget,
+  );
+  
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Continue'),
+  );
+  return $form;
+}
+
+/**
+ * Validation callback to change the widget for a property field from a bundle's
+ * field management form.
+ **/
+function eck__extra_field_widget_form_validate($form, &$form_state) {
+  // Missing widget type.
+  if (empty($form_state['values']['widget_type'])) {
+    form_set_error('widget_type', t('You need to select a widget.'));
+  }
+  // Wrong widget type.
+  else {
+    $entity_type = entity_type_load($form['#bundle']->name);
+    $widget_types = eck_property_widget_type_options($entity_type->properties[$form['#property_name']]['type']);
+    if (!isset($widget_types[$form_state['values']['widget_type']])) {
+      form_set_error('widget_type', t('Invalid widget.'));
+    }
+  }
+}
+
+/**
+ * Submit callback to change the widget for a property field from a bundle's
+ * field management form.
+ **/
+function eck__extra_field_widget_form_submit($form, &$form_state) {
+  // Load entity_type and bundle in case they have changed since the form was first built.
+  $entity_type = entity_type_load($form['#entity_type']->name);
+  $bundle = bundle_load($entity_type->name, $form['#bundle']->name);
+  // Update the widget settings if it has changed.
+  if ($form['#default_widget'] != $form_state['values']['widget_type']) {
+    // Grab the config settings for this bundle so we can alter them.
+    $config = (!empty($bundle->config)) ? $bundle->config : array();
+    if (isset($config['extra_fields'][$form['#property_name']]['form'])) {
+      $widget_info = eck_property_info_widget_types($form_state['values']['widget_type']);
+      // Changing the widget so make sure to start with the default widget settings.
+      $widget = array(
+        'type' => $form_state['values']['widget_type'],
+        'settings' => $widget_info['default settings'],
+      );
+      $config['extra_fields'][$form['#property_name']]['form']['widget'] = $widget;
+      $bundle->config = $config;
+      // Save the bundle.
+      $bundle->save();
+    } else {
+      // The extra field form setting was not found in the config so it must no longer
+      // be managed. Don't do anything except notify the user.
+      drupal_set_message(t('Could not change the property widget. The property %name on the %bundle bundle is no selected for management.', array('%name' => $form['#property_name'], '%bundle' => $bundle->label)), 'error');
+    }
+  }
+  $form_state['redirect'] = 'admin/structure/entity-type/' . $entity_type->name . '/' . $bundle->name . '/fields';
+}

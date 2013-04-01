@@ -50,7 +50,8 @@ function hook_eck_entity_type_delete(EntityType $entity_type) {
  *     'description': Description to use as help text for property widget
  *                    selection.
  *     'value callback': The name of a callback function to use for processing
- *                       the value returned by the widget before saving.
+ *                       the value returned by the widget before saving. See
+ *                       eck_property_widget_extract_value().
  *     
  **/
 function hook_eck_property_widget_info() {
