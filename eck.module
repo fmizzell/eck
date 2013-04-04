@@ -21,6 +21,13 @@ function eck_views_api() {
   );
 }
 
+/**
+ * Implements hook_flush_caches().
+ */
+function eck_flush_caches() {
+  return array('cache_eck');
+}
+
 function eck_eck_default_properties(){
   $default_properties = array();
   
