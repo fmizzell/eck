@@ -488,7 +488,7 @@ function eck__entity__form($form, &$form_state, $entity) {
     // Get the default value for this property.
     $value = NULL;
     if (isset($entity->{$property_name})) {
-      $entity->{$property_name};
+      $value = $entity->{$property_name};
     } elseif (isset($bundle_property_config['default_value_function'])) {
       $value = $bundle_property_config['default_value_function']($entity_type, $bundle, $entity);
     } elseif ($bundle_property_config['default_value']) {
@@ -533,18 +533,12 @@ function eck__entity__form($form, &$form_state, $entity) {
   // TODO: Can probably integrate this with the widget hooks and do away with this.
   $vars = array('entity' => $entity);
   $vars += $property_info;
-
-  $widgets = eck_property_behavior_invoke_plugin($entity_type, 'default_widget', $vars);
-  foreach($widgets as $property_name => $widget){
-    //If there was no extra field widget then look for a widget in the property behaviors.
-    if (empty($properties[$property_name])) $properties[$property_name] = $widget;
-  }
   
   // Add the property forms to the entity form.
   if (!empty($properties)) {
     $form += $properties;
   }
-  
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#weight' => 10000,
