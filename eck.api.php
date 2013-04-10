@@ -111,7 +111,7 @@ function hook_eck_property_widget_info(&$widget_types) {
  * @see hook_eck_property_widget_form().
  * @see hook_eck_property_widget_WIDGET_TYPE_form().
  */
-function hook_eck_property_widget_form(&$form, &$form_state, $property_name, $bundle_property_config, $langcode, $value, $element)) {
+function hook_eck_property_widget_form(&$form, &$form_state, $property_name, $bundle_property_config, $langcode, $value, $element) {
   if ($bundle_property_config['widget']['type'] == 'text') {
     $element += array(
       '#type' => 'textfield',
@@ -157,4 +157,31 @@ function hook_eck_property_widget_form(&$element, $form_state, $context) {
  *     'value': The property's current value to use in the widget.
  */
 function hook_eck_property_widget_WIDGET_TYPE_form(&$element, $form_state, $context) {
+}
+
+
+function hook_eck_property_types(){
+  $property_types['property_type_machine_name'] =
+  array(
+      'class' => "PropertyTypeClass"
+  );
+  
+  return $property_types;
+}
+
+
+
+/**
+ * Default properties, are prebuild properties with a schema and a behavior
+ */
+function hook_eck_default_properties(){
+  
+  $default_properties['property_machine_name'] =
+  array(
+    'label' => "Property Label",
+    'type' => "property_type",
+    'behavior' => 'property_behavior'
+  );
+  
+  return $default_properties;
 }

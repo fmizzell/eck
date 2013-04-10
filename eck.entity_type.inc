@@ -343,8 +343,18 @@ function eck__entity_type__schema($entity_type) {
   );
   
   // Add properties to schema definition.
-  eck_set_properties_schema($schema, $entity_type);
+  $schema['fields'] += eck__entity_type__properties_schema($entity_type);
 
+  return $schema;
+}
+
+function eck__entity_type__properties_schema($entity_type){
+  $schema = array();
+  foreach($entity_type->properties as $property => $property_info){
+    $property_type_info = eck_get_property_type($property_info['type']);
+    $schema[$property] = $property_type_info['class']::schema();
+  }
+  
   return $schema;
 }
 

@@ -5,6 +5,7 @@ module_load_include('inc', 'eck', 'eck.entity_type');
 module_load_include('inc', 'eck', 'eck.bundle');
 module_load_include('inc', 'eck', 'eck.entity');
 module_load_include('inc', 'eck', 'eck.default_properties');
+module_load_include('inc', 'eck', 'eck.property_type');
 module_load_include('inc', 'eck', 'eck.properties');
 module_load_include('inc', 'eck', 'eck.property_behavior');
 
@@ -1386,3 +1387,34 @@ function eck_alphabetical_cmp( $a, $b )
 { 
   return strcasecmp($a->name, $b->name);
 } 
+
+function eck_eck_property_types(){
+  $property_types = array();
+  
+  $property_types['decimal'] = array(
+    'label' => "Decimal",
+    'class' => "DecimalPropertyType"    
+  );
+  $property_types['integer'] = array(
+    'label' => "Integer",
+    'class' => "IntegerPropertyType"    
+  );
+  $property_types['positive_integer'] = array(
+    'label' => "Positive Integer",
+    'class' => "PositiveIntegerPropertyType"    
+  );
+  $property_types['text'] = array(
+    'label' => "Text",
+    'class' => "TextPropertyType"    
+  );
+  $property_types['language'] = array(
+    'label' => "Language",
+    'class' => "LanguagePropertyType"    
+  );
+  $property_types['uuid'] = array(
+    'label' => "UUID",
+    'class' => "UUIDPropertyType"    
+  );
+  
+  return $property_types;
+}
