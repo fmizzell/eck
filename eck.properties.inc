@@ -1,161 +1,4 @@
 <?php
-/**
- * @file
- * Handles properties attached to entites created through ECK.
- */
-
-/**
- * Assigns fields to the db schema for an entity type.
- * @param $schema
- */
-
-function eck_set_properties_schema(&$schema, $entity_type){
-  $properties = $entity_type->properties;
-  
-  //dpm($properties, "Properties in schema");
-  
-  foreach($properties as $name => $info){
-      $type = $info['type'];
-      $schema['fields'][$name] = eck_property_type_schema($type);
-  }
-}
-
-function eck_property_types() {
-  //All types: serial, int, float, numeric, varchar, char, text, blob, datetime
-  $default_types = array(
-    'text' => t('Text'),
-    'integer' => t('Integer'), 
-    'decimal' => t('Decimal'), 
-    'positive_integer' => t('Unsigned Integer'),
-    'language' => t('Language'),
-  );
-
-  drupal_alter('eck_property_types', $default_types);
-
-  // @TODO: As modules start to implement ECK hooks, this should be removed.
-  if (module_exists('uuid') && !array_key_exists('uuid', $default_types)) {
-    $default_types['uuid'] = t('UUID');
-  }
-
-  return $default_types;
-}
-
-
-function eck_property_type_schema($type) {
-  $schema = array();
-  
-  switch ($type) {
-    case 'text':
-      $schema = array(
-        'description' => 'Text',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      );
-      break;
-
-    case 'decimal':
-      $schema = array(
-        'description' => 'Decimal',
-        'type' => 'float',
-        'not null' => TRUE,
-        'default' => 0,
-      );
-      break;
-
-    case 'integer':
-      $schema = array(
-        'type' => 'int',
-        'description' => "Integer",
-        'not null' => TRUE,
-        'default' => 0,
-      );
-      break;
-    case 'positive_integer':
-      $schema = array(
-        'type' => 'int',
-        'description' => "Integer",
-        'not null' => TRUE,
-        'unsigned' => TRUE,
-        'default' => 0,
-      );
-      break;
-      
-      
-    case 'uuid':
-      $schema = array(
-        'type' => 'char',
-        'length' => 36,
-        'not null' => TRUE,
-        'default' => '',
-        'description' => 'The Universally Unique Identifier.',
-      );
-      break;
-      
-    case 'language':
-      $schema = array(
-        'description' => 'Language',
-        'type' => 'varchar',
-        'length' => 12,
-        'not null' => TRUE,
-        'default' => '',
-      );
-      break;
-
-    default:
-      $schema = NULL;
-      break;
-  }
-  
-  drupal_alter('eck_property_type_schema', $schema);
-  
-  return $schema;
-}
-
-
-/**
- * Generates schema definition for additional ECK properties.
- *
- * @param $property_name
- *   Property to generate schema definition for.
- * @param $entity_type
- *   (Object) An object with and entity types info, as returned by entity_type__load 
- * This is only use to add stuff to the descriptions of the property, do we really need this?
- * Well, if people is already using the module it will be a pain in the butt to syncronize their schemas to use
- * indexes, and so on without the specifics of the entity type, so for the sake of moving forward to more important
- * things, lets leave the $entity_type as a parameter for this function.
- */
-/*function eck__property__schema(&$schema, $entity_type, $property_name) {
-}*/
-
-/*function eck__property__form($entity_type){
-  $form = array();
-  // Enable/disable properties.
-  $form['properties'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Properties'),
-    '#description' => t('Note: unchecking will delete the property and all data stored within!'),
-    '#collapsible' => TRUE,
-    '#tree' => TRUE,
-  );
-  
-  $properties = hook_eck_property_info();
- 
-  foreach ($properties as $property => $info) {
-    
-      $form['properties'][$property] = array(
-        '#type' => 'checkbox',
-        '#title' => $info['label'],
-        '#default_value' => 
-        isset($entity_type->properties) &&
-        array_key_exists($property, $entity_type->properties) ? 1 : 0
-      );
-  }
-  
-  return $form;
-}*/
-
 
 function eck__properties__form($form, &$state, $entity_type_name){
   if (!isset($entity_type_name)) {
@@ -263,7 +106,16 @@ function eck__properties__form($form, &$state, $entity_type_name){
   );
 
   //Add new property
-  $types[t('Generic')] = eck_property_types();
+  $property_types = eck_get_property_types();
+  
+  //lets transform the property_types info array into something appropriate for
+  //a select list
+  $property_type_options = array();
+  foreach($property_types as $property_name => $info){
+    $property_type_options[$property_name] = $info['label'];
+  }
+  
+  $types[t('Generic')] = $property_type_options;
  
   $form["add_new_property"] = array(
     '#markup' => '<h3>Add new property</h3>'
@@ -274,7 +126,7 @@ function eck__properties__form($form, &$state, $entity_type_name){
     '#title' => t('Type'),
     '#options' => array('' => t('- Please choose -')) + $types,
     '#required' => TRUE,
-    '#after_build' => array('eck_deactivate_on_save')
+    '#after_build' => array('_eck_deactivate_on_save')
   );
 
   $form["property_label"] = array(
@@ -282,7 +134,7 @@ function eck__properties__form($form, &$state, $entity_type_name){
     '#title' => t("Name"),
     '#description' => t("A human readable name for the property."),
     '#required' => TRUE,
-    '#after_build' => array('eck_deactivate_on_save')
+    '#after_build' => array('_eck_deactivate_on_save')
   );
 
   $form["property_name"] = array(
@@ -291,7 +143,7 @@ function eck__properties__form($form, &$state, $entity_type_name){
       'exists' => '_eck_fake_exists',
       'source' => array('property_label'),
     ),
-   '#after_build' => array('eck_deactivate_on_save')
+   '#after_build' => array('_eck_deactivate_on_save')
   );
   
   $behavior_plugins = ctools_get_plugins('eck', 'property_behavior');
@@ -323,16 +175,6 @@ function eck__properties__form($form, &$state, $entity_type_name){
   );
   
   return $form;
-}
-
-function eck_deactivate_on_save($element, &$state){
-  if(array_key_exists('input', $state) && array_key_exists('op', $state['input']) && 
-    $state['input']['op'] == t('Save')) {
-    isset($element['#element_validate']) ? $element['#element_validate'] = NULL : NULL;
-    isset($element['#needs_validation']) ? $element['#needs_validation'] = NULL : NULL;
-  }
-  
-  return $element;
 }
 
 function eck__properties__form_validate($form, &$state){
@@ -380,6 +222,153 @@ function eck__properties__form_submit($form, &$state){
     drupal_flush_all_caches();
   }
 }
+
+function _eck_deactivate_on_save($element, &$state){
+  if(array_key_exists('input', $state) && array_key_exists('op', $state['input']) && 
+    $state['input']['op'] == t('Save')) {
+    isset($element['#element_validate']) ? $element['#element_validate'] = NULL : NULL;
+    isset($element['#needs_validation']) ? $element['#needs_validation'] = NULL : NULL;
+  }
+  
+  return $element;
+}
+
+interface PropertyType{
+  public static function schema();
+  public static function validate($value);
+}
+
+class TextPropertyType implements PropertyType{
+  public static function schema(){
+    $schema = array(
+      'description' => 'Text',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    );
+    
+    return $schema;
+  }
+
+  public static function validate($value) {
+    //Pretty much anything can be store in a text field
+    //even an object?
+    //@TODO check what happens when trying to save an obejct to a varchar field
+    //in the db
+    
+    return TRUE;
+  }
+}
+
+class LanguagePropertyType extends TextPropertyType{
+  
+  public static function schema(){
+    $schema = parent::schema();
+    
+    $schema['description'] = "Language";
+    $schema['length'] = 12;
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    //make sure it is text
+    if(parent::validate($value)){
+      //@TODO check with the language people, what kind of validation can we
+      //do here
+      return TRUE;
+    }
+    
+    return FALSE;
+  }
+}
+
+class IntegerPropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'type' => 'int',
+      'description' => "Integer",
+      'not null' => TRUE,
+      'default' => 0,
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    if(is_integer($value)){
+      return TRUE;
+    }
+    
+    return FALSE;
+  }
+}
+
+class PositiveIntegerPropertyType extends IntegerPropertyType{
+  
+  public static function schema() {
+    $schema = parent::schema();
+    
+    $schema['description'] = "Positive Integer";
+    $schema['unsigned'] = TRUE;
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    if(parent::validate($value) && $value >= 0){
+      return TRUE;
+    }
+    
+    return FALSE;
+  }
+}
+
+class DecimalPropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'description' => 'Decimal',
+      'type' => 'float',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    if(is_double($value) || is_float($value)){
+      return TRUE;
+    }
+    
+    return FALSE;
+  }
+}
+
+class UUIDPropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'description' => 'Decimal',
+      'type' => 'float',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    //@TODO UUID module has a function ... steal :)
+    return TRUE;
+  }
+}
+
+
+
 
 
 
