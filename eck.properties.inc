@@ -298,11 +298,8 @@ class IntegerPropertyType implements PropertyType{
   }
   
   public static function validate($value){
-    if(is_integer($value)){
-      return TRUE;
-    }
-    
-    return FALSE;
+    $number = filter_var($value, FILTER_VALIDATE_INT);
+    return ($number !== FALSE);
   }
 }
 
