@@ -374,7 +374,7 @@ function eck__entity_type__info($entity_type) {
   $info = array();
   $entity_type_label = $entity_type->label;
   
-  $entity_class = "Entity";
+  $entity_class = "ECKEntity";
   $controller_class = "EntityAPIController";
 
   /*if (!drupal_autoload_class($entity_class = eck_get_class_name($entity_type->name, 'Entity'))) {

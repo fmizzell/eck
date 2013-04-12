@@ -495,3 +495,85 @@ class Bundle extends DBObject{
     return field_create_instance($instance);
   }
 }
+
+class ECKEntity extends Entity{
+  
+  //this flag only gets set so we can make our properties public again
+  //before we save the object;
+  private $ignore_validation;
+  
+  private $property_values;
+  
+  public function __construct(array $values = array(), $entityType = NULL){
+    
+    $this->ignore_validation = FALSE;
+    
+    parent::__construct($values, $entityType);
+    
+    //I have this stupid crap.. fixing drupals mess ups.
+    $entity_type_name = $this->entityType();
+    $entity_type = EntityType::loadByName($entity_type_name);
+    $properties = $entity_type->properties;
+    $property_names = array_keys($properties);
+    
+    foreach($property_names as $pn){
+      $value = $this->{$pn};
+      unset($this->$pn);
+      $this->{$pn} = $value;
+    }
+  }
+  
+  public function __set($name, $value) {
+    //let's implement non restrictive validation.
+    //if it is a property validate, if it isn't just set it
+    
+    $entity_type_name = $this->entityType();
+    $entity_type = EntityType::loadByName($entity_type_name);
+    $properties = $entity_type->properties;
+    $property_names = array_keys($properties);
+    
+    if(in_array($name, $property_names) && !$this->ignore_validation){
+      
+      $property_type = $properties[$name]['type'];
+      $property_type_info = eck_get_property_type($property_type);
+      
+      if($property_type_info['class']::validate($value)){
+        $this->property_values[$name] = $value;
+      }else{
+        throw new Exception("Invalid value {$value} for property {$name} of type {$property_type} in 
+        Entity type: {$entity_type_name}");
+      }
+      
+    }else{
+      $this->{$name} = $value;
+    }
+  }
+
+
+  public function __get($name) {
+    if(array_key_exists($name, $this->property_values)){
+      return $this->property_values[$name];
+    }else if(isset($this->{$name})){
+      return $this->{$name};
+    }
+    return NULL;
+  }
+  
+  public function __isset($name) {
+    if(array_key_exists($name, $this->property_values)){
+      return TRUE;
+    }else if(isset($this->{$name})){
+      return TRUE;
+    }
+    return FALSE;
+  }
+  
+  public function save(){
+    //going back to public properties
+    $this->ignore_validation = TRUE;
+    foreach($this->property_values as $property => $value){
+      $this->{$property} = $value; 
+    }
+    return parent::save();
+  }
+}

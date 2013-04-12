@@ -819,7 +819,7 @@ function eck_property_widget_type_options($property_type = NULL, $by_label = FAL
 
   if (!isset($options)) {
     $options = array();
-    $property_types = eck_property_types();
+    $property_types = eck_get_property_types();
     foreach (eck_property_info_widget_types() as $name => $widget_type) {
       foreach ($widget_type['property types'] as $widget_property_type) {
         // Check that the field type exists.
@@ -834,10 +834,10 @@ function eck_property_widget_type_options($property_type = NULL, $by_label = FAL
     return !empty($options[$property_type]) ? $options[$property_type] : array();
   }
   if ($by_label) {
-    $property_types = eck_property_types();
+    $property_types = eck_get_property_types();
     $options_by_label = array();
     foreach ($options as $property_type => $widgets) {
-      $options_by_label[$property_types[$property_type]] = $widgets;
+      $options_by_label[$property_types[$property_type]['label']] = $widgets;
     }
     return $options_by_label;
   }
@@ -926,7 +926,7 @@ function eck_eck_property_widget_info() {
     'text' => array(
       'label' => t('Text'),
       'settings' => array('size' => 60, 'max_length' => 255),
-      'property types' => array('text'),
+      'property types' => array('text', "integer", "decimal"),
       'file' => 'eck.property_widgets',
     ),
   );
@@ -1160,7 +1160,7 @@ function eck_form_field_ui_field_overview_form_submit($form, &$form_state) {
         $extra_field['default_value_function'] = $default_function;
       }
       // Pull in the default..default value from the property type schema.
-      $schema = eck_property_type_schema($entity_type->properties[$property_name]['type']);
+      $schema = eck_get_property_type_schema($entity_type->properties[$property_name]['type']);
       $extra_field['default_value'] = $schema['default'];
       $config['extra_fields'][$property_name]['form'] = $extra_field;
       $bundle->config = $config;
@@ -1169,30 +1169,6 @@ function eck_form_field_ui_field_overview_form_submit($form, &$form_state) {
     }
   }
 }
-
-
-/*******************************************************************************
- *            Entity Classes
- ******************************************************************************/
-
-
-/**
- * Base class for ECK entites.
- */
-class ECKEntity extends Entity {
-  
-}
-
-
-/*
-function eck_entity_info_alter(&$info){
-  dpm($info);
-}
-
-function eck_schema_alter(&$schema){
-  dpm($schema);
-}*/
-
 
 //Entity Hooks
 function eck_entity_presave($entity, $entity_type){

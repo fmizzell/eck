@@ -550,6 +550,35 @@ function eck__entity__form($form, &$form_state, $entity) {
 function eck__entity__form_validate($form, &$state) {
   $entity = $state['values']['entity'];
   field_attach_form_validate($entity->entityType(), $entity, $form, $state);
+  
+  //lets validate our properties by trying to set them :)
+  $entity_type_name = $entity->entityType();
+  $entity_type = EntityType::loadByName($entity_type_name);
+  $properties = $entity_type->properties;
+  
+  //If we find a value set for a property lets just set it
+  foreach($properties as $property => $info){
+    $form_value = _eck_form_property_value($state, $property);
+    
+    if(isset($form_value)){
+      
+      //@TODO This should be a widget hook not a behavior function
+      $vars = array('data' => $form_value);
+      $data = eck_property_behavior_invoke_plugin($entity_type, 'pre_set', 
+      $vars);
+      
+      if(array_key_exists($property, $data)){
+        $form_value = $data[$property];
+      }
+      
+      try{
+        $entity->{$property} = $form_value;
+      }catch(Exception $e){
+        //if there was an exception lets set up the proper for error
+        form_set_error($property, "Invalid property value {$form_value}, value should be of type {$info['type']}");
+      }
+    }
+  } 
 }
 
 /**
@@ -564,36 +593,6 @@ function eck__entity__form_submit($form, &$state) {
   $entity = $state['values']['entity'];
   
   field_attach_submit($entity->entityType(), $entity, $form, $state);
-  
-  $entity_type = $entity->entityType();
-  $entity_type = EntityType::loadByName($entity_type);
-  $properties = $entity_type->properties;
-  
-  $wrapper = NULL;
-  //If we find a value set for a property lets just set it
-  foreach($properties as $property => $info){
-    $form_value = _eck_form_property_value($state, $property);
-    if(isset($form_value)){
-      //@todo maybe we should do this in the form validation step. 
-      //that way we can catch entity wrapper validation exceptions
-      //and set a form error message appropiately
-      
-      //lets give the behavior a chance to manipulate the data before it is set
-      $vars = array('data' => $form_value);
-      $data = eck_property_behavior_invoke_plugin($entity_type, 'pre_set', 
-      $vars);
-      
-      if(array_key_exists($property, $data)){
-        $form_value = $data[$property];
-      }
-      
-      if(!$wrapper){
-        $wrapper = entity_metadata_wrapper($entity_type->name, $entity);
-      }
-      
-      $wrapper->{$property}->set($form_value);
-    }
-  }
   
   $entity->save();
 
