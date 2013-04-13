@@ -315,8 +315,13 @@ class PositiveIntegerPropertyType extends IntegerPropertyType{
   }
   
   public static function validate($value){
-    if(parent::validate($value) && $value >= 0){
-      return TRUE;
+    if(parent::validate($value)){
+      
+      //lets cast it in case it is string
+      $int = intval($value);
+      if($int >= 0){
+        return TRUE;
+      }
     }
     
     return FALSE;
@@ -337,11 +342,8 @@ class DecimalPropertyType implements PropertyType{
   }
   
   public static function validate($value){
-    if(is_double($value) || is_float($value)){
-      return TRUE;
-    }
-    
-    return FALSE;
+    $number = filter_var($value, FILTER_VALIDATE_FLOAT);
+    return ($number !== FALSE);
   }
 }
 
