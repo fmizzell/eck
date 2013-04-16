@@ -536,7 +536,7 @@ class ECKEntity extends Entity{
   //before we save the object;
   private $ignore_validation;
   
-  private $property_values;
+  private $property_values = array();
   
   public function __construct(array $values = array(), $entityType = NULL){
     
@@ -560,24 +560,31 @@ class ECKEntity extends Entity{
   public function __set($name, $value) {
     //let's implement non restrictive validation.
     //if it is a property validate, if it isn't just set it
-    
+
     $entity_type_name = $this->entityType();
     $entity_type = EntityType::loadByName($entity_type_name);
     $properties = $entity_type->properties;
     $property_names = array_keys($properties);
-    
+
     if(in_array($name, $property_names) && !$this->ignore_validation){
       
       $property_type = $properties[$name]['type'];
       $property_type_info = eck_get_property_type($property_type);
       
-      if($property_type_info['class']::validate($value)){
+      if (!isset($value)) {
+        $schema = $property_type_info['class']::schema();
+        if (isset($schema['default'])) {
+          $this->property_values[$name] = $schema['default'];
+        }
+      }
+      elseif($property_type_info['class']::validate($value)){
         $this->property_values[$name] = $value;
-      }else{
+      }
+      else{
         throw new Exception("Invalid value {$value} for property {$name} of type {$property_type} in 
         Entity type: {$entity_type_name}");
       }
-      
+
     }else{
       $this->{$name} = $value;
     }
