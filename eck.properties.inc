@@ -266,6 +266,7 @@ class LanguagePropertyType extends TextPropertyType{
   public static function schema(){
     $schema = parent::schema();
     
+    $schema['default'] = 'und';
     $schema['description'] = "Language";
     $schema['length'] = 12;
     
