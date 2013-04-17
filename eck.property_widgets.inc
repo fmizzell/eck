@@ -40,6 +40,17 @@ function eck_eck_property_widget_settings_form($entity_type, $bundle, $property_
       '#description' => t('The maximum length of the field in characters.'),
       '#element_validate' => array('element_validate_integer_positive'),
     );
+  }else if ($bundle_property_config['widget']['type'] == 'options') {
+    $settings = $bundle_property_config['widget']['settings'];
+    // The size of the 'text' widget text box in columns/characters.
+    $form['options'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Options'),
+      '#default_value' => $settings['options'],
+      '#required' => TRUE,
+      '#description' => "Add the options, one per line, in the format value|label",
+      '#element_validate' => array('eck_property_widget_options_validate'),
+    );
   }
 
   return $form;
@@ -65,5 +76,34 @@ function eck_eck_property_widget_form(&$form, &$form_state, $property_name, $bun
       '#attributes' => array('class' => array('text-full')),
     );
   }
+  if ($bundle_property_config['widget']['type'] == 'options') {
+    $options = array();
+    $options_string = $bundle_property_config['widget']['settings']['options'];
+    if(!empty($options_string)){
+      $option_lines = explode("\n", $options_string);
+
+      foreach($option_lines as $line){
+        $kv = explode("|", $line);
+        $options[$kv[0]] = $kv[1];
+      }
+    }
+    
+    $element += array(
+      '#type' => 'radios',
+      '#default_value' => isset($value) ? $value : NULL,
+      '#options' => $options
+    );
+  }
   return $element;
+}
+
+function eck_property_widget_options_validate($element, &$form_state) {
+  $value = $element['#value'];
+  $options = explode("\n", $value);
+  foreach($options as $option){
+    $key_value = explode("|", $option);
+    if(count($key_value) != 2){
+      form_error($element, t('%name: incorrect format.', array('%name' => $element['#title'])));
+    }
+  }
 }
