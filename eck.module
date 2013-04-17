@@ -937,14 +937,23 @@ function eck_property_info_widget_types($widget_type = NULL, $reset = FALSE) {
  * @see eck_property_info_widget_types().
  **/
 function eck_eck_property_widget_info() {
-  $widget_types = array(
-    'text' => array(
-      'label' => t('Text'),
-      'settings' => array('size' => 60, 'max_length' => 255),
-      'property types' => array('text', "integer", "positive_integer", "decimal"),
-      'file' => 'eck.property_widgets',
-    ),
+  $widget_types = array();
+  
+  $widget_types['text'] = array(
+    'label' => t('Text'),
+    'settings' => array('size' => 60, 'max_length' => 255),
+    'property types' => array('text', "integer", "positive_integer", "decimal"),
+    'file' => 'eck.property_widgets',
   );
+  
+  $widget_types['options'] = array(
+    'label' => t('Options'),
+    'settings' => array('options' => ""),
+    'property types' => array('text', "integer", "positive_integer", "decimal"),
+    'file' => 'eck.property_widgets',
+  );
+  
+  
   return $widget_types;
 }
 
