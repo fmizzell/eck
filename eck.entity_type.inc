@@ -30,9 +30,8 @@ function eck__entity_type__menu() {
     'title' => 'Entity types',
     'description' => 'A centralized administrative section for entity types',
     'page callback' => 'eck__entity_type__list',
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array(array('eck administer entity types', 'eck list entity types')),
-     
+    'access callback' => 'eck_access',
+    'access arguments' => array("list", "entity_type"),
     'file' => 'eck.entity_type.inc'
   );
 
@@ -42,8 +41,8 @@ function eck__entity_type__menu() {
     'description' => 'Add a new entity type',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('eck__entity_type__form'),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array(array('eck administer entity types', 'eck add entity types')),
+    'access callback' => 'eck_access',
+    'access arguments' => array("create", "entity_type"),
      
     'type' => MENU_LOCAL_ACTION,
     'weight' => -1,
@@ -72,15 +71,25 @@ function eck__entity_type__list() {
   usort($entity_types,'eck_alphabetical_cmp');
   
   foreach ($entity_types as $entity_type) {
-    $allowed_operations = '';
-    //Check that the user has permissions to delete:
-    if( eck__multiple_access_check( array( 'eck administer entity types', 'eck delete entity types') ) )
-      $allowed_operations = l(t("delete"), "{$path}/{$entity_type->name}/delete");    
-        
-    $rows[] = array(
-          l(t("{$entity_type->label}"), "{$path}/{$entity_type->name}"),
-          $allowed_operations);
+    //Check that the user has permissions to operate on the entity types
+    $actions = array("update" => "edit", "delete" => "delete");
+    foreach($actions  as $action => $menu){
+      
+      if(eck_access($action, 'entity_type', $entity_type)) {
+        $allowed_operations = isset($allowed_operations)?$allowed_operations." | ":"";
+        $allowed_operations .= l(t($menu), "{$path}/{$entity_type->name}/{$menu}");      
+      }
+    }
+    
+    if(eck_access("list", "bundle")){
+      $rows[] = array(l(t("{$entity_type->label}"), "{$path}/{$entity_type->name}"), $allowed_operations);
+    }else{
+      $rows[] = array(t("{$entity_type->label}"), $allowed_operations);
+    }
+    
+    $allowed_operations = NULL;
   }
+  
   $build['entity_table'] = array(
     '#theme' => 'table',
     '#header' => $header,
@@ -387,8 +396,7 @@ function eck__entity_type__info($entity_type) {
     'base table' => "eck_{$entity_type->name}",
     'entity class' => $entity_class,
     'controller class' => $controller_class,
-    'form callback' => 'eck__entity__form',
-    'access callback' => 'eck__entity_access',
+    'access callback' => 'eck_entity_access',
     'module' => 'eck',
     'fieldable' => TRUE,
     'entity keys' => array(
