@@ -18,15 +18,28 @@ function eck__bundle__menu($entity_type) {
   // Create the menus relavant to types.
   $path = eck__entity_type__path();
   $menu = array();
+  
+  // EDIT an entity type
+  $menu["{$path}/{$entity_type->name}/edit"] = array(
+    'title' => "Edit",
+    'description' => "Edit the '{$entity_type->label}' entity type",
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array("eck__entity_type__form", $entity_type->name),
+    'access callback' => 'eck_access',
+    'access arguments' => array('update', 'entity_type', $entity_type),
+    'file' => 'eck.entity_type.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+  );
 
-  // DELETE ENTITY TYPE
+  // DELETE an entity type
   $menu["{$path}/{$entity_type->name}/delete"] = array(
     'title' => "Delete",
     'description' => "Delete the '{$entity_type->label}' Entity Type",
     'page callback' => "drupal_get_form",//"eck__entity_type__delete",
     'page arguments' => array("eck__entity_type__delete_form", $entity_type->name),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array( array('eck administer entity types', 'eck delete entity types') ),
+    'access callback' => 'eck_access',
+    'access arguments' => array("delete", "entity_type", $entity_type),
     'file' => 'eck.entity_type.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 3,
@@ -48,21 +61,14 @@ function eck__bundle__menu($entity_type) {
     'weight' => 4,
   );
   
-  // OVERVIEW Entity types.
+  // LIST bundles of an entity type.
   $menu["{$path}/{$entity_type->name}"] = array(
     'title' => "{$entity_type->label}" ,
     'description' => "View all the bundles for '{$entity_type->label}'",
     'page callback' => "eck__bundle__list",
     'page arguments' => array(3),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array( array('eck administer entity types',
-                                       'eck add entity types',
-                                       'eck edit entity types',
-                                       'eck administer bundles', 
-                                       'eck list bundles', 
-                                       "eck administer {$entity_type->name} bundles",
-                                       "eck list {$entity_type->name} bundles"
-                                       ) ),
+    'access callback' => 'eck_access',
+    'access arguments' => array('list', 'bundle'),
     'file' => 'eck.bundle.inc'
   );
   
@@ -71,21 +77,9 @@ function eck__bundle__menu($entity_type) {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 100,
   );
-  
-  
-  $menu["{$path}/{$entity_type->name}/edit"] = array(
-    'title' => "Edit",
-    'description' => "Edit the '{$entity_type->label}' entity type",
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array("eck__entity_type__form", $entity_type->name),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array( array('eck administer entity types', 'eck edit entity types') ),
-    'file' => 'eck.entity_type.inc',
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 2,
-  );
 
-
+  
+  //ADD bundles to an entity type
   $menu["{$path}/{$entity_type->name}/add"] = array(
     'title' => "Add bundle ",
     'description' => "Add a(n) new '{$entity_type->label} Bundle'",
