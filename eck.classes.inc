@@ -305,27 +305,41 @@ class EntityType extends DBObject{
   }
   
   public static function loadByName($name){
-    $self = new EntityType();
-    $self->load('name', $name);
-    // If the entity type is new, then we return false, as it is not a successful load.
-    if($self->is_new){
-      return FALSE;
-    }
-    return $self;
+    return EntityType::loadAll($name);
   }
   
-  public static function loadAll(){
-    $results = db_select('eck_entity_type', 't')
-    ->fields('t', array('name'))
-    ->execute();
-    
-    $entity_types = array();
-    
-    foreach($results as $result){
-      $name = $result->name;
-      $entity_types[] = EntityType::loadByName($name);
+  public static function loadAll($entity_type_name = '', $reset = FALSE){
+    static $entity_types;
+
+    if ($reset) {
+      $entity_types = NULL;
+      // Clear all languages.
+      cache_clear_all('entity_types', 'cache_eck', TRUE);
     }
-    return $entity_types;
+
+    if (!isset($entity_types)) {
+      if ($cached = cache_get("entity_types", 'cache_eck')) {
+        $entity_types = $cached->data;
+      }
+      else {
+        $entity_types = array();
+        $results = db_select('eck_entity_type', 't')
+          ->fields('t', array('name'))
+          ->execute();
+
+        foreach($results as $result){
+          $name = $result->name;
+          $entity_type = new EntityType();
+          $entity_type->load('name', $name);
+          $entity_types[$name] = $entity_type;
+        }
+        cache_set("entity_types", $entity_types, 'cache_eck');
+      }
+    }
+
+    if (!$entity_type_name) return $entity_types;
+  
+    if (isset($entity_types[$entity_type_name])) return $entity_types[$entity_type_name];
   }
 }
 
@@ -419,41 +433,61 @@ class Bundle extends DBObject{
    *  "{$entity_type_name}_{$bundle_name}"
    */
   public static function loadByMachineName($machine_name){
-    $self = new Bundle();
-    $self->load('machine_name', $machine_name);
-    return $self;
+    return Bundle::loadAll($machine_name);
   }
   
-  public static function loadAll(){
-    //@todo move this to a general function
-    $results = db_select('eck_bundle', 't')
-    ->fields('t', array('machine_name'))
-    ->execute();
-    
-    $bundles = array();
-    
-    foreach($results as $result){
-      $name = $result->machine_name;
-      $bundles[] = Bundle::loadByMachineName($name);
+  public static function loadAll($machine_name = NULL, $reset = FALSE){
+    static $bundles;
+
+    if ($reset) {
+      $bundles = NULL;
+      // Clear all languages.
+      cache_clear_all('bundles', 'cache_eck', TRUE);
     }
-    return $bundles;
+
+    if (!isset($bundles)) {
+      if ($cached = cache_get("bundles", 'cache_eck')) {
+        $bundles = $cached->data;
+      }
+      else {
+        $bundles = array();
+        //@todo move this to a general function
+        $results = db_select('eck_bundle', 't')
+          ->fields('t', array('machine_name'))
+          ->execute();
+
+        foreach($results as $result){
+          $name = $result->machine_name;
+          $bundle = new Bundle();
+          $bundle->load('machine_name', $name);
+          $bundles[$name] = $bundle;
+        }
+        cache_set("bundles", $bundles, 'cache_eck');
+      }
+    }
+
+    if (!$machine_name) return $bundles;
+
+    if (isset($bundles[$machine_name])) return $bundles[$machine_name];
   }
-  
+
   public static function loadByEntityType($entity_type){
-    //@todo move this to a general function
-    $results = db_select('eck_bundle', 't')
-    ->fields('t', array('name'))
-    ->condition('entity_type', $entity_type->name, '=')
-    ->execute();
-    
-    $bundles = array();
-    
-    foreach($results as $result){
-      $name = $result->name;
-   
-      $bundles[] = Bundle::loadByMachineName("{$entity_type->name}_{$name}");
+    $entity_bundles = &drupal_static(__FUNCTION__, array());
+
+    $entity_type_name = $entity_type->name;
+
+    if (!isset($entity_bundles[$entity_type_name])) {
+      $entity_bundles[$entity_type_name] = array();
+      $bundles = Bundle::loadAll();
+      $entity_bundles[$entity_type_name] = array_filter(
+        $bundles,
+        function ($bundle) use ($entity_type_name) {
+          return $entity_type_name == $bundle->entity_type;
+        } 
+      );
     }
-    return $bundles;
+
+    return (isset($entity_bundles[$entity_type_name])) ? $entity_bundles[$entity_type_name] : array();
   }
 
  /**
@@ -569,15 +603,15 @@ class ECKEntity extends Entity{
     if(in_array($name, $property_names) && !$this->ignore_validation){
       
       $property_type = $properties[$name]['type'];
-      $property_type_info = eck_get_property_type($property_type);
+      $property_type_class = eck_get_property_type_class($property_type);
       
       if (!isset($value)) {
-        $schema = $property_type_info['class']::schema();
+        $schema = $property_type_class::schema();
         if (isset($schema['default'])) {
           $this->property_values[$name] = $schema['default'];
         }
       }
-      elseif($property_type_info['class']::validate($value)){
+      elseif($property_type_class::validate($value)){
         $this->property_values[$name] = $value;
       }
       else{

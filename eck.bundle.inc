@@ -258,6 +258,7 @@ function eck__bundle__add_submit($form, &$form_state) {
   drupal_set_message(t('the %bundle for entity type %entity_type has been saved', 
   array('%bundle' => $bundle_name, '%entity_type' => $entity_type->name)));
 
+  Bundle::loadAll(NULL, TRUE);
   drupal_get_schema(NULL, TRUE);
   entity_info_cache_clear();
   menu_rebuild();
@@ -321,6 +322,7 @@ function eck__bundle__edit_form_submit($form, &$form_state) {
   $bundle->config = $bundle_config;
   // Save the bundle object to the database
   $bundle->save();
+  Bundle::loadAll(NULL, TRUE);
 }
 
 /**
@@ -595,6 +597,7 @@ function eck__manage_extra_field_form_submit($form, &$form_state) {
     $bundle->config = $config;
     // Save the bundle.
     $bundle->save();
+    Bundle::loadAll(NULL, TRUE);
   } else {
     // The extra field form setting was not found in the config so it must no longer
     // be managed. Don't do anything except notify the user.
@@ -735,6 +738,7 @@ function eck__extra_field_widget_form_submit($form, &$form_state) {
       $bundle->config = $config;
       // Save the bundle.
       $bundle->save();
+      Bundle::loadAll(NULL, TRUE);
     } else {
       // The extra field form setting was not found in the config so it must no longer
       // be managed. Don't do anything except notify the user.
@@ -794,6 +798,7 @@ function eck__remove_extra_field_form_submit($form, &$form_state) {
       $bundle->config = $config;
       // Save the bundle.
       $bundle->save();
+      Bundle::loadAll(NULL, TRUE);
     }
   }
   $form_state['redirect'] = 'admin/structure/entity-type/' . $entity_type . '/' . $bundle->name . '/fields';
