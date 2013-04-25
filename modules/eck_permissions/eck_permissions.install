@@ -1,0 +1,39 @@
+<?php
+
+function eck_permissions_schema(){
+  // Schema for the eck permissions table.
+  $schema['eck_permissions'] = array(
+    'description' => "The base table for entity type information",
+    'fields' => array(
+      'id' => array(
+        'description' => "The primary identifier for a bundle",
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => "Is this a user specific permission or a role permission",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      ),
+      'oid' => array(
+        'description' => "The id of the object (role or user) that this permission is relevant to.",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'permission' => array(
+        'description' => "the permission string",
+        'type' => 'varchar',
+        'length' => 256,
+        'not null' => TRUE
+      ),   
+    ),
+    'primary key' => array('id'),
+    'indexes' => array()
+  );
+
+  return $schema;
+}
