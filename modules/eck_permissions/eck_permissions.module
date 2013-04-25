@@ -1,0 +1,108 @@
+<?php
+
+function eck_permissions_menu(){
+  $menu = array();
+  
+  $menu['admin/people/eck-permissions'] =
+  array(
+    'title' => "ECK Permissions",
+    'page callback' => "eck_permissions",
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK
+  );
+  
+  return $menu;
+}
+
+function eck_permissions(){
+  return drupal_get_form("eck_permissions_form");
+}
+
+function eck_permissions_form($form, &$state){
+  
+  $form['role'] =
+  array(
+    '#type' => 'textfield',
+    '#title' => t('Role'),
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+  );
+  
+  $form['permission'] =
+  array(
+    '#type' => 'textfield',
+    '#title' => t('Permission'),
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+  );
+  
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+  
+  return $form;
+}
+
+function eck_permissions_form_submit($form, &$state){
+  $values = $state['values'];
+  $role = $values['role'];
+  $permission = $values['permission'];
+  
+  $perm = new ECKPermission();
+  $perm->type = "role";
+  $perm->oid = $role;
+  $perm->permission = $permission;
+  $perm->save();
+}
+
+class ECKPermission extends DBObject{
+  public function __construct(){
+    parent::__construct('eck_permissions');
+    $this->config = array();
+  }
+  
+  public static function loadById($id){
+    $self = new ECKPermission();
+    $self->load('id', $id);
+    return $self;
+  }
+  
+  public static function loadAllByRole($rid){
+    //@todo move this to a general function
+    $results = db_select('eck_permissions', 'p')
+    ->fields('p', array('id'))
+    ->condition("type", "role", "=")
+    ->condition("oid", $rid, "=")
+    ->execute();
+    
+    $perms = array();
+    
+    foreach($results as $result){
+      $id = $result->id;
+      $perms[] = ECKPermission::loadById($id);
+    }
+    return $perms;
+  }
+}
+
+function eck_permissions_eck_access($op, $object_type, $object, $account){
+  
+  $roles = $account->roles;
+  $perms = array();
+  
+  foreach($roles as $rid => $role){
+    $new = ECKPermission::loadAllByRole($rid);
+    $perms = array_merge($perms, $new);
+  }
+  
+  $allow = FALSE;
+  foreach($perms as $p){
+    $perm = $p->permission;
+    $cperm = "{$op} {$object_type}";
+    if(strcmp($perm, $cperm) == 0){
+      $allow = TRUE;
+    }
+  }
+  
+  return array($allow);
+}
