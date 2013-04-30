@@ -136,7 +136,7 @@ function eck_entity_type_features_rebuild($module) {
     EntityType::loadAll(NULL, TRUE);
     drupal_get_schema(NULL, TRUE);
     entity_info_cache_clear();
-    menu_rebuild();
+    variable_set('menu_rebuild_needed', TRUE);
   }
 }
 
@@ -270,7 +270,7 @@ function eck_bundle_features_rebuild($module) {
     Bundle::loadAll(NULL, TRUE);
     drupal_get_schema(NULL, TRUE);
     entity_info_cache_clear();
-    menu_rebuild();
+    variable_set('menu_rebuild_needed', TRUE);
   }
 }
 
