@@ -381,7 +381,7 @@ class Bundle extends DBObject{
       //@todo we just need to change the field in the db to be unique
       if($this->is_new){
         $bundle = Bundle::loadByMachineName($this->machine_name);
-        if(!$bundle->is_new){
+        if($bundle && !$bundle->is_new){
           $save = FALSE;
         }
       }
