@@ -40,7 +40,7 @@ function eck_eck_property_widget_settings_form($entity_type, $bundle, $property_
       '#description' => t('The maximum length of the field in characters.'),
       '#element_validate' => array('element_validate_integer_positive'),
     );
-  }else if ($bundle_property_config['widget']['type'] == 'options') {
+  } elseif ($bundle_property_config['widget']['type'] == 'options') {
     $settings = $bundle_property_config['widget']['settings'];
     // The size of the 'text' widget text box in columns/characters.
     $form['options'] = array(
@@ -87,12 +87,27 @@ function eck_eck_property_widget_form(&$form, &$form_state, $property_name, $bun
         $options[$kv[0]] = $kv[1];
       }
     }
-    
+
     $element += array(
       '#type' => 'radios',
       '#default_value' => isset($value) ? $value : NULL,
       '#options' => $options
     );
+  }
+  if ($bundle_property_config['widget']['type'] == 'language_toggle') {
+    global $language;
+    if (module_exists('locale')) {
+      $element += array(
+        '#type' => 'select',
+        '#default_value' => isset($value) ? $value : $language->language,
+        '#options' => array(LANGUAGE_NONE => t('Language neutral')) + locale_language_list('name'),
+      );
+    } else {
+      $element += array(
+        '#type' => 'value',
+        '#value' => !isset($value) ? $value : $language->language,
+      );
+    }
   }
   return $element;
 }
