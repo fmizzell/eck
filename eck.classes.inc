@@ -405,7 +405,7 @@ class Bundle extends DBObject{
   public static function loadByMachineName($machine_name){
     return Bundle::loadAll($machine_name);
   }
-A
+
   public static function loadAll($machine_name = NULL, $reset = FALSE){
     static $bundles;
 
