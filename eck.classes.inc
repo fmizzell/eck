@@ -553,6 +553,8 @@ class ECKEntity extends Entity{
     $entity_type = EntityType::loadByName($entity_type_name);
     $properties = $entity_type->properties;
     $property_names = array_keys($properties);
+    $vars = array('args' => array('name' => $values, 'value' => $entityType), 'entity_type_name' => $entity_type_name, 'entity_type' => $entity_type, 'properties' => $properties);
+     dsm($vars, 'ECKENTITY:__construct');
     
     foreach($property_names as $pn){
       $value = $this->{$pn};
@@ -565,13 +567,18 @@ class ECKEntity extends Entity{
     //let's implement non restrictive validation.
     //if it is a property validate, if it isn't just set it
 
-    $entity_type_name = $this->entityType();
-    $entity_type = EntityType::loadByName($entity_type_name);
-    $properties = $entity_type->properties;
-    $property_names = array_keys($properties);
+    // Try to load the entityType and property information.
+    if ($entity_type_name = $this->entityType()) {
+      if (($entity_type = EntityType::loadByName($entity_type_name)) && is_object($entity_type)) { 
+        if ($properties = $entity_type->properties) {
+          $property_names = array_keys($properties);
+        }
+      }
+    }
 
-    if(in_array($name, $property_names) && !$this->ignore_validation){
-      
+    //TODO: should look into loading the entity info through entity_get_info() and determining validation that way.
+    //      Currently we don't validate when the ECKEntityType has not been instantiated yet. Not sure if it is needed though.
+    if (isset($property_names) && in_array($name, $property_names) && !$this->ignore_validation) {
       $property_type = $properties[$name]['type'];
       $property_type_class = eck_get_property_type_class($property_type);
       
@@ -581,15 +588,15 @@ class ECKEntity extends Entity{
           $this->property_values[$name] = $schema['default'];
         }
       }
-      elseif($property_type_class::validate($value)){
+      elseif ($property_type_class::validate($value)) {
         $this->property_values[$name] = $value;
       }
-      else{
+      else {
         throw new Exception("Invalid value {$value} for property {$name} of type {$property_type} in 
         Entity type: {$entity_type_name}");
       }
 
-    }else{
+    } else {
       $this->{$name} = $value;
     }
   }
