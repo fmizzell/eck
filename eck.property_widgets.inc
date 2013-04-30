@@ -19,41 +19,40 @@
  * @see hook_eck_property_widget_settings_form().
  */
 function eck_eck_property_widget_settings_form($entity_type, $bundle, $property_name, $bundle_property_config) {
-  $form = array();
-
-  if ($bundle_property_config['widget']['type'] == 'text') {
-    $settings = $bundle_property_config['widget']['settings'];
-    // The size of the 'text' widget text box in columns/characters.
-    $form['size'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Size of textfield'),
-      '#default_value' => $settings['size'],
-      '#required' => TRUE,
-      '#element_validate' => array('element_validate_integer_positive'),
+  $widget = (isset($bundle_property_config['widget'])) ? $bundle_property_config['widget'] : array('type' => '');
+  if ($widget['type'] == 'text') {
+    return array(
+      // The size of the 'text' widget text box in columns/characters.
+      'size' => array(
+        '#type' => 'textfield',
+        '#title' => t('Size of textfield'),
+        '#default_value' => $widget['settings']['size'],
+        '#required' => TRUE,
+        '#element_validate' => array('element_validate_integer_positive'),
+      ),
+      // The maximum length for a 'text' widget
+      'max_length' => array(
+        '#type' => 'textfield',
+        '#title' => t('Maximum length'),
+        '#default_value' => $widget['settings']['max_length'],
+        '#required' => TRUE,
+        '#description' => t('The maximum length of the field in characters.'),
+        '#element_validate' => array('element_validate_integer_positive'),
+      ),
     );
-    // The maximum length for a 'text' widget
-    $form['max_length'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Maximum length'),
-      '#default_value' => $settings['max_length'],
-      '#required' => TRUE,
-      '#description' => t('The maximum length of the field in characters.'),
-      '#element_validate' => array('element_validate_integer_positive'),
-    );
-  } elseif ($bundle_property_config['widget']['type'] == 'options') {
-    $settings = $bundle_property_config['widget']['settings'];
-    // The size of the 'text' widget text box in columns/characters.
-    $form['options'] = array(
-      '#type' => 'textarea',
-      '#title' => t('Options'),
-      '#default_value' => $settings['options'],
-      '#required' => TRUE,
-      '#description' => "Add the options, one per line, in the format value|label",
-      '#element_validate' => array('eck_property_widget_options_validate'),
+  } elseif ($widget['type'] == 'options') {
+    return array(
+      // The allowed options for the options widget.
+      'options' => array(
+        '#type' => 'textarea',
+        '#title' => t('Options'),
+        '#default_value' => $widget['settings']['options'],
+        '#required' => TRUE,
+        '#description' => t('Add the options, one per line, in the format value|label'),
+        '#element_validate' => array('eck_property_widget_options_validate'),
+      ),
     );
   }
-
-  return $form;
 }
 
 /**
