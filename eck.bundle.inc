@@ -85,9 +85,8 @@ function eck__bundle__menu($entity_type) {
     'description' => "Add a(n) new '{$entity_type->label} Bundle'",
     'page callback' => "drupal_get_form",
     'page arguments' => array('eck__bundle__add', 3),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array( array('eck administer bundles', 
-      'eck add bundles', "eck add {$entity_type->name} bundles") ),
+    'access callback' => 'eck_access',
+    'access arguments' => array('create', 'bundle'),
     'type' => MENU_LOCAL_ACTION,
     'weight' => 0,
     'file' => 'eck.bundle.inc'
@@ -113,12 +112,7 @@ function eck__bundle__list($entity_type) {
   $entity_type = entity_type_load($entity_type);
   
   //Check that the user has permissions to view bundle lists:
-  if( eck__multiple_access_check(
-      array( 'eck administer bundles', 
-             'eck list bundles',
-             "eck administer {$entity_type->name} bundles",
-             "eck list {$entity_type->name} bundles"
-  ) ) )
+  if(eck_access('list', 'bundle'))
   {
     
     $header = array(t('Type'), array('data' => t('Operations'), 'colspan' => '1'));
@@ -136,19 +130,15 @@ function eck__bundle__list($entity_type) {
       
       $allowed_operations = '';
       //Check that the user has permissions to delete:
-      if( eck__multiple_access_check(
-        array( 'eck administer bundles', 
-               'eck delete bundles',
-               "eck administer {$entity_type->name} bundles",
-               "eck delete {$entity_type->name} bundles"
-              ) )
-      ) $allowed_operations = l(t('delete'), $uri."/delete");
+      if(eck_access('delete', 'bundle', $bundle)){
+        $allowed_operations = l(t('delete'), $uri."/delete");
+      }
       
-      $rows[] = 
-      array(
-        l($bundle_label, url($uri, array('absolute' => TRUE))),
-        $allowed_operations
-      );
+      if(eck_access('list', 'entity')){
+        $rows[] = array(l($bundle_label, url($uri, array('absolute' => TRUE))), $allowed_operations);
+      }else{
+        $rows[] = array($bundle_label, $allowed_operations);
+      }
     }
  
     $build['bundle_table'] = array(

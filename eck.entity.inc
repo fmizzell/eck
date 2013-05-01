@@ -23,18 +23,24 @@ function eck__entity__menu($entity_type, $bundle) {
     'title' => "Delete",
     'page callback' => "drupal_get_form",//"eck__bundle__delete",
     'page arguments' => array('eck__bundle__delete_form', 3, 4),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array( array( 'eck administer bundles',
-                                        'eck delete bundles',
-                                        "eck administer {$entity_type->name} bundles",
-                                        "eck delete {$entity_type->name} bundles",
-                                      ) ),
+    'access callback' => 'eck_access',
+    'access arguments' => array('delete', 'bundle', $bundle),
     'file' => 'eck.bundle.inc',
     'type' => MENU_LOCAL_TASK
   );
+  
+  // EDIT Bundle
+  $menu["{$path}/{$entity_type->name}/{$bundle->name}/edit"] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('eck__bundle__edit_form', $entity_type->name, $bundle->name),
+    'access callback' => 'eck_access',
+    'access arguments' => array('update', 'bundle', $bundle),
+    'file' => 'eck.bundle.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
 
   // Managing a bundle's properties as extra fields
-  
   $menu["{$path}/{$entity_type->name}/{$bundle->name}/properties/%"] = array(
     'title arguments' => array(6),
     'page callback' => 'drupal_get_form',
@@ -83,19 +89,6 @@ function eck__entity__menu($entity_type, $bundle) {
     'type' => MENU_LOCAL_TASK,
     'weight' => 10,
   );
-
-  //The entity autocomplete module does a great job at providing generalize
-  //autocomplete function that will work for any entity that declares the label
-  //property in the entity_info array, but there is not a general solution to
-  //have autocomplete functionality from a field. So I will fill that gap by
-  //declaring a field_autocomplete for all eck entities
-  /*$menu["admin/structure/eck/{$entity_type->name}/{$bundle->name}/field-autocomplete"] = array(
-    'title' => "Field Autocomplete for {$entity_type->name}:{$bundle->name}",
-    'page callback' => "eck__bundle__field_autocomplete",
-    'page arguments' => array($entity_type, $bundle),
-    'access arguments' => array("autocomplete {$entity_type->name} {$bundle->name} bundle"),
-    'file' => 'eck.bundle.inc'
-  );*/
   
   $admin_info = get_bundle_admin_info($entity_type->name, $bundle->name);
   
@@ -105,21 +98,8 @@ function eck__entity__menu($entity_type, $bundle) {
     'description' => "View all entites of type {$entity_type->label} with bundle {$bundle->label}",
     'page callback' => "eck__entity__list",
     'page arguments' => array($entity_type->name, $bundle->name),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array( 
-      array( 
-        'eck administer bundles',
-        'eck add bundles',
-        'eck edit bundles',
-        "eck administer {$entity_type->name} bundles",
-        "eck add {$entity_type->name} bundles",
-        "eck edit {$entity_type->name} bundles",
-        'eck administer entities', 
-        "eck list entities",
-        "eck administer {$entity_type->name} {$bundle->name} entities",
-        "eck list {$entity_type->name} {$bundle->name} entities"
-      ) 
-    ),
+    'access callback' => 'eck_access',
+    'access arguments' => array('list', 'entity'),
     'weight' => 0,
     'file' => 'eck.entity.inc'
   );
@@ -133,24 +113,38 @@ function eck__entity__menu($entity_type, $bundle) {
   $crud_info = get_bundle_crud_info($entity_type->name, $bundle->name);
 
   foreach($crud_info as $action => $info){
+    
+    switch($action){
+      case 'add':
+        $perm_op = 'create';
+        break;
+      case 'edit':
+        $perm_op = 'update';
+        break;
+      default:
+        $perm_op = $action;
+        break;
+    }
+    
+    $perm_args = array($perm_op, 'entity');
+    
     $action_label = ucfirst($action);
     $args = array();
     
     if(array_key_exists('entity_id', $info)){
       $args[] = $info['entity_id'];
+      $perm_args[] = $info['entity_id'];
     }
     
     $args = array_merge(array($entity_type->name, $bundle->name), $args);
-    $access_args = array_merge(array($action), $args);
 
     $menu[$info['path']] = array(
       'title' => "{$action_label} {$bundle->label}",
       'description' => "{$action_label} an entity of type {$entity_type->label} with bundle {$bundle->label}",
       'page callback' => "eck__entity__{$action}",
       'page arguments' => $args,
-      'load arguments' => array($entity_type->name),
-      'access callback' => 'eck__entity_menu_access',
-      'access arguments' => $access_args,
+      'access callback' => 'eck_access',
+      'access arguments' => $perm_args,
       'file' => 'eck.entity.inc',
     );
 
@@ -164,33 +158,40 @@ function eck__entity__menu($entity_type, $bundle) {
         'weight' => 0
       );
       
-     /* $menu[$info['path']."/list"] = array(
-        'title' => "List",
-        'description' => "View all entites of type {$entity_type->label} with bundle {$bundle->label}",
-        'page callback' => "eck__entity__list",
-        'page arguments' => array($entity_type->name, $bundle->name),
-        'access arguments' => array("administer {$entity_type->name} {$bundle->name} entities"),
-        'weight' => 0,
-        'file' => 'eck.entity.inc',
-        'type' => MENU_LOCAL_TASK
-      );*/
-      
-       $weight = 1;
+      $weight = 1;
       foreach($crud_info as $a => $i){
        
         if($a != 'view' && $a != 'add' && $a !="list"){
+          switch($a){
+            case 'add':
+              $po = 'create';
+              break;
+            case 'edit':
+              $po = 'update';
+              break;
+            default:
+              $po = $action;
+              break;
+          }  
+        
           $al = ucfirst($a);
           
           $view_path = $info['path']."/{$a}";
-          $access_args = array_merge(array($a), $args);
+          
+          $p_args = array($po, 'entity');
+    
+
+          if(array_key_exists('entity_id', $i)){
+            $perm_arg = $i['entity_id'];
+          }
           
           $menu[$view_path] = array(
             'title' => "{$al}",
             'description' => "{$action_label} an entity of type {$entity_type->label} with bundle {$bundle->label}",
             'page callback' => "eck__entity__{$a}",
             'page arguments' => $args,
-            'access callback' => 'eck__entity_menu_access',
-            'access arguments' => $access_args,
+            'access callback' => 'eck_access',
+            'access arguments' => $p_args,
             'file' => 'eck.entity.inc',
             'type' => MENU_LOCAL_TASK,
             'context' => (MENU_CONTEXT_PAGE|MENU_CONTEXT_INLINE), 
@@ -262,19 +263,14 @@ function eck__entity__list($entity_type_name, $bundle_name) {
   //so lets add a link ourselves until we figure out whether there is a better solution
   $crud_info = get_bundle_crud_info($entity_type->name, $bundle->name);
   //Check that the user has permissions to add an entity:
-  if (eck__entity_menu_access('add', $entity_type->name, $bundle->name))
+  if (eck_access('create', 'entity'))
     $build['add'] = array('#markup' => "+ ".l(t("Add {$bundle->label}"), $crud_info['add']['path'], array('query' => $destination)));
 
   //Check that the user has permissions to view entity lists:
-  if( eck__multiple_access_check(
-      array( 'eck administer entities', 
-             'eck list entities',
-             "eck administer {$entity_type->name} {$bundle->name} entities",
-             "eck list {$entity_type->name} {$bundle->name} entities"
-  ) ) )
-  
-  $build['table'] = entity_table($entities, TRUE);
-  $build['pager'] = array('#theme' => 'pager');
+  if( eck_access('list', 'entity')){
+    $build['table'] = entity_table($entities, TRUE);
+    $build['pager'] = array('#theme' => 'pager');
+  }
 
   return $build;
 }

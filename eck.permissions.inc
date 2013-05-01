@@ -119,7 +119,8 @@ function eck_access($op, $object_type, $object = NULL, $account = NULL){
 function eck_eck_access($op, $object_type, $object, $account){
   
   $opb = in_array($op, array('list', 'create', 'update', 'delete'));
-  $otb = strcmp($object_type, "entity_type") == 0 || strcmp($object_type, "bundle") == 0 ;
+  $otb = strcmp($object_type, "entity_type") == 0  || strcmp($object_type, "bundle") == 0 
+          || strcmp($object_type, "entity") == 0 ;
   //$ob = !isset($object);
   
   //lets handle the general case of entity type permissions

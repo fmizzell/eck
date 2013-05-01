@@ -63,6 +63,8 @@ function eck__entity_type__menu() {
  * Callback for the entity_type overview.
  */
 function eck__entity_type__list() {
+  $allowed_operations = "";
+  
   $path = eck__entity_type__path();
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
   $rows = array();
