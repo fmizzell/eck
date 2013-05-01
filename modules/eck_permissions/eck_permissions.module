@@ -86,23 +86,43 @@ class ECKPermission extends DBObject{
 }
 
 function eck_permissions_eck_access($op, $object_type, $object, $account){
-  
-  $roles = $account->roles;
-  $perms = array();
-  
-  foreach($roles as $rid => $role){
-    $new = ECKPermission::loadAllByRole($rid);
-    $perms = array_merge($perms, $new);
-  }
-  
   $allow = FALSE;
-  foreach($perms as $p){
-    $perm = $p->permission;
-    $cperm = "{$op} {$object_type}";
-    if(strcmp($perm, $cperm) == 0){
-      $allow = TRUE;
+  
+  //we are only dealing with object specific permissions, general permission are
+  //handled by eck
+  if(isset($object)){
+    $roles = $account->roles;
+    $perms = array();
+
+    foreach($roles as $rid => $role){
+      $new = ECKPermission::loadAllByRole($rid);
+      $perms = array_merge($perms, $new);
+    }
+
+    
+    foreach($perms as $p){
+      $perm = $p->permission;
+      $object_id = eck_permissions_object_id($object_type, $object);
+      $cperm = "{$op} {$object_type}:{$object_id}";
+      if(strcmp($perm, $cperm) == 0){
+        $allow = TRUE;
+      }
     }
   }
-  
+
   return array($allow);
+}
+
+function eck_permissions_object_id($object_type, $object){
+  if($object_type == "entity_type"){
+    return $object->name;
+  }else if($object_type == "bundle"){
+    return $object->machine_name;
+  }else if($object_type == "entity"){
+    if(is_object($object)){
+      return $object->id;
+    }else if(is_numeric($object)){
+      return $object;
+    }
+  }
 }
