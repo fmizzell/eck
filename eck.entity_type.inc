@@ -386,12 +386,6 @@ function eck__entity_type__info($entity_type) {
   $entity_class = "ECKEntity";
   $controller_class = "EntityAPIController";
 
-  /*if (!drupal_autoload_class($entity_class = eck_get_class_name($entity_type->name, 'Entity'))) {
-    $entity_class = 'EckEntity';
-  }
-  if (!drupal_autoload_class($controller_class = eck_get_class_name($entity_type->name, 'Controller'))) {
-    $controller_class = 'EckController';
-  }*/
 
   $info[$entity_type->name] = array(
     'label' => t($entity_type_label),
@@ -433,14 +427,9 @@ function eck__entity_type__info($entity_type) {
       'label' => $bundle_label,
       'admin' => array(
         'path' => $path,
-        'access callback' => 'eck__multiple_access_check',
+        'access callback' => 'eck_access',
         'access arguments' => 
-         array( array( 'eck administer bundles',
-                       'eck edit bundles',
-                       "eck administer {$entity_type->name} bundles", 
-                       "eck edit {$entity_type->name} bundles"
-                     ) 
-              )
+         array('update', 'bundle')
       ),
       'crud' =>
       array(

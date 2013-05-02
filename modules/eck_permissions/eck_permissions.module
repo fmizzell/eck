@@ -119,10 +119,6 @@ function eck_permissions_object_id($object_type, $object){
   }else if($object_type == "bundle"){
     return $object->machine_name;
   }else if($object_type == "entity"){
-    if(is_object($object)){
-      return $object->id;
-    }else if(is_numeric($object)){
-      return $object;
-    }
+    return "{$object->entityType()}_{$object->id}";
   }
 }
