@@ -14,6 +14,13 @@ module_load_include('inc', 'eck', 'eck.permissions');
 module_load_include('inc', 'eck', 'includes/eck.references_dialog');
 
 /**
+ * Load callback for %eckentity
+ */
+function eckentity_load($id, $type) {
+  return entity_load_single($type, $id);
+}
+
+/**
  * Implements hook_views_api().
  */
 function eck_views_api() {
@@ -135,7 +142,7 @@ function eck__entity__uri($entity) {
 
   module_load_include('inc', 'eck', 'eck.entity');
   $crud_info = get_bundle_crud_info($entity->entityType(), $entity->type);
-  $view_path = str_replace('%', $ids[0], $crud_info['view']['path']);
+  $view_path = str_replace('%eckentity', $ids[0], $crud_info['view']['path']);
   
   return array('path' => $view_path);
 }
@@ -192,15 +199,16 @@ function entity_table($entities, $select = FALSE) {
     $destination = drupal_get_destination();
     //Check that the user has permissions to edit:
     if (eck_access('update', 'entity', $entity)) {
-      $edit_path = str_replace('%', $id, $crud_info['edit']['path']);
+      $edit_path = str_replace('%eckentity', $id, $crud_info['edit']['path']);
       $allowed_operations = l(t('edit'), $edit_path, array('query' => $destination));
     }
     
     //Check that the user has permissions to delete:
     if (eck_access('delete', 'entity', $entity)) {
-      $delete_path = str_replace('%', $id, $crud_info['delete']['path']);
+      $delete_path = str_replace('%eckentity', $id, $crud_info['delete']['path']);
       $allowed_operations .= (($allowed_operations)?'<br />':'').l(t('delete'), $delete_path, array('query' => $destination));
     }
+    
     $uri = entity_uri($entity_type, $entity);
     $row = array(l(entity_label($entity_type, $entity), $uri['path'], $uri['options']));
     $row[] = array('data' => $allowed_operations); //"admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
@@ -958,10 +966,6 @@ function eck_entity_delete($entity, $entity_type){
       array('entity' => $entity));
   }
 }
-
-
-
-
 
 function eck_entity_view_alter(&$view){
   $entity_types = EntityType::loadAll();

@@ -111,7 +111,7 @@ function eck__entity__menu($entity_type, $bundle) {
   );
   
   $crud_info = get_bundle_crud_info($entity_type->name, $bundle->name);
-  
+
   foreach($crud_info as $action => $info){
     
     switch($action){
@@ -128,7 +128,6 @@ function eck__entity__menu($entity_type, $bundle) {
     
     $perm_args = array($perm_op, 'entity');
     
-      
     $action_label = ucfirst($action);
     $args = array();
     
@@ -138,7 +137,7 @@ function eck__entity__menu($entity_type, $bundle) {
     }
     
     $args = array_merge(array($entity_type->name, $bundle->name), $args);
-    
+
     $menu[$info['path']] = array(
       'title' => "{$action_label} {$bundle->label}",
       'description' => "{$action_label} an entity of type {$entity_type->label} with bundle {$bundle->label}",
@@ -146,9 +145,10 @@ function eck__entity__menu($entity_type, $bundle) {
       'page arguments' => $args,
       'access callback' => 'eck_access',
       'access arguments' => $perm_args,
+      'load arguments' => array($entity_type->name),
       'file' => 'eck.entity.inc',
     );
-    
+
     //I think it would be useful to have the edit, delete, and list tabs at the view also
     //But lets leave this out for right now
     if($action == 'view'){
@@ -298,7 +298,10 @@ function eck__entity__add($entity_type_name, $bundle_name) {
  * @param $entity_type
  *  (String) entity type
  * @param $id
- *  (int) The entities id
+ *  (mixed) The entity id or the entity object itself
+ *  Normally you wouldn't need to call this function if you already have the
+ *  loaded entity but there are some workflows where an object is passed.
+ *  So this function handles that case as well.
  */
 function eck__entity__build($entity_type, $bundle, $id) {
   if (is_numeric($id)) {
@@ -306,25 +309,31 @@ function eck__entity__build($entity_type, $bundle, $id) {
     $entities = entity_load($entity_type->name, array($id));
     if(array_key_exists($id, $entities)){
      $entity = $entities[$id];
-    }else{
+    }
+    else {
       $entity = NULL;
     }
-  }else{
+  }
+  elseif (is_object($id) and isset($id->type) and $entity_type->name == $id->type) {
+    $entity = $id;
+  }
+  else {
     drupal_not_found();
     exit();
   }
   
-  if(!$entity){
+  if (!$entity) {
     drupal_not_found();
     exit();
-  }else{
-    if($entity->type == $bundle->name){
+  }
+  else {
+    if ($entity->type == $bundle->name) {
       return $entity->view();
-    }else{
+    }
+    else {
       drupal_not_found();
       exit();
     }
-
   }
 }
 
@@ -343,6 +352,9 @@ function eck__entity__edit($entity_type_name, $bundle_name, $id) {
     $entities = entity_load($entity_type_name, array($id));
     $entity = $entities[$id];
   }
+  elseif (is_object($id) and isset($id->type) and $id->type == $entity_type_name) {
+    $entity = $id;
+  }
 
   return drupal_get_form("eck__entity__form_edit_{$entity_type_name}_{$bundle_name}", $entity);
 }
@@ -358,25 +370,26 @@ function eck__entity__edit($entity_type_name, $bundle_name, $id) {
  *  (String) entity type
  * @param $bundle
  *  (String) Bundle
- * @param $id
- *  (int) the Id of the entity to be deleted
+ * @param $entity
+ *  (object) entity object to be deleted.
  */
-function eck__entity__delete($entity_type_name, $bundle_name, $id) {
+function eck__entity__delete($entity_type_name, $bundle_name, $entity) {
   $entity_type = entity_type_load($entity_type_name);
   $bundle = bundle_load($entity_type_name, $bundle_name);
-  return drupal_get_form('eck__entity__delete_form', $entity_type, $bundle, $id);
+  return drupal_get_form('eck__entity__delete_form', $entity_type, $bundle, $entity);
   
 }
 
-function eck__entity__delete_form($form, &$form_state, $entity_type, $bundle, $id){
+/**
+ * Delete form
+ */
+function eck__entity__delete_form($form, &$form_state, $entity_type, $bundle, $entity){
   $path = eck__entity_type__path();
-    
-  $entities = entity_load($entity_type->name, array($id));
 
   $form['entity'] =
       array(
         '#type' => 'value',
-        '#value' => $entities[$id],
+        '#value' => $entity,
   );
 
   $form['entity_type'] =
@@ -398,7 +411,7 @@ function eck__entity__delete_form($form, &$form_state, $entity_type, $bundle, $i
   );
 
   $message = t("Are you sure that you want to delete %id",
-          array("%id" => $id));
+          array("%id" => $entity->id));
 
   $caption = t("This action cannot be undone.");
 
@@ -592,12 +605,16 @@ function eck__entity__form_submit($form, &$state) {
  * @param $bundle
  *  (String) Bundle
  * @param $id
- *  (int) the Id of the entity to be deleted
+ *  (mixed) ID or Entity Object being viewed
  */
 function eck__entity__view($entity_type_name, $bundle_name, $id) {
-  $entity = entity_load($entity_type_name, array($id));
-  $entity = $entity[$id];
-  
+  if (is_object($id) and $id->type == $entity_type_name) {
+    $entity = $id;
+  }
+  else {
+    $entity = entity_load_single($entity_type_name, $id);    
+  }
+
   $entity_type = entity_type_load($entity_type_name);
   $properties = $entity_type->properties;
   $bundle = bundle_load($entity_type_name, $bundle_name);
