@@ -28,17 +28,6 @@ function eck__entity__menu($entity_type, $bundle) {
     'file' => 'eck.bundle.inc',
     'type' => MENU_LOCAL_TASK
   );
-  
-  // EDIT Bundle
-  $menu["{$path}/{$entity_type->name}/{$bundle->name}/edit"] = array(
-    'title' => 'Edit',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('eck__bundle__edit_form', $entity_type->name, $bundle->name),
-    'access callback' => 'eck_access',
-    'access arguments' => array('update', 'bundle', $bundle),
-    'file' => 'eck.bundle.inc',
-    'type' => MENU_LOCAL_TASK,
-  );
 
   // Managing a bundle's properties as extra fields
   $menu["{$path}/{$entity_type->name}/{$bundle->name}/properties/%"] = array(

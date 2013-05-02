@@ -250,6 +250,7 @@ function eck__entity_type__form_submit($form, &$state) {
       $bundle->name = $bundle_name;
       $bundle->label = $bundle_label;
       $bundle->save();
+      Bundle::loadAll(NULL, TRUE);
     }
     
      //lets handle the default properties
@@ -258,9 +259,10 @@ function eck__entity_type__form_submit($form, &$state) {
     $entity_type->save();
     
     //Clear info caches in order to pick up newly created entities.
+    EntityType::loadAll(NULL, TRUE);
     drupal_get_schema(NULL, TRUE);
     entity_info_cache_clear();
-    menu_rebuild();
+    variable_set('menu_rebuild_needed', TRUE);
     if($entity_type->is_new){
       drupal_set_message(t('Entity type %entity_type has been created.', array('%entity_type' => $entity_type->label)));
     } else {
@@ -366,8 +368,8 @@ function eck__entity_type__schema($entity_type) {
 function eck__entity_type__properties_schema($entity_type){
   $schema = array();
   foreach($entity_type->properties as $property => $property_info){
-    $property_type_info = eck_get_property_type($property_info['type']);
-    $schema[$property] = $property_type_info['class']::schema();
+    $property_type_class = eck_get_property_type_class($property_info['type']);
+    $schema[$property] = $property_type_class::schema();
   }
   
   return $schema;

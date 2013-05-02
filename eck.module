@@ -37,9 +37,43 @@ function eck_views_api() {
 /**
  * Implements hook_flush_caches().
  */
-/*function eck_flush_caches() {
-  return array('cache_eck');
-}*/
+
+function eck_flush_caches() {
+  // Reload all property types.
+  eck_get_property_types(NULL, TRUE);
+  // Reload all property widget types.
+  eck_property_info_widget_types(NULL, TRUE);
+  // Reload all ECK entity types.
+  EntityType::loadAll(NULL, TRUE);
+  // Reload all Bundles.
+  Bundle::loadAll(NULL, TRUE);
+}
+
+/**
+ * Implements hook_modules_enabled().
+ */
+function eck_modules_enabled($modules) {
+  $reset_caches = FALSE;
+  foreach ($modules as $module) {
+    if (module_hook($module, 'eck_property_widget_info') || module_hook($module, 'eck_property_types')) {
+      eck_flush_caches();
+      break;
+    }
+  }
+}
+
+/**
+ * Implements hook_modules_disabled().
+ */
+function eck_modules_disabled($modules) {
+  $reset_caches = FALSE;
+  foreach ($modules as $module) {
+    if (module_hook($module, 'eck_property_widget_info') || module_hook($module, 'eck_property_types')) {
+      eck_flush_caches();
+      break;
+    }
+  }
+}
 
 function eck_eck_default_properties(){
   $default_properties = array();
@@ -623,7 +657,6 @@ function eck_property_info_widget_types($widget_type = NULL, $reset = FALSE) {
     $widget_types = NULL;
     // Clear all languages.
     cache_clear_all('property_widget_types:', 'cache_eck', TRUE);
-    return;
   }
 
   if (!isset($widget_types)) {
@@ -635,8 +668,8 @@ function eck_property_info_widget_types($widget_type = NULL, $reset = FALSE) {
 
       // Populate property widget types.
       foreach (module_implements('eck_property_widget_info') as $module) {
-        $widget_types = (array) module_invoke($module, 'eck_property_widget_info');
-        foreach ($widget_types as $name => $widget_info) {
+        $module_widget_types = (array) module_invoke($module, 'eck_property_widget_info');
+        foreach ($module_widget_types as $name => $widget_info) {
           // Provide defaults.
           $widget_info += array(
             'type' => $name,
@@ -673,22 +706,25 @@ function eck_property_info_widget_types($widget_type = NULL, $reset = FALSE) {
  * @see eck_property_info_widget_types().
  **/
 function eck_eck_property_widget_info() {
-  $widget_types = array();
-  
-  $widget_types['text'] = array(
-    'label' => t('Text'),
-    'settings' => array('size' => 60, 'max_length' => 255),
-    'property types' => array('text', "integer", "positive_integer", "decimal"),
-    'file' => 'eck.property_widgets',
+  $widget_types = array(
+    'text' => array(
+      'label' => t('Text'),
+      'settings' => array('size' => 60, 'max_length' => 255),
+      'property types' => array('text', 'integer', 'positive_integer', 'decimal'),
+      'file' => 'eck.property_widgets',
+    ),
+    'options' => array(
+      'label' => t('Options'),
+      'settings' => array('options' => ''),
+      'property types' => array('text', 'integer', 'positive_integer', 'decimal'),
+      'file' => 'eck.property_widgets',
+    ),
+    'language_toggle' => array(
+      'label' => t('Language toggle'),
+      'property types' => array('language'),
+      'file' => 'eck.property_widgets',
+    ),
   );
-  
-  $widget_types['options'] = array(
-    'label' => t('Options'),
-    'settings' => array('options' => ""),
-    'property types' => array('text', "integer", "positive_integer", "decimal"),
-    'file' => 'eck.property_widgets',
-  );
-  
   
   return $widget_types;
 }
@@ -926,6 +962,7 @@ function eck_form_field_ui_field_overview_form_submit($form, &$form_state) {
       $bundle->config = $config;
       // Save the bundle.
       $bundle->save();
+      Bundle::loadAll(NULL, TRUE);
     }
   }
 }
@@ -1001,27 +1038,27 @@ function eck_eck_property_types(){
   $property_types = array();
   
   $property_types['decimal'] = array(
-    'label' => "Decimal",
+    'label' => t("Decimal"),
     'class' => "DecimalPropertyType"    
   );
   $property_types['integer'] = array(
-    'label' => "Integer",
+    'label' => t("Integer"),
     'class' => "IntegerPropertyType"    
   );
   $property_types['positive_integer'] = array(
-    'label' => "Positive Integer",
+    'label' => t("Positive Integer"),
     'class' => "PositiveIntegerPropertyType"    
   );
   $property_types['text'] = array(
-    'label' => "Text",
+    'label' => t("Text"),
     'class' => "TextPropertyType"    
   );
   $property_types['language'] = array(
-    'label' => "Language",
+    'label' => t("Language"),
     'class' => "LanguagePropertyType"    
   );
   $property_types['uuid'] = array(
-    'label' => "UUID",
+    'label' => t("UUID"),
     'class' => "UUIDPropertyType"    
   );
   

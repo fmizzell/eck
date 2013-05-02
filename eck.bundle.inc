@@ -242,69 +242,12 @@ function eck__bundle__add_submit($form, &$form_state) {
   drupal_set_message(t('the %bundle for entity type %entity_type has been saved', 
   array('%bundle' => $bundle_name, '%entity_type' => $entity_type->name)));
 
+  Bundle::loadAll(NULL, TRUE);
   drupal_get_schema(NULL, TRUE);
   entity_info_cache_clear();
-  menu_rebuild();
+  variable_set('menu_rebuild_needed', TRUE);
 
   drupal_goto("{$path}/{$entity_type->name}");
-}
-
-/**
- * Form constructor for the entity bundle editing form.
- *
- * @param $entity_type_name
- *   Entity type name
- *
- * @param $bundle_name
- *   Entity bundle name
- *
- */
-
-function eck__bundle__edit_form($form, &$form_state, $entity_type_name, $bundle_name) {
-  $path = eck__entity_type__path();
-  $entity_type = entity_type_load($entity_type_name);
-  $bundle = bundle_load($entity_type_name, $bundle_name);
-  $form = array();
-
-  $form['entity_type'] =
-      array(
-        '#type' => 'value',
-        '#value' => $entity_type,
-  );
-
-  $form['bundle'] =
-      array(
-        '#type' => 'value',
-        '#value' => $bundle,
-  );
-
-  // Let the behaviors to modify form
-  $vars = eck_property_behavior_invoke_plugin_alter($entity_type, 'bundle_form', array('form' => $form, 'form_state' => $form_state));
-  $form = $vars['form'];
-  $form_state = $vars['form_state'];
-
-  $form['actions'] = array('#type' => 'actions');
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save bundle'),
-    '#weight' => 40,
-  );
-  return $form;
-}
-
-function eck__bundle__edit_form_submit($form, &$form_state) {
-  $bundle = $form_state['values']['bundle'];
-  // Save all form values starting from 'config_' to the $bundle->config array.
-  $bundle_config = array();
-  foreach ($form_state['values'] as $name => $value) {
-    if (strpos($name, 'config_') === 0) {
-      // We don't need 'config_' prefix
-      $bundle_config[substr($name, 7)] = $form_state['values'][$name];
-    }
-  }
-  $bundle->config = $bundle_config;
-  // Save the bundle object to the database
-  $bundle->save();
 }
 
 /**
@@ -337,7 +280,8 @@ function eck__bundle__delete($entity_type, $bundle){
   //and finally we delete the bundle from the eck_type table
   $bundle->delete();
   
-  menu_rebuild();
+  drupal_get_schema(NULL, TRUE);
+  variable_set('menu_rebuild_needed', TRUE);
   drupal_flush_all_caches();
   
   drupal_set_message("The bundle '{$bundle->name}' from the entity type '{$entity_type->name}' has been deleted");
@@ -597,6 +541,7 @@ function eck__manage_extra_field_form_submit($form, &$form_state) {
     $bundle->config = $config;
     // Save the bundle.
     $bundle->save();
+    Bundle::loadAll(NULL, TRUE);
   } else {
     // The extra field form setting was not found in the config so it must no longer
     // be managed. Don't do anything except notify the user.
@@ -737,6 +682,7 @@ function eck__extra_field_widget_form_submit($form, &$form_state) {
       $bundle->config = $config;
       // Save the bundle.
       $bundle->save();
+      Bundle::loadAll(NULL, TRUE);
     } else {
       // The extra field form setting was not found in the config so it must no longer
       // be managed. Don't do anything except notify the user.
@@ -796,6 +742,7 @@ function eck__remove_extra_field_form_submit($form, &$form_state) {
       $bundle->config = $config;
       // Save the bundle.
       $bundle->save();
+      Bundle::loadAll(NULL, TRUE);
     }
   }
   $form_state['redirect'] = 'admin/structure/entity-type/' . $entity_type . '/' . $bundle->name . '/fields';
