@@ -149,8 +149,6 @@ function eck__entity__menu($entity_type, $bundle) {
       'file' => 'eck.entity.inc',
     );
 
-    //I think it would be useful to have the edit, delete, and list tabs at the view also
-    //But lets leave this out for right now
     if($action == 'view'){
       
       $menu[$info['path']."/view"] = array(
@@ -158,51 +156,7 @@ function eck__entity__menu($entity_type, $bundle) {
         'type' => MENU_DEFAULT_LOCAL_TASK,
         'weight' => 0
       );
-      
-      $weight = 1;
-      foreach($crud_info as $a => $i){
-       
-        if($a != 'view' && $a != 'add' && $a !="list"){
-          switch($a){
-            case 'add':
-              $po = 'create';
-              break;
-            case 'edit':
-              $po = 'update';
-              break;
-            default:
-              $po = $action;
-              break;
-          }  
-        
-          $al = ucfirst($a);
-          
-          $view_path = $info['path']."/{$a}";
-          
-          $p_args = array($po, 'entity');
-    
-
-          if(array_key_exists('entity_id', $i)){
-            $perm_arg = $i['entity_id'];
-          }
-          
-          $menu[$view_path] = array(
-            'title' => "{$al}",
-            'description' => "{$action_label} an entity of type {$entity_type->label} with bundle {$bundle->label}",
-            'page callback' => "eck__entity__{$a}",
-            'page arguments' => $args,
-            'access callback' => 'eck_access',
-            'access arguments' => $p_args,
-            'file' => 'eck.entity.inc',
-            'type' => MENU_LOCAL_TASK,
-            'context' => (MENU_CONTEXT_PAGE|MENU_CONTEXT_INLINE), 
-            'weight' => $weight
-          );
-          $weight++;
-        }
-      }
     }
-    //Holy Crap What a mess @todo clean up ^^
   }
   
   return $menu;
@@ -303,24 +257,7 @@ function eck__entity__add($entity_type_name, $bundle_name) {
  *  loaded entity but there are some workflows where an object is passed.
  *  So this function handles that case as well.
  */
-function eck__entity__build($entity_type, $bundle, $id) {
-  if (is_numeric($id)) {
-    
-    $entities = entity_load($entity_type->name, array($id));
-    if(array_key_exists($id, $entities)){
-     $entity = $entities[$id];
-    }
-    else {
-      $entity = NULL;
-    }
-  }
-  elseif (is_object($id) and isset($id->type) and $entity_type->name == $id->type) {
-    $entity = $id;
-  }
-  else {
-    drupal_not_found();
-    exit();
-  }
+function eck__entity__build($entity_type, $bundle, $entity) {
   
   if (!$entity) {
     drupal_not_found();
@@ -347,15 +284,7 @@ function eck__entity__build($entity_type, $bundle, $id) {
  * @param $id
  *  (int) the Id of the entity to be edited
  */
-function eck__entity__edit($entity_type_name, $bundle_name, $id) {
-  if (is_numeric($id)) {
-    $entities = entity_load($entity_type_name, array($id));
-    $entity = $entities[$id];
-  }
-  elseif (is_object($id) and isset($id->type) and $id->type == $entity_type_name) {
-    $entity = $id;
-  }
-
+function eck__entity__edit($entity_type_name, $bundle_name, $entity) {
   return drupal_get_form("eck__entity__form_edit_{$entity_type_name}_{$bundle_name}", $entity);
 }
 
@@ -607,20 +536,14 @@ function eck__entity__form_submit($form, &$state) {
  * @param $id
  *  (mixed) ID or Entity Object being viewed
  */
-function eck__entity__view($entity_type_name, $bundle_name, $id) {
-  if (is_object($id) and $id->type == $entity_type_name) {
-    $entity = $id;
-  }
-  else {
-    $entity = entity_load_single($entity_type_name, $id);    
-  }
+function eck__entity__view($entity_type_name, $bundle_name, $entity) {
 
   $entity_type = entity_type_load($entity_type_name);
   $properties = $entity_type->properties;
   $bundle = bundle_load($entity_type_name, $bundle_name);
   
   $build = array();
-  $entity_view = eck__entity__build($entity_type, $bundle, $id);
+  $entity_view = eck__entity__build($entity_type, $bundle, $entity);
   $property_view = array();
   
   $formatters = eck_property_behavior_invoke_plugin($entity_type, 'default_formatter', 
