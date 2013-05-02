@@ -431,17 +431,17 @@ function eck__entity_type__info($entity_type) {
         ),
         'edit' => 
         array(
-          'path' => $path."/%/edit",
+          'path' => $path."/%eckentity/edit",
           'entity_id' => 5
         ),
         'delete' => 
         array(
-          'path' => $path."/%/delete",
+          'path' => $path."/%eckentity/delete",
           'entity_id' => 5
         ),
         'view' => 
         array(
-          'path' => "{$entity_type->name}/{$bundle->name}/%",
+          'path' => "{$entity_type->name}/{$bundle->name}/%eckentity",
           'entity_id' => 2
         )
       )

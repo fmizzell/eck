@@ -12,6 +12,13 @@ module_load_include('inc', 'eck', 'eck.property_behavior');
 module_load_include('inc', 'eck', 'includes/eck.references_dialog');
 
 /**
+ * Load callback for %eckentity
+ */
+function eckentity_load($id, $type) {
+  return entity_load_single($type, $id);
+}
+
+/**
  * Implements hook_views_api().
  */
 function eck_views_api() {
@@ -126,7 +133,7 @@ function eck__entity__uri($entity) {
 
   module_load_include('inc', 'eck', 'eck.entity');
   $crud_info = get_bundle_crud_info($entity->entityType(), $entity->type);
-  $view_path = str_replace('%', $ids[0], $crud_info['view']['path']);
+  $view_path = str_replace('%eckentity', $ids[0], $crud_info['view']['path']);
   
   return array('path' => $view_path);
 }
@@ -183,13 +190,13 @@ function entity_table($entities, $select = FALSE) {
     $destination = drupal_get_destination();
     //Check that the user has permissions to edit:
     if (eck__entity_menu_access('edit', $entity_type, $bundle, $id)) {
-      $edit_path = str_replace('%', $id, $crud_info['edit']['path']);
+      $edit_path = str_replace('%eckentity', $id, $crud_info['edit']['path']);
       $allowed_operations = l(t('edit'), $edit_path, array('query' => $destination));
     }
     
     //Check that the user has permissions to delete:
     if (eck__entity_menu_access('delete', $entity_type, $bundle, $id)) {
-      $delete_path = str_replace('%', $id, $crud_info['delete']['path']);
+      $delete_path = str_replace('%eckentity', $id, $crud_info['delete']['path']);
       $allowed_operations .= (($allowed_operations)?'<br />':'').l(t('delete'), $delete_path, array('query' => $destination));
     }
     $uri = entity_uri($entity_type, $entity);
@@ -842,8 +849,8 @@ function eck_entity_delete($entity, $entity_type){
  *   A string representing the entity type to check.
  * @param $bundle_name
  *   A string representing the entity bundle to check.
- * @param $entity_id
- *   (optional) The ID of the entity to check. This should be passed whenever
+ * @param mixed $entity_id
+ *   (optional) The entity object or ID to check. This should be passed whenever
  *   it is available (i.e., for any action besides "add", since in that case
  *   there is no existing entity to check).
  *
@@ -855,13 +862,17 @@ function eck__entity_menu_access($action, $entity_type_name, $bundle_name, $enti
   // provided. (The latter is to allow eck__entity_access() to work similarly
   // to node_access() in the case of the "add" operation.)
   if (isset($entity_id)) {
-    $entities = entity_load($entity_type_name, array($entity_id));
-    if (isset($entities[$entity_id])) {
-      $entity_or_bundle = $entities[$entity_id];
+    if (is_object($entity_id) and $entity_id->type == $entity_type_name) {
+      // You already have the entity
+      $entity_or_bundle = $entity_id;
     }
     else {
+      $entity_or_bundle = entity_load_single($entity_type_name, $entity_id);
+    }
+
+    if (empty($entity_or_bundle)) {
       // Deny access if the requested entity doesn't exist.
-      return FALSE;
+      return FALSE;      
     }
   }
   else {
