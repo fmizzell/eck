@@ -51,11 +51,8 @@ function eck__bundle__menu($entity_type) {
     'description' => "Manage the properties of the {$entity_type->label} entity type",
     'page callback' => "drupal_get_form",//"eck__entity_type__delete",
     'page arguments' => array("eck__properties__form", $entity_type->name),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array ( array('eck administer entity types',
-                                        'eck edit entity types',
-                                        "manage {$entity_type->name} properties"
-                                       ) ),
+    'access callback' => 'eck_access',
+    'access arguments' => array("update", "property"),
     'file' => 'eck.properties.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 4,
