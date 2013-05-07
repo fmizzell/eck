@@ -20,7 +20,7 @@ function eck_permissions(){
 
 function eck_permissions_form($form, &$state){
   
-  $form['role'] =
+  $form['user_role'] =
   array(
     '#type' => 'textfield',
     '#title' => t('Role'),
@@ -45,12 +45,14 @@ function eck_permissions_form($form, &$state){
 
 function eck_permissions_form_submit($form, &$state){
   $values = $state['values'];
-  $role = $values['role'];
+  $user_role = $values['user_role'];
+  $pieces = explode(":", $user_role);
+  
   $permission = $values['permission'];
   
   $perm = new ECKPermission();
-  $perm->type = "role";
-  $perm->oid = $role;
+  $perm->type = $pieces[0];
+  $perm->oid = $pieces[1];
   $perm->permission = $permission;
   $perm->save();
 }
@@ -83,6 +85,23 @@ class ECKPermission extends DBObject{
     }
     return $perms;
   }
+  
+  public static function loadAllByUID($uid){
+    //@todo move this to a general function
+    $results = db_select('eck_permissions', 'p')
+    ->fields('p', array('id'))
+    ->condition("type", "user", "=")
+    ->condition("oid", $uid, "=")
+    ->execute();
+    
+    $perms = array();
+    
+    foreach($results as $result){
+      $id = $result->id;
+      $perms[] = ECKPermission::loadById($id);
+    }
+    return $perms;
+  }
 }
 
 function eck_permissions_eck_access($op, $object_type, $object, $account){
@@ -94,6 +113,10 @@ function eck_permissions_eck_access($op, $object_type, $object, $account){
     $roles = $account->roles;
     $perms = array();
 
+    //first we want the user specific permissions
+    $new = ECKPermission::loadAllByUID($account->uid);
+    $perms = array_merge($perms, $new);
+    
     foreach($roles as $rid => $role){
       $new = ECKPermission::loadAllByRole($rid);
       $perms = array_merge($perms, $new);
@@ -103,9 +126,24 @@ function eck_permissions_eck_access($op, $object_type, $object, $account){
     foreach($perms as $p){
       $perm = $p->permission;
       $object_id = eck_permissions_object_id($object_type, $object);
+      
       $cperm = "{$op} {$object_type}:{$object_id}";
       if(strcmp($perm, $cperm) == 0){
         $allow = TRUE;
+      }
+      
+      //we also want to deal with general options of permissions
+      $pieces = explode("|", $object_id);
+      
+      for($i = 0; $i < count($pieces); $i++){
+        $pc = $pieces;
+        $pc[$i] = "*";
+        $new_object_id = implode("|", $pc);
+        
+        $cperm = "{$op} {$object_type}:{$new_object_id}";
+        if(strcmp($perm, $cperm) == 0){
+          $allow = TRUE;
+        }
       }
     }
   }
@@ -117,8 +155,8 @@ function eck_permissions_object_id($object_type, $object){
   if($object_type == "entity_type"){
     return $object->name;
   }else if($object_type == "bundle"){
-    return $object->machine_name;
+    return "{$object->entity_type}|{$object->name}";
   }else if($object_type == "entity"){
-    return "{$object->entityType()}_{$object->id}";
+    return "{$object->entityType()}|{$object->type}|{$object->id}";
   }
 }
