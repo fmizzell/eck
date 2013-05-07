@@ -18,15 +18,28 @@ function eck__bundle__menu($entity_type) {
   // Create the menus relavant to types.
   $path = eck__entity_type__path();
   $menu = array();
+  
+  // EDIT an entity type
+  $menu["{$path}/{$entity_type->name}/edit"] = array(
+    'title' => "Edit",
+    'description' => "Edit the '{$entity_type->label}' entity type",
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array("eck__entity_type__form", $entity_type->name),
+    'access callback' => 'eck_access',
+    'access arguments' => array('update', 'entity_type', $entity_type),
+    'file' => 'eck.entity_type.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+  );
 
-  // DELETE ENTITY TYPE
+  // DELETE an entity type
   $menu["{$path}/{$entity_type->name}/delete"] = array(
     'title' => "Delete",
     'description' => "Delete the '{$entity_type->label}' Entity Type",
     'page callback' => "drupal_get_form",//"eck__entity_type__delete",
     'page arguments' => array("eck__entity_type__delete_form", $entity_type->name),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array( array('eck administer entity types', 'eck delete entity types') ),
+    'access callback' => 'eck_access',
+    'access arguments' => array("delete", "entity_type", $entity_type),
     'file' => 'eck.entity_type.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 3,
@@ -38,31 +51,21 @@ function eck__bundle__menu($entity_type) {
     'description' => "Manage the properties of the {$entity_type->label} entity type",
     'page callback' => "drupal_get_form",//"eck__entity_type__delete",
     'page arguments' => array("eck__properties__form", $entity_type->name),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array ( array('eck administer entity types',
-                                        'eck edit entity types',
-                                        "manage {$entity_type->name} properties"
-                                       ) ),
+    'access callback' => 'eck_access',
+    'access arguments' => array("update", "property"),
     'file' => 'eck.properties.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 4,
   );
   
-  // OVERVIEW Entity types.
+  // LIST bundles of an entity type.
   $menu["{$path}/{$entity_type->name}"] = array(
     'title' => "{$entity_type->label}" ,
     'description' => "View all the bundles for '{$entity_type->label}'",
     'page callback' => "eck__bundle__list",
     'page arguments' => array(3),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array( array('eck administer entity types',
-                                       'eck add entity types',
-                                       'eck edit entity types',
-                                       'eck administer bundles', 
-                                       'eck list bundles', 
-                                       "eck administer {$entity_type->name} bundles",
-                                       "eck list {$entity_type->name} bundles"
-                                       ) ),
+    'access callback' => 'eck_access',
+    'access arguments' => array('list', 'bundle'),
     'file' => 'eck.bundle.inc'
   );
   
@@ -71,29 +74,16 @@ function eck__bundle__menu($entity_type) {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 100,
   );
-  
-  
-  $menu["{$path}/{$entity_type->name}/edit"] = array(
-    'title' => "Edit",
-    'description' => "Edit the '{$entity_type->label}' entity type",
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array("eck__entity_type__form", $entity_type->name),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array( array('eck administer entity types', 'eck edit entity types') ),
-    'file' => 'eck.entity_type.inc',
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 2,
-  );
 
-
+  
+  //ADD bundles to an entity type
   $menu["{$path}/{$entity_type->name}/add"] = array(
     'title' => "Add bundle ",
     'description' => "Add a(n) new '{$entity_type->label} Bundle'",
     'page callback' => "drupal_get_form",
     'page arguments' => array('eck__bundle__add', 3),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array( array('eck administer bundles', 
-      'eck add bundles', "eck add {$entity_type->name} bundles") ),
+    'access callback' => 'eck_access',
+    'access arguments' => array('create', 'bundle'),
     'type' => MENU_LOCAL_ACTION,
     'weight' => 0,
     'file' => 'eck.bundle.inc'
@@ -119,12 +109,7 @@ function eck__bundle__list($entity_type) {
   $entity_type = entity_type_load($entity_type);
   
   //Check that the user has permissions to view bundle lists:
-  if( eck__multiple_access_check(
-      array( 'eck administer bundles', 
-             'eck list bundles',
-             "eck administer {$entity_type->name} bundles",
-             "eck list {$entity_type->name} bundles"
-  ) ) )
+  if(eck_access('list', 'bundle'))
   {
     
     $header = array(t('Type'), array('data' => t('Operations'), 'colspan' => '1'));
@@ -142,19 +127,15 @@ function eck__bundle__list($entity_type) {
       
       $allowed_operations = '';
       //Check that the user has permissions to delete:
-      if( eck__multiple_access_check(
-        array( 'eck administer bundles', 
-               'eck delete bundles',
-               "eck administer {$entity_type->name} bundles",
-               "eck delete {$entity_type->name} bundles"
-              ) )
-      ) $allowed_operations = l(t('delete'), $uri."/delete");
+      if(eck_access('delete', 'bundle', $bundle)){
+        $allowed_operations = l(t('delete'), $uri."/delete");
+      }
       
-      $rows[] = 
-      array(
-        l($bundle_label, url($uri, array('absolute' => TRUE))),
-        $allowed_operations
-      );
+      if(eck_access('list', 'entity')){
+        $rows[] = array(l($bundle_label, url($uri, array('absolute' => TRUE))), $allowed_operations);
+      }else{
+        $rows[] = array($bundle_label, $allowed_operations);
+      }
     }
  
     $build['bundle_table'] = array(
