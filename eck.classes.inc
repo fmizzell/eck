@@ -601,10 +601,21 @@ class ECKEntity extends Entity{
 
 
   public function __get($name) {
-    if(array_key_exists($name, $this->property_values)){
+    if (array_key_exists($name, $this->property_values)){
       return $this->property_values[$name];
-    }else if(isset($this->{$name})){
+    }
+    else if (isset($this->{$name})){
       return $this->{$name};
+    }
+    else if ($field = field_info_field($name)) {
+      if ($this->entityType) {
+        if ($bundle = $this->bundle()) {
+          if (in_array($bundle, $field['bundles'][$this->entityType])) {
+            $this->{$name} = array();
+            return $this->{$name};
+          }
+        }
+      }
     }
     return NULL;
   }
