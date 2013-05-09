@@ -393,6 +393,7 @@ function eck__entity_type__info($entity_type) {
     'entity class' => $entity_class,
     'controller class' => $controller_class,
     'access callback' => 'eck_entity_access',
+    'form callback' => 'eck__entity__form',
     'module' => 'eck',
     'fieldable' => TRUE,
     'entity keys' => array(
