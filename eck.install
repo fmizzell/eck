@@ -33,11 +33,24 @@ function eck_requirements($phase){
  * in eck.module
  */
 
-/**
- * TODO: Currently when the module is uninstalled, the tables of Entities that
- * were left behind are still around, can we warn the user when they are trying
- * to uninstall about the left over entities that are being managed?
- */
+function eck_disable(){
+  $entity_types = EntityType::loadAll();
+  //lets save the name of every entity type so we can delete them in uninstall
+  foreach($entity_types as $entity_type){
+    $tables[] = $entity_type->name;
+  }
+  
+  variable_set('eck_tables', $tables);
+}
+
+function eck_uninstall(){
+  $tables = variable_get('eck_tables');
+  foreach($tables as $table){
+    db_drop_table("eck_{$table}");
+  }
+  
+  variable_del('eck_tables');
+}
 
 /**
  * Implements hook_schema().
