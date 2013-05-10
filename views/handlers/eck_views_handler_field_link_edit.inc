@@ -9,12 +9,7 @@ class eck_views_handler_field_link_edit extends eck_views_handler_field_link {
     $entity_type = $entity->entityType();
     $bundle = $entity->type;
     $action = "edit";
-    if (eck__multiple_access_check(
-      array(
-      'eck administer entities',
-      "eck {$action} entities",
-      "eck administer {$entity_type} {$bundle} entities",
-      "eck {$action} {$entity_type} {$bundle} entities"))){
+    if (eck_access('update', 'entity', $entity)){
       
       $crud_info = get_bundle_crud_info($entity_type, $bundle);
       $this->options['alter']['make_link'] = TRUE;
