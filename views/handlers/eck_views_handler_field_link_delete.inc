@@ -10,12 +10,7 @@ class eck_views_handler_field_link_delete extends eck_views_handler_field_link {
     $bundle = $entity->type;
     $action = 'delete';
     
-    if (eck__multiple_access_check(
-      array(
-      'eck administer entities',
-      "eck {$action} entities",
-      "eck administer {$entity_type} {$bundle} entities",
-      "eck {$action} {$entity_type} {$bundle} entities"))){
+    if (eck_access($action, 'entity', $entity)){
         
       $crud_info = get_bundle_crud_info($entity_type, $bundle);
       $this->options['alter']['make_link'] = TRUE;

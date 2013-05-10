@@ -71,34 +71,7 @@ function eck_permission() {
  * @see entity_access()
  */
 function eck_entity_access($op, $entity, $account, $entity_type_name) {
-  // @todo This module uses different CRUD terminology than is normally used in
-  //   Drupal, so we need to convert what entity_access() sent us back to
-  //   something this module will understand.
-  $crud_map = array(
-    'create' => 'add',
-    'update' => 'edit',
-  );
-  if (isset($crud_map[$op])) {
-    $op = $crud_map[$op];
-  }
-
-  // Check the relevant permissions. If an entity or bundle is provided, use
-  // that to get the bundle-specific permissions and check those too.
-  $permissions = array(
-    'eck administer entities',
-    "eck {$op} entities",
-  );
-  if (isset($entity_or_bundle)) {
-    if (is_object($entity_or_bundle)) {
-      list(, , $bundle_name) = entity_extract_ids($entity_type_name, $entity_or_bundle);
-    }
-    else {
-      $bundle_name = $entity_or_bundle;
-    }
-    $permissions[] = "eck administer {$entity_type_name} {$bundle_name} entities";
-    $permissions[] = "eck {$op} {$entity_type_name} {$bundle_name} entities";
-  }
-  return eck__multiple_access_check($permissions, FALSE /*TODO: should auto-load entity author here. */, $account);
+  return eck_access($op, 'entity', $entity, $account);
 }
 
 function eck_access($op, $object_type, $object = NULL, $account = NULL){
