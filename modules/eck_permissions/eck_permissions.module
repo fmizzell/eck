@@ -23,7 +23,7 @@ function eck_permissions_form($form, &$state){
   $form['user_role'] =
   array(
     '#type' => 'textfield',
-    '#title' => t('Role'),
+    '#title' => t('User / Role'),
     '#size' => 60,
     '#maxlength' => 128,
     '#required' => TRUE,
@@ -142,6 +142,23 @@ function eck_permissions_eck_access($op, $object_type, $object, $account){
         
         $cperm = "{$op} {$object_type}:{$new_object_id}";
         if(strcmp($perm, $cperm) == 0){
+          $allow = TRUE;
+        }
+      }
+    }
+    
+    //should behaviors care about anything but entity permissions?
+    //I guess we'll play it by ear
+    if($object_type == "entity"){
+      
+      $entity_type_name = $object->entityType();
+      $entity_type = EntityType::loadByName($entity_type_name);
+      $behavior_access = eck_property_behavior_invoke_plugin($entity_type, 
+        'permissions', array('op' => $op, 'entity' => $object, 'permissions' => $perms, 
+        'account' => $account)); 
+      
+      foreach($behavior_access as $access){
+        if($access){
           $allow = TRUE;
         }
       }
