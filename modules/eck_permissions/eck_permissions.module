@@ -135,9 +135,27 @@ function eck_permissions_eck_access($op, $object_type, $object, $account){
       //we also want to deal with general options of permissions
       $pieces = explode("|", $object_id);
       
+      //how many possible permissions can be generated
+      $binary_string = "";
       for($i = 0; $i < count($pieces); $i++){
+        $binary_string .= 1;
+      }
+      
+      $total_permissions = bindec($binary_string);
+      
+      for($i = 0; $i <= $total_permissions; $i++){
+        
+        $binary = decbin($i);
+        $binary = strrev($binary);
         $pc = $pieces;
-        $pc[$i] = "*";
+        
+        for($j = 0; $j < count($pieces); $j++){
+          $bit = substr($binary, $j, 1);
+          if($bit == 1){
+            $pc[$j] = "*";
+          }
+        }
+        
         $new_object_id = implode("|", $pc);
         
         $cperm = "{$op} {$object_type}:{$new_object_id}";
