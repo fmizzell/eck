@@ -11,50 +11,159 @@ function eck_permissions_menu(){
     'type' => MENU_LOCAL_TASK
   );
   
+  $menu['admin/people/eck-permissions/%/%'] =
+  array(
+    'title' => "ECK Permissions",
+    'page callback' => "eck_permissions",
+    'page arguments' => array(3, 4),
+    'access callback' => TRUE
+  );
+  
+  $menu['admin/people/eck-permissions/%/%/delete/%'] =
+  array(
+    'title' => "ECK Permissions",
+    'page callback' => "drupal_get_form",
+    'page arguments' => array('eck_permissions_delete_form', 6),
+    'access callback' => TRUE
+  );
+  
   return $menu;
 }
 
-function eck_permissions(){
-  return drupal_get_form("eck_permissions_form");
+/**
+ * @param type $pid the permissions id
+ */
+function eck_permissions_delete_form($form, &$state, $pid){
+  $path = current_path();
+  $pieces = explode('delete', $path);
+  $path = $pieces[0];
+  
+  $form['pid'] = array(
+    '#type' => "value",
+    '#value' => $pid
+  );
+  
+  return confirm_form($form, "Are you sure you want to delete the permission: {$pid}", $path);
 }
 
-function eck_permissions_form($form, &$state){
+function eck_permissions_delete_form_submit($form, &$state){
+  $values = $state['values'];
+  $pid = $values['pid'];
+  $permission = ECKPermission::loadById($pid);
+  $permission->delete();
   
-  $form['user_role'] =
-  array(
-    '#type' => 'textfield',
-    '#title' => t('User / Role'),
-    '#size' => 60,
-    '#maxlength' => 128,
-    '#required' => TRUE,
+  $path = current_path();
+  $pieces = explode('delete', $path);
+  $path = $pieces[0];
+  
+  $state['redirect'] = $path;
+}
+
+function eck_permissions($object_type = NULL, $object_id = NULL){
+  
+  if(!isset($object_type) && !isset($objcet_id)){
+    $form = drupal_get_form("eck_permissions_receiving_object_form");
+    return $form;
+  }
+  else{
+    
+    $add_form = drupal_get_form('eck_permissions_add_form', $object_type, $object_id);
+    
+    $header = array();
+    $rows = array();
+
+    if(isset($object_type) && isset($object_id)){
+      //let's present a table with the permissions assigned already
+      $permissions = array();
+
+      if($object_type == 'role'){
+        $permissions = ECKPermission::loadAllByRole($object_id);
+      }else if($object_type == 'user'){
+        $permissions = ECKPermission::loadAllByUID($object_id);
+      }
+
+      $header = array('id', 'permission', 'actions');
+      $rows = array();
+      $counter = 0;
+      $path = current_path();
+      foreach($permissions as $perm){
+        $rows[$counter][] = $perm->id;
+        $rows[$counter][] = $perm->permission;
+        $rows[$counter][] = l("delete", "$path/delete/{$perm->id}");
+        $counter++;
+      }
+
+    }
+
+    return array('add_form' => $add_form, 'table' => array('#theme' => 'table', '#header' => $header, '#rows' => $rows));
+  }
+  
+}
+
+function eck_permissions_add_form($form, &$state, $object_type, $object_id){
+  
+  $form['object_type'] = array(
+    '#type' => 'value',
+    '#value' => $object_type
   );
   
-  $form['permission'] =
-  array(
-    '#type' => 'textfield',
-    '#title' => t('Permission'),
-    '#size' => 60,
-    '#maxlength' => 128,
-    '#required' => TRUE,
+  $form['object_id'] = array(
+    '#type' => 'value',
+    '#value' => $object_id
   );
   
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+  $form['permission'] = array(
+    '#type' => 'textfield',
+    '#title' => "Add a permission",
+    '#required' => TRUE
+  );
+  
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Add'));
   
   return $form;
 }
 
-function eck_permissions_form_submit($form, &$state){
-  $values = $state['values'];
-  $user_role = $values['user_role'];
-  $pieces = explode(":", $user_role);
-  
-  $permission = $values['permission'];
-  
+function eck_permissions_add_form_submit($form, &$state){
   $perm = new ECKPermission();
-  $perm->type = $pieces[0];
-  $perm->oid = $pieces[1];
-  $perm->permission = $permission;
+  
+  $values = $state['values'];
+  $perm->type = $values['object_type'];
+  $perm->oid = $values['object_id'];
+  $perm->permission = $values['permission'];
+  
   $perm->save();
+}
+
+function eck_permissions_receiving_object_form($form, &$state){
+  
+  $form['object_type'] =
+  array(
+    '#type' => 'radios',
+    '#title' => t('User or Role?'),
+    '#options' => array('user' => "User", 'role' => "Role"),
+    '#required' => TRUE,
+  );
+  
+  $form['object_id'] =
+  array(
+    '#type' => 'textfield',
+    '#title' => t('ID'),
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+  );
+  
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Go to Permissions!'));
+  
+  return $form;
+}
+
+function eck_permissions_receiving_object_form_submit($form, &$state){
+  $values = $state['values'];
+  $object_type = $values['object_type'];
+  $object_id = $values['object_id'];
+  
+  $state['redirect'] = "admin/people/eck-permissions/$object_type/$object_id";
 }
 
 class ECKPermission extends DBObject{
