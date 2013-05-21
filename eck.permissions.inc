@@ -95,7 +95,7 @@ function eck_access($op, $object_type, $object = NULL, $account = NULL){
 
 function eck_eck_access($op, $object_type, $object, $account){
   
-  $opb = in_array($op, array('list', 'create', 'update', 'delete'));
+  $opb = in_array($op, array('list', 'create', 'update', 'delete', 'view'));
   $otb = strcmp($object_type, "entity_type") == 0  || strcmp($object_type, "bundle") == 0 
           || strcmp($object_type, "entity") == 0 || strcmp($object_type, "property") == 0;
   //$ob = !isset($object);
