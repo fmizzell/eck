@@ -9,6 +9,7 @@ module_load_include('inc', 'eck', 'eck.property_type');
 module_load_include('inc', 'eck', 'eck.properties');
 module_load_include('inc', 'eck', 'eck.property_behavior');
 module_load_include('inc', 'eck', 'eck.permissions');
+module_load_include('inc', 'eck', 'eck.schema');
 
 //Integration with references dialog
 module_load_include('inc', 'eck', 'includes/eck.references_dialog');
@@ -1071,6 +1072,10 @@ function eck_eck_property_types(){
   $property_types['uuid'] = array(
     'label' => t("UUID"),
     'class' => "UUIDPropertyType"    
+  );
+  $property_types['entity_reference'] = array(
+    'label' => t("Entity Reference"),
+    'class' => "EntityReferencePropertyType"
   );
   
   return $property_types;

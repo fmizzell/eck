@@ -106,3 +106,273 @@ function eck_get_property_type_schema($property_type_name){
     return $class::schema();
   }
 }
+
+// Generic types supported by schema api
+// 'varchar', 'char', 'int', 'serial', 'float', 'numeric', 'text', 'blob' or 'datetime'
+interface PropertyType{
+  public static function schema();
+  public static function validate($value);
+}
+
+/**
+ * PRIMITIVE PROPERTY TYPES
+ */
+
+class TextPropertyType implements PropertyType{
+  public static function schema(){
+    $schema = array(
+      'description' => 'Text',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    );
+    
+    return $schema;
+  }
+
+  public static function validate($value) {
+    //Pretty much anything can be store in a text field
+    //even an object?
+    //@TODO check what happens when trying to save an obejct to a varchar field
+    //in the db
+    
+    return TRUE;
+  }
+}
+
+class FixedSizeTextPropertyType implements PropertyType{
+  public static function schema(){
+    $schema = array(
+      'description' => 'All of the  values of this property are text of the same size',
+      'type' => 'char',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    );
+    
+    return $schema;
+  }
+
+  public static function validate($value) {
+    //Pretty much anything can be store in a text field
+    //even an object?
+    //@TODO check what happens when trying to save an obejct to a varchar field
+    //in the db
+    
+    return TRUE;
+  }
+}
+
+class LongTextPropertyType implements PropertyType{
+  public static function schema(){
+    $schema = array(
+      'description' => 'Long Text (longer than 8000 characters)',
+      'type' => 'text',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    );
+    
+    return $schema;
+  }
+
+  public static function validate($value) {
+    //Pretty much anything can be store in a text field
+    //even an object?
+    //@TODO check what happens when trying to save an obejct to a varchar field
+    //in the db
+    
+    return TRUE;
+  }
+}
+
+class IntegerPropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'description' => "Integer",
+      'type' => 'int',
+      'size' => 'normal',
+      'not null' => TRUE,
+      'default' => 0,
+      'unsigned' => FALSE
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    $number = filter_var($value, FILTER_VALIDATE_INT);
+    return ($number !== FALSE);
+  }
+}
+
+class DecimalPropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'description' => 'Decimal/Float/Double',
+      'type' => 'float',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    $number = filter_var($value, FILTER_VALIDATE_FLOAT);
+    return ($number !== FALSE);
+  }
+}
+
+class SerialPropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'description' => 'Decimal/Float/Double',
+      'type' => 'serial',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    $number = filter_var($value, FILTER_VALIDATE_FLOAT);
+    return ($number !== FALSE);
+  }
+}
+
+class BlobPropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'description' => 'Decimal/Float/Double',
+      'type' => 'blob',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    $number = filter_var($value, FILTER_VALIDATE_FLOAT);
+    return ($number !== FALSE);
+  }
+}
+
+class DateTimePropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'description' => 'Decimal/Float/Double',
+      'type' => 'datetime',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    $number = filter_var($value, FILTER_VALIDATE_FLOAT);
+    return ($number !== FALSE);
+  }
+}
+
+/**
+ * SPECIAL PROPERTY TYPES
+ */
+
+class LanguagePropertyType extends TextPropertyType{
+  
+  public static function schema(){
+    $schema = parent::schema();
+    
+    $schema['default'] = 'und';
+    $schema['description'] = "Language";
+    $schema['length'] = 12;
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    //make sure it is text
+    if(parent::validate($value)){
+      //@TODO check with the language people, what kind of validation can we
+      //do here
+      return TRUE;
+    }
+    
+    return FALSE;
+  }
+}
+
+class UUIDPropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'description' => 'Decimal',
+      'type' => 'float',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    //@TODO UUID module has a function ... steal :)
+    return TRUE;
+  }
+}
+
+class EntityReferencePropertyType extends IntegerPropertyType{
+  
+  public static function schema(){
+    $schema = parent::schema();
+    $schema['description'] = "Entity Reference";
+    
+    return $schema;
+  }
+  
+  public static function configurationForm(){
+    $entity_types = EntityType::loadAll();
+    $options = array();
+    foreach($entity_types as $et){
+      $options[$et->name] = $et->label; 
+    }
+    return array('#type' => 'radios', '#options' => $options);
+  }
+}
+
+//On the upgrade path, we should just change this to a special configuration
+//case of integer
+/*class PositiveIntegerPropertyType extends IntegerPropertyType{
+  
+  public static function schema() {
+    $schema = parent::schema();
+    
+    $schema['description'] = "Positive Integer";
+    $schema['unsigned'] = TRUE;
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    if(parent::validate($value)){
+      
+      //lets cast it in case it is string
+      $int = intval($value);
+      if($int >= 0){
+        return TRUE;
+      }
+    }
+    
+    return FALSE;
+  }
+}*/
