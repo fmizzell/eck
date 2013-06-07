@@ -104,7 +104,12 @@ function eck__properties__form($form, &$state, $entity_type_name){
     '#empty' => t('No other properties for this entity type.'),
     '#default_value' => $defaults
   );
+  
+  return $form;
+}
 
+function eck__add_property__form($form, &$state, $entity_type_name){
+  
   //Add new property
   $property_types = eck_get_property_types();
   
@@ -126,7 +131,16 @@ function eck__properties__form($form, &$state, $entity_type_name){
     '#title' => t('Type'),
     '#options' => array('' => t('- Please choose -')) + $types,
     '#required' => TRUE,
-    '#after_build' => array('_eck_deactivate_on_save')
+    //'#after_build' => array('_eck_deactivate_on_save'),
+    '#ajax' => array(
+      'callback' => 'eck_properties_property_config',
+      'wrapper' => 'eck-property-config',
+      'method' => "replace"
+    )
+  );
+   
+  $form["eck_property_config"] = array(
+    '#markup' => "<div id='eck-property-config'></div>"
   );
 
   $form["property_label"] = array(
@@ -153,28 +167,54 @@ function eck__properties__form($form, &$state, $entity_type_name){
     $options[$behavior] = $info['label'];
   }
   
-  
   $form['property_behavior'] = array(
     '#type' => 'select',
     '#title' => t('Behavior'),
     '#options' => array('' => t('- Please choose -')) + $options
   );
   
+  
   $form['property_add'] = array(
     '#type' => 'submit',
     '#value' => t('Add Property'),
   );
   
-  $form['line_break'] = array(
-    '#markup' => '<br><hr/><br>'
-  );
-  
-  $form['save'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save'),
-  );
+  if(isset($state['values']['property_type'])){
+    $property_type = $state['values']['property_type'];
+    $property_type_info = eck_get_property_types($property_type);
+    $form['eck_property_config2'] = array();
+    $form['eck_property_config2']['#prefix'] = "<div id='eck-property-config'>";
+    $form['eck_property_config2']['#suffix'] = "</div>";
+
+    $form['eck_property_config2']['schema_wrapper'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Property schema configuration'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $default_schema = $property_type_info['class']::schema();
+    $sf = new SchemaForm($default_schema);
+    $form['eck_property_config2']['schema_wrapper']['schema'] = $sf->getSchemaForm();
+
+    if(method_exists($property_type_info['class'], "configurationForm")){
+      $form['eck_property_config2']['config_wrapper'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Property type configuration')
+    );
+      $form['eck_property_config2']['config_wrapper']['config'] = $property_type_info['class']::configurationForm();
+    }
+  }else{
+    $form["eck_property_config2"] = array(
+      '#prefix' => "<div id='eck-property-config'>",
+      '#suffix' => "</div>"
+    );
+  }
   
   return $form;
+}
+
+function eck_properties_property_config($form, &$state){
+  return $form['eck_property_config2'];
 }
 
 function eck__properties__form_validate($form, &$state){
@@ -232,145 +272,3 @@ function _eck_deactivate_on_save($element, &$state){
   
   return $element;
 }
-
-interface PropertyType{
-  public static function schema();
-  public static function validate($value);
-}
-
-class TextPropertyType implements PropertyType{
-  public static function schema(){
-    $schema = array(
-      'description' => 'Text',
-      'type' => 'varchar',
-      'length' => 255,
-      'not null' => TRUE,
-      'default' => '',
-    );
-    
-    return $schema;
-  }
-
-  public static function validate($value) {
-    //Pretty much anything can be store in a text field
-    //even an object?
-    //@TODO check what happens when trying to save an obejct to a varchar field
-    //in the db
-    
-    return TRUE;
-  }
-}
-
-class LanguagePropertyType extends TextPropertyType{
-  
-  public static function schema(){
-    $schema = parent::schema();
-    
-    $schema['default'] = 'und';
-    $schema['description'] = "Language";
-    $schema['length'] = 12;
-    
-    return $schema;
-  }
-  
-  public static function validate($value){
-    //make sure it is text
-    if(parent::validate($value)){
-      //@TODO check with the language people, what kind of validation can we
-      //do here
-      return TRUE;
-    }
-    
-    return FALSE;
-  }
-}
-
-class IntegerPropertyType implements PropertyType{
-  
-  public static function schema() {
-    $schema = array(
-      'type' => 'int',
-      'description' => "Integer",
-      'not null' => TRUE,
-      'default' => 0,
-    );
-    
-    return $schema;
-  }
-  
-  public static function validate($value){
-    $number = filter_var($value, FILTER_VALIDATE_INT);
-    return ($number !== FALSE);
-  }
-}
-
-class PositiveIntegerPropertyType extends IntegerPropertyType{
-  
-  public static function schema() {
-    $schema = parent::schema();
-    
-    $schema['description'] = "Positive Integer";
-    $schema['unsigned'] = TRUE;
-    
-    return $schema;
-  }
-  
-  public static function validate($value){
-    if(parent::validate($value)){
-      
-      //lets cast it in case it is string
-      $int = intval($value);
-      if($int >= 0){
-        return TRUE;
-      }
-    }
-    
-    return FALSE;
-  }
-}
-
-class DecimalPropertyType implements PropertyType{
-  
-  public static function schema() {
-    $schema = array(
-      'description' => 'Decimal',
-      'type' => 'float',
-      'not null' => TRUE,
-      'default' => 0,
-    );
-    
-    return $schema;
-  }
-  
-  public static function validate($value){
-    $number = filter_var($value, FILTER_VALIDATE_FLOAT);
-    return ($number !== FALSE);
-  }
-}
-
-class UUIDPropertyType implements PropertyType{
-  
-  public static function schema() {
-    $schema = array(
-      'description' => 'Decimal',
-      'type' => 'float',
-      'not null' => TRUE,
-      'default' => 0,
-    );
-    
-    return $schema;
-  }
-  
-  public static function validate($value){
-    //@TODO UUID module has a function ... steal :)
-    return TRUE;
-  }
-}
-
-
-
-
-
-
-
-
