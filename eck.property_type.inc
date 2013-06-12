@@ -123,9 +123,11 @@ class TextPropertyType implements PropertyType{
     $schema = array(
       'description' => 'Text',
       'type' => 'varchar',
-      'length' => 255,
+      'size' => 'normal',
       'not null' => TRUE,
       'default' => '',
+      //relevant only to: varchar, char, and text
+      'length' => 255,
     );
     
     return $schema;
@@ -146,9 +148,11 @@ class FixedSizeTextPropertyType implements PropertyType{
     $schema = array(
       'description' => 'All of the  values of this property are text of the same size',
       'type' => 'char',
-      'length' => 255,
+      'size' => 'normal',
       'not null' => TRUE,
       'default' => '',
+      //relevant only to: varchar, char, and text
+      'length' => 255,
     );
     
     return $schema;
@@ -172,6 +176,8 @@ class LongTextPropertyType implements PropertyType{
       'length' => 255,
       'not null' => TRUE,
       'default' => '',
+      //relevant only to: varchar, char, and text
+      'length' => 255,
     );
     
     return $schema;
@@ -196,6 +202,7 @@ class IntegerPropertyType implements PropertyType{
       'size' => 'normal',
       'not null' => TRUE,
       'default' => 0,
+      //relevant only to int and float
       'unsigned' => FALSE
     );
     
@@ -214,8 +221,11 @@ class DecimalPropertyType implements PropertyType{
     $schema = array(
       'description' => 'Decimal/Float/Double',
       'type' => 'float',
+      'size' => 'normal',
       'not null' => TRUE,
       'default' => 0,
+      //relevant only to int and float
+      'unsigned' => FALSE
     );
     
     return $schema;
@@ -233,6 +243,7 @@ class SerialPropertyType implements PropertyType{
     $schema = array(
       'description' => 'Decimal/Float/Double',
       'type' => 'serial',
+      'size' => 'normal',
       'not null' => TRUE,
       'default' => 0,
     );
@@ -252,8 +263,8 @@ class BlobPropertyType implements PropertyType{
     $schema = array(
       'description' => 'Decimal/Float/Double',
       'type' => 'blob',
+      'size' => 'normal',
       'not null' => TRUE,
-      'default' => 0,
     );
     
     return $schema;
@@ -269,8 +280,9 @@ class DateTimePropertyType implements PropertyType{
   
   public static function schema() {
     $schema = array(
-      'description' => 'Decimal/Float/Double',
+      'description' => 'Date/Time',
       'type' => 'datetime',
+      'size' => 'normal',
       'not null' => TRUE,
       'default' => 0,
     );
@@ -293,7 +305,7 @@ class LanguagePropertyType extends TextPropertyType{
   public static function schema(){
     $schema = parent::schema();
     
-    $schema['default'] = 'und';
+    $schema['default'] = LANGUAGE_NONE;
     $schema['description'] = "Language";
     $schema['length'] = 12;
     
@@ -312,15 +324,16 @@ class LanguagePropertyType extends TextPropertyType{
   }
 }
 
-class UUIDPropertyType implements PropertyType{
+class UUIDPropertyType extends FixedSizeTextPropertyType{
+  
+  public static function schemaConditions(){
+    return array('locked' => 'length');
+  }
   
   public static function schema() {
-    $schema = array(
-      'description' => 'Decimal',
-      'type' => 'float',
-      'not null' => TRUE,
-      'default' => 0,
-    );
+    $schema = parent::schema();
+    $schema ['description'] = 'Universally Unique Identifier';
+    $schema['length'] = 16;
     
     return $schema;
   }
@@ -350,9 +363,7 @@ class EntityReferencePropertyType extends IntegerPropertyType{
   }
 }
 
-//On the upgrade path, we should just change this to a special configuration
-//case of integer
-/*class PositiveIntegerPropertyType extends IntegerPropertyType{
+class PositiveIntegerPropertyType extends IntegerPropertyType{
   
   public static function schema() {
     $schema = parent::schema();
@@ -375,4 +386,4 @@ class EntityReferencePropertyType extends IntegerPropertyType{
     
     return FALSE;
   }
-}*/
+}
