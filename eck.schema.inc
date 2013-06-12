@@ -111,4 +111,16 @@ class SchemaForm{
     );
     return $element;
   }
+  
+  protected function lengthFormElement($value){
+    $key = "default";
+    
+    $element = array(
+      '#title' => t('Length'),
+      '#type' => 'textfield',
+      '#value' => $value,
+      '#disabled' => array_key_exists($key, $this->locked_properties)?$this->locked_properties[$key]:FALSE
+    );
+    return $element;
+  }
 }
