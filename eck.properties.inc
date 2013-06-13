@@ -110,6 +110,11 @@ function eck__properties__form($form, &$state, $entity_type_name){
 
 function eck__add_property__form($form, &$state, $entity_type_name){
   
+  $form['entity_type_name'] = array(
+    '#type' => 'value',
+    '#value' => $entity_type_name
+  );
+  
   //Add new property
   $property_types = eck_get_property_types();
   
@@ -132,85 +137,114 @@ function eck__add_property__form($form, &$state, $entity_type_name){
     '#options' => array('' => t('- Please choose -')) + $types,
     '#required' => TRUE,
     //'#after_build' => array('_eck_deactivate_on_save'),
-    '#ajax' => array(
+    /*'#ajax' => array(
       'callback' => 'eck_properties_property_config',
       'wrapper' => 'eck-property-config',
       'method' => "replace"
-    )
+    )*/
   );
    
-  $form["eck_property_config"] = array(
-    '#markup' => "<div id='eck-property-config'></div>"
-  );
-
-  $form["property_label"] = array(
-    '#type' => 'textfield',
-    '#title' => t("Name"),
-    '#description' => t("A human readable name for the property."),
-    '#required' => TRUE,
-    '#after_build' => array('_eck_deactivate_on_save')
-  );
-
-  $form["property_name"] = array(
-    '#type' => 'machine_name',
-    '#machine_name' => array(
-      'exists' => '_eck_fake_exists',
-      'source' => array('property_label'),
-    ),
-   '#after_build' => array('_eck_deactivate_on_save')
-  );
-  
-  $behavior_plugins = ctools_get_plugins('eck', 'property_behavior');
-  $options = array();
-  
-  foreach($behavior_plugins as $behavior => $info){
-    $options[$behavior] = $info['label'];
-  }
-  
-  $form['property_behavior'] = array(
-    '#type' => 'select',
-    '#title' => t('Behavior'),
-    '#options' => array('' => t('- Please choose -')) + $options
-  );
-  
-  
-  $form['property_add'] = array(
+ $form['property_select_type'] = array(
     '#type' => 'submit',
-    '#value' => t('Add Property'),
+    '#value' => t('Select Property Type'),
   );
-  
-  if(isset($state['values']['property_type'])){
+ 
+  if(array_key_exists('values', $state) && !empty($state['values']['property_type'])) {
+    
     $property_type = $state['values']['property_type'];
     $property_type_info = eck_get_property_types($property_type);
-    $form['eck_property_config2'] = array();
-    $form['eck_property_config2']['#prefix'] = "<div id='eck-property-config'>";
-    $form['eck_property_config2']['#suffix'] = "</div>";
 
-    $form['eck_property_config2']['schema_wrapper'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Property schema configuration'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-    );
     $default_schema = $property_type_info['class']::schema();
-    $sf = new SchemaForm($default_schema);
-    $form['eck_property_config2']['schema_wrapper']['schema'] = $sf->getSchemaForm();
 
-    if(method_exists($property_type_info['class'], "configurationForm")){
-      $form['eck_property_config2']['config_wrapper'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Property type configuration')
+    $form['default_schema'] = array(
+      '#type' => 'value',
+      '#value' => $default_schema
     );
-      $form['eck_property_config2']['config_wrapper']['config'] = $property_type_info['class']::configurationForm();
+
+    $sf = new SchemaForm($default_schema);
+
+    $schema_form = $sf->getSchemaForm();
+    foreach($schema_form as $name => $field){
+      unset($schema_form[$name]);
+      $schema_form["schema_{$name}"] = $field;
     }
-  }else{
-    $form["eck_property_config2"] = array(
-      '#prefix' => "<div id='eck-property-config'>",
-      '#suffix' => "</div>"
+
+    $form['schema'] = $schema_form;
+    
+    $form["property_label"] = array(
+      '#type' => 'textfield',
+      '#title' => t("Name"),
+      '#description' => t("A human readable name for the property."),
+      '#required' => TRUE,
+      '#after_build' => array('_eck_deactivate_on_save')
     );
+
+    $form["property_name"] = array(
+      '#type' => 'machine_name',
+      '#machine_name' => array(
+        'exists' => '_eck_fake_exists',
+        'source' => array('property_label'),
+      ),
+     '#after_build' => array('_eck_deactivate_on_save')
+    );
+
+    $behavior_plugins = ctools_get_plugins('eck', 'property_behavior');
+    $options = array();
+
+    foreach($behavior_plugins as $behavior => $info){
+      $options[$behavior] = $info['label'];
+    }
+
+    $form['property_behavior'] = array(
+      '#type' => 'select',
+      '#title' => t('Behavior'),
+      '#options' => array('' => t('- Please choose -')) + $options
+    );
+
+
+    $form['property_add'] = array(
+      '#type' => 'submit',
+      '#value' => t('Add Property'),
+    );
+
   }
   
   return $form;
+}
+
+function eck__add_property__form_submit($form, &$state){
+  $values = $state['values'];
+  
+  if(strcmp($values['op'], t('Select Property Type')) == 0){
+    $state['rebuild'] = TRUE;
+  }else{
+    //lets save schema customization
+    $default_schema = $values['default_schema'];
+    unset($values['default_schema']);
+
+    $new_schema = array();
+    //lets get the values from the form
+    foreach($values as $name => $value){
+      if(substr_count($name, "schema") > 0){
+        $new_name = str_replace("schema_", "", $name);
+        if(strcmp($new_name, "unsigned") == 0 || strcmp($new_name, "not null") == 0){
+          $value = ($value)?TRUE:FALSE;
+        }
+        $new_schema[$new_name] = $value;
+      }
+    }
+
+    //$diff = array_diff($new_schema, $default_schema);
+
+    $entity_type_name = $values['entity_type_name'];
+    $entity_type = EntityType::loadByName($entity_type_name);
+
+    $entity_type->addProperty($values['property_name'], $values['property_label'], 
+            $values['property_type'], $values['property_behavior'], $new_schema);
+
+    $entity_type->save();
+    eck_get_property_types(NULL, TRUE);
+  }
 }
 
 function eck_properties_property_config($form, &$state){

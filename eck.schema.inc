@@ -42,7 +42,7 @@ class SchemaForm{
     $element = array(
       '#title' => t('Description'),
       '#type' => 'textarea',
-      '#value' => $value,
+      '#default_value' => $value,
       '#disabled' => array_key_exists($key, $this->locked_properties)?$this->locked_properties[$key]:FALSE
     );
     return $element;
@@ -53,7 +53,7 @@ class SchemaForm{
     $element = array(
       '#title' => t('Type'),
       '#type' => 'textfield',
-      '#value' => $value,
+      '#default_value' => $value,
       '#disabled' => array_key_exists($key, $this->locked_properties)?$this->locked_properties[$key]:FALSE
     );
     return $element;
@@ -70,7 +70,7 @@ class SchemaForm{
       '#title' => t('Size'),
       '#type' => 'select',
       '#options' => $options,
-      '#value' => $value,
+      '#default_value' => $value,
       '#disabled' => array_key_exists($key, $this->locked_properties)?$this->locked_properties[$key]:FALSE
     );
     return $element;
@@ -82,7 +82,7 @@ class SchemaForm{
     $element = array(
       '#title' => t('Not Null'),
       '#type' => 'checkbox',
-      '#value' => $value,
+      '#default_value' => $value,
       '#disabled' => array_key_exists($key, $this->locked_properties)?$this->locked_properties[$key]:FALSE
     );
     return $element;
@@ -94,7 +94,7 @@ class SchemaForm{
     $element = array(
       '#title' => t('Default'),
       '#type' => 'textfield',
-      '#value' => $value,
+      '#default_value' => $value,
       '#disabled' => array_key_exists($key, $this->locked_properties)?$this->locked_properties[$key]:FALSE
     );
     return $element;
@@ -106,7 +106,7 @@ class SchemaForm{
     $element = array(
       '#title' => t('Unsigned'),
       '#type' => 'checkbox',
-      '#value' => $value,
+      '#default_value' => $value,
       '#disabled' => array_key_exists($key, $this->locked_properties)?$this->locked_properties[$key]:FALSE
     );
     return $element;
@@ -118,7 +118,7 @@ class SchemaForm{
     $element = array(
       '#title' => t('Length'),
       '#type' => 'textfield',
-      '#value' => $value,
+      '#default_value' => $value,
       '#disabled' => array_key_exists($key, $this->locked_properties)?$this->locked_properties[$key]:FALSE
     );
     return $element;
