@@ -1,111 +1,83 @@
 <?php
 
-function eck__properties__form($form, &$state, $entity_type_name){
-  if (!isset($entity_type_name)) {
-    $entity_type = new EntityType();
-  }
-  else {
-    $entity_type = EntityType::loadByName($entity_type_name);
-  }
+function eck__properties($entity_type_name){
+  $current_path = current_path();
   
-  $form['entity_type'] = array('#type' => 'value', '#value' => $entity_type);
+  $entity_type = EntityType::loadByName($entity_type_name);
   
-  $form['info'] = array('#markup' => "<p><strong>HELP:</strong> The add property button will temporarily add a property to the
-    entity type, to finalize adding the property, click the checkbox on the left and click save </p>");
+  //lets get the default properties
+  $default_properties = eck_get_default_properties();
+  //let get the actual properties of the entity type
+  $entity_type_properties = $entity_type->properties;
   
-  //When the add button is clicked, the submit callback directs the form to be rebuilt. 
-   //Here we check to see if a new property was added, and keep it in a a list of new properties
-   //to add them to the table on each rebuild 
-   $entity_type_properties = $entity_type->properties;
-   
-   if(!array_key_exists('values', $state) || !array_key_exists('new_properties', $state['values'])){
-     $new_properties = eck_get_default_properties();
-     $new_properties = array_merge($new_properties, $entity_type_properties);
-   }else{
-     $new_properties = $state['values']['new_properties'];
-   }
+  //lets arrenge the table with the appropiate action links
   
-   if(!empty($state['values']['property_name'])){
-     $property_name = $state['values']['property_name'];
-     $property_type = $state['values']['property_type'];
-     //OK we need to do a little bit of filtering do the oddity of modifying existing
-     //properties through the add Property form #fail @todo need to get a better interface.
-     //But until then, we need to keep the form from changing the property_type or property_name of the already
-     //existing properties
-     
-     if(!array_key_exists($property_name, $new_properties) || 
-       $new_properties[$property_name]['type'] == $property_type){
-     
-       $new_properties[$property_name] =
-       array(
-         'label' => $state['values']['property_label'],
-         'type' => $state['values']['property_type']
-       );
-       
-       if(array_key_exists('property_behavior', $state['values'])){
-         $new_properties[$state['values']['property_name']]['behavior'] = 
-           $state['values']['property_behavior'];
-       }
-     }else{
-       drupal_set_message("Can not modify the type of {$property_name}", "error");
-     }
-   }
-   
-   $form['new_properties'] = array('#type' => 'value', '#value' => $new_properties);
-  
-  //This is the select table where all the new properties are shown.
+  //This is the table where all properties are shown.
   $header = array(
     'machine_name' => t('Machine Name'),
     'name' => t('Name'),
     'type' => t('Type'),
-    'behavior' => t('Behaviour')
+    'behavior' => t('Behaviour'),
+    'operations' => t('Operations')
   );
   
   $options = array();
-  
-  //@todo can we do this in a better way.. the only way I can think of is, load all defaults,
-  //and then load all the properties in the entity type, while modifying the before added default
-  //properties given the entity type settings
-  
-  $property_arrays = array('new_properties');
-  
-  foreach($property_arrays as $array_name){
-    foreach(${$array_name} as $property_name => $property_info){
-      $options[$property_name] = 
-      array(
-        'machine_name' => $property_name,
-        'name' => $property_info['label'],
-        'type' => $property_info['type'],
-      );
-      
-      if(array_key_exists('behavior', $property_info)){
-        $options[$property_name]['behavior'] = $property_info['behavior'];
-      }else{
-        $options[$property_name]['behavior'] = "";
+  //lets process default properties first
+  foreach($default_properties as $machine_name => $info){
+    $default_property_row = array();
+    $info['machine_name'] = $machine_name;
+    foreach($header as $key => $label){
+      if($key == 'name'){
+        $key = "label";
+      }  
+      if($key != 'operations'){
+        $default_property_row[] = array_key_exists($key, $info)?$info[$key]:"";
       }
-      
     }
+    
+    if(array_key_exists($machine_name, $entity_type_properties)){
+      $default_property_row[] = l('Deactivate', $current_path."/".$machine_name."/deactivate");
+      unset($entity_type_properties[$machine_name]);
+    }else{
+       $default_property_row[] = l('Activate', $current_path."/".$machine_name."/activate") ;
+    }
+    
+    $options[] = $default_property_row;
   }
   
-  $form["new_properties_table_label"] = array(
-    '#markup' => '<h3>Properties</h3>'
-  );
-  
-  $defaults = array();
-  foreach($entity_type_properties as $property => $info){
-    $defaults[$property] = 1;
+  //ok, now lets do our custom properties
+  //lets process default properties first
+  foreach($entity_type_properties as $machine_name => $info){
+    $default_property_row = array();
+    $info['machine_name'] = $machine_name;
+    foreach($header as $key => $label){
+      if($key == 'name'){
+        $key = "label";
+      }  
+      if($key != 'operations'){
+        $default_property_row[] = array_key_exists($key, $info)?$info[$key]:"";
+      }
+    }
+    
+    $operations = "";
+    foreach(array('edit' => "Edit", 'delete' => "Delete", "behavior" => "Behavior") as $op => $label){
+      $operations .= l($label, $current_path."/".$machine_name."/{$op}")." ";
+    }
+    
+    $default_property_row[] = $operations;
+    
+    $options[] = $default_property_row;
   }
   
-  $form['new_properties_table'] = 
+  $build['properties_table'] = 
   array(
-    '#type' => 'tableselect',
+    '#theme' => 'table',
     '#header' => $header,
-    '#options' => $options,
+    '#rows' => $options,
     '#empty' => t('No other properties for this entity type.'),
-    '#default_value' => $defaults
   );
   
-  return $form;
+  return $build;
 }
 
 function eck__add_property__form($form, &$state, $entity_type_name){
