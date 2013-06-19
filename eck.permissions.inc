@@ -19,7 +19,7 @@ function eck_permission_label($string){
 function eck_permission() {
   $perms = array();
   
-  $actions = array('list', 'create', "update", "delete");
+  $actions = array('list', 'create', "update", "delete", "view");
   $objects = array("entity_type", "bundle", "entity");
   
   foreach($objects as $object){
