@@ -1,5 +1,58 @@
 <?php
 
+function eck__is_default_property($property){
+  $default_properties = eck_get_default_properties();
+  $is_default = FALSE;
+  
+  if(array_key_exists($property, $default_properties)){
+    $is_default = TRUE;
+  }
+  
+  return $is_default;
+}
+
+function eck__activate_default_property($entity_type_name, $property){
+  $entity_type = EntityType::loadByName($entity_type_name);
+  if(eck__is_default_property($property)){
+    //we have 2 cases, if it is active, do nothing
+    $properties = $entity_type->properties;
+    if(array_key_exists($property, $properties)){
+      drupal_set_message("{$property} is already active");
+    }
+    //else activate the property
+    else{
+      $info = eck_get_default_property($property);
+      $entity_type->addProperty($property, $info['label'], $info['type'], $info['behavior']);
+      $entity_type->save();
+      EntityType::loadAll(NULL, TRUE);
+    }
+  }else{
+    drupal_set_message("{$property} is not a default property", "error");
+  }
+  drupal_goto(eck__entity_type__path()."/{$entity_type->name}/property");
+}
+
+function eck__deactivate_default_property($entity_type_name, $property){
+  $entity_type = EntityType::loadByName($entity_type_name);
+  if(eck__is_default_property($property)){
+    //we have 2 cases, if it is active, do nothing
+    $properties = $entity_type->properties;
+    if(!array_key_exists($property, $properties)){
+      drupal_set_message("{$property} is already inactive");
+    }
+    //else activate the property
+    else{
+      $entity_type->removeProperty($property);
+      $entity_type->save();
+      EntityType::loadAll(NULL, TRUE);
+    }
+  }else{
+    drupal_set_message("{$property} is not a default property", "error");
+  }
+  drupal_goto(eck__entity_type__path()."/{$entity_type->name}/property");
+}
+
+
 function  eck__default_properties__form($form, &$state, $entity_type){
    //DEFAULT PROPERTIES
   //Now we want to display the default properties

@@ -541,9 +541,9 @@ class ECKEntity extends Entity{
 
   //this flag only gets set so we can make our properties public again
   //before we save the object;
-  private $ignore_validation;
+  protected $ignore_validation;
 
-  private $property_values = array();
+  protected $property_values = array();
 
   public function __construct(array $values = array(), $entityType = NULL){
 

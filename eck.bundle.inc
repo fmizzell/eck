@@ -57,7 +57,67 @@ function eck__bundle__menu($entity_type) {
     'type' => MENU_LOCAL_TASK,
     'weight' => 4,
   );
+  
+  //Add a property
+  $menu["{$path}/{$entity_type->name}/property/add"] = array(
+    'title' => "Add property",
+    'description' => "Add a property of the {$entity_type->label} entity type",
+    'page callback' => "drupal_get_form",//"eck__entity_type__delete",
+    'page arguments' => array("eck__add_property__form", $entity_type->name),
+    'access callback' => 'eck_access',
+    'access arguments' => array("update", "property"),
+    'file' => 'eck.properties.inc',
+    'type' => MENU_LOCAL_ACTION,
+    'weight' => 4,
+  );
     
+  //Activate a default property
+  $menu["{$path}/{$entity_type->name}/property/%/activate"] = array(
+    'title' => "Activate default property",
+    'page callback' => "eck__activate_default_property",
+    'page arguments' => array($entity_type->name, 5),
+    'access callback' => 'eck_access',
+    'access arguments' => array("update", "property"),
+    'file' => 'eck.default_properties.inc',
+  );
+    
+  //Dectivate a default property
+  $menu["{$path}/{$entity_type->name}/property/%/deactivate"] = array(
+    'title' => "Activate default property",
+    'page callback' => "eck__deactivate_default_property",
+    'page arguments' => array($entity_type->name, 5),
+    'access callback' => 'eck_access',
+    'access arguments' => array("update", "property"),
+    'file' => 'eck.default_properties.inc',
+  );
+  
+  //Deactivate a default property
+  $menu["{$path}/{$entity_type->name}/property/add"] = array(
+    'title' => "Add property",
+    'description' => "Add a property of the {$entity_type->label} entity type",
+    'page callback' => "drupal_get_form",//"eck__entity_type__delete",
+    'page arguments' => array("eck__add_property__form", $entity_type->name),
+    'access callback' => 'eck_access',
+    'access arguments' => array("update", "property"),
+    'file' => 'eck.properties.inc',
+    'type' => MENU_LOCAL_ACTION,
+    'weight' => 4,
+  );
+  
+  //Deactivate a default property
+  $menu["{$path}/{$entity_type->name}/property/add"] = array(
+    'title' => "Add property",
+    'description' => "Add a property of the {$entity_type->label} entity type",
+    'page callback' => "drupal_get_form",//"eck__entity_type__delete",
+    'page arguments' => array("eck__add_property__form", $entity_type->name),
+    'access callback' => 'eck_access',
+    'access arguments' => array("update", "property"),
+    'file' => 'eck.properties.inc',
+    'type' => MENU_LOCAL_ACTION,
+    'weight' => 4,
+  );
+    
+  //Modify (add/change/delete) the behavior on a property
   $menu["{$path}/{$entity_type->name}/property/add"] = array(
     'title' => "Add property",
     'description' => "Add a property of the {$entity_type->label} entity type",
