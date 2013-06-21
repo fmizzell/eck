@@ -80,7 +80,7 @@ function eck__properties($entity_type_name){
   return $build;
 }
 
-function eck__add_property__form($form, &$state, $entity_type_name){
+function eck__property_add__form($form, &$state, $entity_type_name){
   
   $form['entity_type_name'] = array(
     '#type' => 'value',
@@ -184,7 +184,97 @@ function eck__add_property__form($form, &$state, $entity_type_name){
   return $form;
 }
 
-function eck__add_property__form_submit($form, &$state){
+function eck__property_edit__form($form, &$state, $entity_type_name, $property){
+  $entity_type = EntityType::loadByName($entity_type_name);
+  $properties = $entity_type->properties;
+  if(array_key_exists($property, $properties)){
+    $form['entity_type'] = array(
+      '#type' => 'value',
+      '#value' => $entity_type
+    );
+    
+    $form['property'] = array(
+      '#type' => 'value',
+      '#value' => $property
+    );
+    
+    $form['label'] = array(
+      '#type' => 'textfield',
+      '#title' => 'label',
+      '#default_value' => $properties[$property]['label']
+    );
+    
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#weight' => 10000,
+      '#value' => t('Save'),
+    );
+  }else{
+    drupal_set_message('This property does not exists');
+    drupal_goto(eck__entity_type__path()."/{$entity_type->name}/property");
+  }
+  
+  return $form;
+}
+
+function eck__property_edit__form_submit($form, &$state){
+  $values = $state['values'];
+  $entity_type = $values['entity_type'];
+  $property = $values['property'];
+  $label = $values['label'];
+  
+  $properties = $entity_type->properties;
+  $properties[$property]['label'] = $label;
+  
+  $entity_type->properties = $properties;
+  
+  $entity_type->save();
+  
+  EntityType::loadAll(NULL, TRUE);
+  $state['redirect'] = eck__entity_type__path()."/{$entity_type->name}/property";
+}
+
+function eck__property_delete__form($form, &$state, $entity_type_name, $property){
+  $entity_type = EntityType::loadByName($entity_type_name);
+  $properties = $entity_type->properties;
+  if(array_key_exists($property, $properties)){
+    $form['entity_type'] = array(
+      '#type' => 'value',
+      '#value' => $entity_type
+    );
+    
+    $form['property'] = array(
+      '#type' => 'value',
+      '#value' => $property
+    );
+    
+    $form['confirmation'] = confirm_form($form, 
+     "Are you sure you want to delete {$property}", 
+     eck__entity_type__path()."/{$entity_type->name}/property");
+    
+    
+  }else{
+    drupal_set_message('This property does not exists');
+    drupal_goto(eck__entity_type__path()."/{$entity_type->name}/property");
+  }
+  
+  return $form;
+}
+
+function eck__property_delete__form_submit($form, &$state){
+  $values = $state['values'];
+  $entity_type = $values['entity_type'];
+  $property = $values['property'];
+  
+  $entity_type->removeProperty($property);
+  
+  $entity_type->save();
+  
+  EntityType::loadAll(NULL, TRUE);
+  $state['redirect'] = eck__entity_type__path()."/{$entity_type->name}/property";
+}
+
+function eck__property_add__form_submit($form, &$state){
   $values = $state['values'];
   
   if(strcmp($values['op'], t('Select Property Type')) == 0){
@@ -215,7 +305,7 @@ function eck__add_property__form_submit($form, &$state){
             $values['property_type'], $values['property_behavior'], $new_schema);
 
     $entity_type->save();
-    eck_get_property_types(NULL, TRUE);
+    EntityType::loadAll(NULL, TRUE);
   }
 }
 
