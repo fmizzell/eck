@@ -63,7 +63,7 @@ function eck__bundle__menu($entity_type) {
     'title' => "Add property",
     'description' => "Add a property of the {$entity_type->label} entity type",
     'page callback' => "drupal_get_form",//"eck__entity_type__delete",
-    'page arguments' => array("eck__add_property__form", $entity_type->name),
+    'page arguments' => array("eck__property_add__form", $entity_type->name),
     'access callback' => 'eck_access',
     'access arguments' => array("update", "property"),
     'file' => 'eck.properties.inc',
@@ -91,43 +91,38 @@ function eck__bundle__menu($entity_type) {
     'file' => 'eck.default_properties.inc',
   );
   
-  //Deactivate a default property
-  $menu["{$path}/{$entity_type->name}/property/add"] = array(
-    'title' => "Add property",
-    'description' => "Add a property of the {$entity_type->label} entity type",
-    'page callback' => "drupal_get_form",//"eck__entity_type__delete",
-    'page arguments' => array("eck__add_property__form", $entity_type->name),
+  //Edit a property
+  $menu["{$path}/{$entity_type->name}/property/%/edit"] = array(
+    'title' => "Edit property",
+    'description' => "Edit a property of the {$entity_type->label} entity type",
+    'page callback' => "drupal_get_form",
+    'page arguments' => array("eck__property_edit__form", $entity_type->name, 5),
     'access callback' => 'eck_access',
     'access arguments' => array("update", "property"),
     'file' => 'eck.properties.inc',
-    'type' => MENU_LOCAL_ACTION,
-    'weight' => 4,
   );
   
-  //Deactivate a default property
-  $menu["{$path}/{$entity_type->name}/property/add"] = array(
-    'title' => "Add property",
-    'description' => "Add a property of the {$entity_type->label} entity type",
-    'page callback' => "drupal_get_form",//"eck__entity_type__delete",
-    'page arguments' => array("eck__add_property__form", $entity_type->name),
+  //Delete a property
+  $menu["{$path}/{$entity_type->name}/property/%/delete"] = array(
+    'title' => "Delete property",
+    'description' => "Delete a property of the {$entity_type->label} entity type",
+    'page callback' => "drupal_get_form",
+    'page arguments' => array("eck__property_delete__form", $entity_type->name, 5),
     'access callback' => 'eck_access',
     'access arguments' => array("update", "property"),
     'file' => 'eck.properties.inc',
-    'type' => MENU_LOCAL_ACTION,
-    'weight' => 4,
   );
     
   //Modify (add/change/delete) the behavior on a property
-  $menu["{$path}/{$entity_type->name}/property/add"] = array(
-    'title' => "Add property",
-    'description' => "Add a property of the {$entity_type->label} entity type",
-    'page callback' => "drupal_get_form",//"eck__entity_type__delete",
-    'page arguments' => array("eck__add_property__form", $entity_type->name),
+ //Edit a property
+  $menu["{$path}/{$entity_type->name}/property/%/behavior"] = array(
+    'title' => "Edit property",
+    'description' => "Modify the behavior of a property of the {$entity_type->label} entity type",
+    'page callback' => "eck__property_behavior",
+    'page arguments' => array($entity_type->name, 5),
     'access callback' => 'eck_access',
     'access arguments' => array("update", "property"),
     'file' => 'eck.properties.inc',
-    'type' => MENU_LOCAL_ACTION,
-    'weight' => 4,
   );
   
   // LIST bundles of an entity type.
