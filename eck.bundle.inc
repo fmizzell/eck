@@ -118,8 +118,8 @@ function eck__bundle__menu($entity_type) {
   $menu["{$path}/{$entity_type->name}/property/%/behavior"] = array(
     'title' => "Edit property",
     'description' => "Modify the behavior of a property of the {$entity_type->label} entity type",
-    'page callback' => "eck__property_behavior",
-    'page arguments' => array($entity_type->name, 5),
+    'page callback' => "drupal_get_form",
+    'page arguments' => array("eck__property_behavior__form", $entity_type->name, 5),
     'access callback' => 'eck_access',
     'access arguments' => array("update", "property"),
     'file' => 'eck.properties.inc',
