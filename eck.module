@@ -21,10 +21,6 @@ function eckentity_load($id, $type) {
   return entity_load_single($type, $id);
 }
 
-function hello_load($id){
-  return eckentity_load($id, "hello");
-}
-
 /**
  * Implements hook_views_api().
  */
