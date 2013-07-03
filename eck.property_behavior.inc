@@ -122,3 +122,122 @@ function eck_property_behavior_validation($value, $info){
   }
 }
 
+function eck__property_behavior__form($form, &$state, $entity_type_name, $property){
+  $entity_type = EntityType::loadByName($entity_type_name);
+  $properties = $entity_type->properties;
+  if(array_key_exists($property, $properties)){
+    $form['entity_type'] = array(
+      '#type' => 'value',
+      '#value' => $entity_type
+    );
+
+    $form['property'] = array(
+      '#type' => 'value',
+      '#value' => $property
+    );
+
+    ctools_include("plugins");
+    $plugins = ctools_get_plugins("eck", "property_behavior");
+    $behaviors = array('_ NONE _');
+    $behaviors = array_merge($behaviors, array_keys($plugins));
+
+    $form['behaviors'] = array(
+      '#type' => 'value',
+      '#value' => $behaviors
+    );
+
+    $key = array_search($properties[$property]['behavior'], $behaviors);
+
+    //we can have 3 possible states,
+    //1) there is no behavior for the property and non has been selected for
+    //configuration
+    //2) there is no behavior for the property, but one has been chosen to be
+    //configured
+    //3) This property has a behavior already
+
+    //has a behavior been selected?
+    $behavior = FALSE;
+    if(array_key_exists('values', $state)){
+      $values = $state['values'];
+      $behavior = $values['behavior'];
+    }
+
+    if(!$key && !$behavior){
+      $form['behavior'] = array(
+        '#title' => 'behavior',
+        '#type' => 'select',
+        '#options' => $behaviors,
+        '#default_value' => $key
+      );
+
+      $form['configure'] = array(
+        '#type' => 'submit',
+        '#weight' => 10000,
+        '#value' => t('Configure'),
+      );
+    }
+    else if(!$key && $behavior){
+      $form['behavior'] = array(
+        '#title' => 'behavior',
+        '#type' => 'select',
+        '#options' => $behaviors,
+        '#default_value' => $key
+      );
+
+      //need to get the behaviors configuration form
+
+      $form['submit'] = array(
+        '#type' => 'submit',
+        '#weight' => 10000,
+        '#value' => t('Save'),
+      );
+    }
+    else{
+      $form['behavior'] = array(
+        '#markup' => "<h3>{$behaviors[$key]}</h3>"
+      );
+
+      $form['remove'] = array(
+        '#type' => 'submit',
+        '#weight' => 10000,
+        '#value' => t('Remove'),
+      );
+    }
+
+  }else{
+    drupal_set_message('This property does not exists');
+    drupal_goto(eck__entity_type__path()."/{$entity_type->name}/property");
+  }
+
+  return $form;
+}
+
+function eck__property_behavior__form_submit($form, &$state){
+
+  if($state['values']['op'] == "Configure"){
+    $state['rebuild'] = TRUE;
+  }else{
+    $values = $state['values'];
+    $entity_type = $values['entity_type'];
+    $property = $values['property'];
+    $behaviors = $values['behaviors'];
+    $behavior = array_key_exists('behavior', $values)?$values['behavior']:FALSE;
+
+    $properties = $entity_type->properties;
+
+    if($behavior != 0){
+      $properties[$property]['behavior'] = $behaviors[$behavior];
+      $entity_type->properties = $properties;
+    }else{
+      $properties[$property]['behavior'] = NULL;
+      $entity_type->properties = $properties;
+    }
+
+    $entity_type->save();
+
+    EntityType::loadAll(NULL, TRUE);
+
+    $state['redirect'] = eck__entity_type__path()."/{$entity_type->name}/property";
+  }
+}
+
