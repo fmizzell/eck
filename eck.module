@@ -1069,10 +1069,7 @@ function eck_eck_property_types(){
     'label' => t("Date/Time"),
     'class' => "DatetimePropertyType"    
   );
-  $property_types['entity_reference'] = array(
-    'label' => t("Entity Reference"),
-    'class' => "EntityReferencePropertyType"
-  );
+  
   $property_types['language'] = array(
     'label' => t("Language"),
     'class' => "LanguagePropertyType"    
