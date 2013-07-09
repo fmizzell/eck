@@ -344,25 +344,6 @@ class UUIDPropertyType extends FixedSizeTextPropertyType{
   }
 }
 
-class EntityReferencePropertyType extends IntegerPropertyType{
-  
-  public static function schema(){
-    $schema = parent::schema();
-    $schema['description'] = "Entity Reference";
-    
-    return $schema;
-  }
-  
-  public static function configurationForm(){
-    $entity_types = EntityType::loadAll();
-    $options = array();
-    foreach($entity_types as $et){
-      $options[$et->name] = $et->label; 
-    }
-    return array('#type' => 'radios', '#options' => $options);
-  }
-}
-
 class PositiveIntegerPropertyType extends IntegerPropertyType{
   
   public static function schema() {

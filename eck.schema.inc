@@ -1,6 +1,16 @@
 <?php
 
 /**
+ * NOTES
+ * - If the default value is empty, we need to remove it from the array for it to work
+ * - Size does not affect float/decimal, and if changes from normal it gives an error on text,
+ *   and fixed text
+ * - Long Text can not have a default value
+ * - Serial can not have a default value
+ * - Date/Time shouldn't have a size
+ */ 
+
+/**
  * A helper class to create schema forms
  */
 
