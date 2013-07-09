@@ -370,6 +370,9 @@ function eck__entity_type__properties_schema($entity_type){
   foreach($entity_type->properties as $property => $property_info){
     $property_type_class = eck_get_property_type_class($property_info['type']);
     $schema[$property] = $property_type_class::schema();
+    if(array_key_exists('schema', $property_info) && !empty($property_info['schema'])){
+      $schema[$property] = array_merge($schema[$property], $property_info['schema']);
+    }
   }
   
   return $schema;

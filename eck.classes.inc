@@ -178,14 +178,14 @@ class EntityType extends DBObject{
     $this->changes = array();
   }
 
-  public function addProperty($name, $label, $type, $behavior = NULL){
+  public function addProperty($name, $label, $type, $behavior = NULL, $schema = NULL){
     if(!$this->is_new){
       $this->recordFieldChange('add', $name);
     }
 
     $p = $this->properties;
     //@todo check that type is an actual type
-    $p[$name] = array('label' => $label, 'type' => $type, 'behavior' => $behavior);
+    $p[$name] = array('label' => $label, 'type' => $type, 'behavior' => $behavior, 'schema' => $schema);
 
     $this->properties = $p;
   }
@@ -270,6 +270,9 @@ class EntityType extends DBObject{
           //now we check to see whether it is a default or a custom property
           //it is not custom so lets get the schema and add the field
           $schema = eck_get_property_type_schema($property['type']);
+          if(array_key_exists('schema', $property) && !empty($property['schema'])){
+            $schema = array_merge($schema, $property['schema']);
+          }
           db_add_field("eck_{$this->name}", $name, $schema);
         }
       }
@@ -538,9 +541,9 @@ class ECKEntity extends Entity{
 
   //this flag only gets set so we can make our properties public again
   //before we save the object;
-  private $ignore_validation;
+  protected $ignore_validation;
 
-  private $property_values = array();
+  protected $property_values = array();
 
   public function __construct(array $values = array(), $entityType = NULL){
 

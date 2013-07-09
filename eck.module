@@ -9,6 +9,7 @@ module_load_include('inc', 'eck', 'eck.property_type');
 module_load_include('inc', 'eck', 'eck.properties');
 module_load_include('inc', 'eck', 'eck.property_behavior');
 module_load_include('inc', 'eck', 'eck.permissions');
+module_load_include('inc', 'eck', 'eck.schema');
 
 //Integration with references dialog
 module_load_include('inc', 'eck', 'includes/eck.references_dialog');
@@ -18,10 +19,6 @@ module_load_include('inc', 'eck', 'includes/eck.references_dialog');
  */
 function eckentity_load($id, $type) {
   return entity_load_single($type, $id);
-}
-
-function hello_load($id){
-  return eckentity_load($id, "hello");
 }
 
 /**
@@ -928,7 +925,6 @@ function eck_form_field_ui_field_overview_form_validate($form, &$form_state) {
   }
 }
 
-
 /**
  * Form submission handler for ECK's additions to field_ui_field_overview_form().
  *
@@ -1049,14 +1045,31 @@ function eck_eck_property_types(){
     'label' => t("Integer"),
     'class' => "IntegerPropertyType"    
   );
-  $property_types['positive_integer'] = array(
-    'label' => t("Positive Integer"),
-    'class' => "PositiveIntegerPropertyType"    
-  );
   $property_types['text'] = array(
     'label' => t("Text"),
     'class' => "TextPropertyType"    
   );
+  $property_types['fixed_size_text'] = array(
+    'label' => t("Fixed Size Text"),
+    'class' => "FixedSizeTextPropertyType"    
+  );
+  $property_types['long_text'] = array(
+    'label' => t("Long Text"),
+    'class' => "LongTextPropertyType"    
+  );
+  $property_types['serial'] = array(
+    'label' => t("Serial"),
+    'class' => "SerialPropertyType"    
+  );
+  $property_types['blob'] = array(
+    'label' => t("Blob"),
+    'class' => "BlobPropertyType"    
+  );
+  $property_types['datetime'] = array(
+    'label' => t("Date/Time"),
+    'class' => "DatetimePropertyType"    
+  );
+  
   $property_types['language'] = array(
     'label' => t("Language"),
     'class' => "LanguagePropertyType"    
@@ -1064,6 +1077,10 @@ function eck_eck_property_types(){
   $property_types['uuid'] = array(
     'label' => t("UUID"),
     'class' => "UUIDPropertyType"    
+  );
+  $property_types['positive_integer'] = array(
+    'label' => t("Positive Integer"),
+    'class' => "PositiveIntegerPropertyType"    
   );
   
   return $property_types;

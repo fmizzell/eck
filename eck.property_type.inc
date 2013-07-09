@@ -106,3 +106,265 @@ function eck_get_property_type_schema($property_type_name){
     return $class::schema();
   }
 }
+
+// Generic types supported by schema api
+// 'varchar', 'char', 'int', 'serial', 'float', 'numeric', 'text', 'blob' or 'datetime'
+interface PropertyType{
+  public static function schema();
+  public static function validate($value);
+}
+
+/**
+ * PRIMITIVE PROPERTY TYPES
+ */
+
+class TextPropertyType implements PropertyType{
+  public static function schema(){
+    $schema = array(
+      'description' => 'Text',
+      'type' => 'varchar',
+      'size' => 'normal',
+      'not null' => TRUE,
+      'default' => '',
+      //relevant only to: varchar, char, and text
+      'length' => 255,
+    );
+    
+    return $schema;
+  }
+
+  public static function validate($value) {
+    //Pretty much anything can be store in a text field
+    //even an object?
+    //@TODO check what happens when trying to save an obejct to a varchar field
+    //in the db
+    
+    return TRUE;
+  }
+}
+
+class FixedSizeTextPropertyType implements PropertyType{
+  public static function schema(){
+    $schema = array(
+      'description' => 'All of the  values of this property are text of the same size',
+      'type' => 'char',
+      'size' => 'normal',
+      'not null' => TRUE,
+      'default' => '',
+      //relevant only to: varchar, char, and text
+      'length' => 255,
+    );
+    
+    return $schema;
+  }
+
+  public static function validate($value) {
+    //Pretty much anything can be store in a text field
+    //even an object?
+    //@TODO check what happens when trying to save an obejct to a varchar field
+    //in the db
+    
+    return TRUE;
+  }
+}
+
+class LongTextPropertyType implements PropertyType{
+  public static function schema(){
+    $schema = array(
+      'description' => 'Long Text (longer than 8000 characters)',
+      'type' => 'text',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+      //relevant only to: varchar, char, and text
+      'length' => 255,
+    );
+    
+    return $schema;
+  }
+
+  public static function validate($value) {
+    //Pretty much anything can be store in a text field
+    //even an object?
+    //@TODO check what happens when trying to save an obejct to a varchar field
+    //in the db
+    
+    return TRUE;
+  }
+}
+
+class IntegerPropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'description' => "Integer",
+      'type' => 'int',
+      'size' => 'normal',
+      'not null' => TRUE,
+      'default' => 0,
+      //relevant only to int and float
+      'unsigned' => FALSE
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    $number = filter_var($value, FILTER_VALIDATE_INT);
+    return ($number !== FALSE);
+  }
+}
+
+class DecimalPropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'description' => 'Decimal/Float/Double',
+      'type' => 'float',
+      'size' => 'normal',
+      'not null' => TRUE,
+      'default' => 0,
+      //relevant only to int and float
+      'unsigned' => FALSE
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    $number = filter_var($value, FILTER_VALIDATE_FLOAT);
+    return ($number !== FALSE);
+  }
+}
+
+class SerialPropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'description' => 'Decimal/Float/Double',
+      'type' => 'serial',
+      'size' => 'normal',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    $number = filter_var($value, FILTER_VALIDATE_FLOAT);
+    return ($number !== FALSE);
+  }
+}
+
+class BlobPropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'description' => 'Decimal/Float/Double',
+      'type' => 'blob',
+      'size' => 'normal',
+      'not null' => TRUE,
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    $number = filter_var($value, FILTER_VALIDATE_FLOAT);
+    return ($number !== FALSE);
+  }
+}
+
+class DateTimePropertyType implements PropertyType{
+  
+  public static function schema() {
+    $schema = array(
+      'description' => 'Date/Time',
+      'type' => 'datetime',
+      'size' => 'normal',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    $number = filter_var($value, FILTER_VALIDATE_FLOAT);
+    return ($number !== FALSE);
+  }
+}
+
+/**
+ * SPECIAL PROPERTY TYPES
+ */
+
+class LanguagePropertyType extends TextPropertyType{
+  
+  public static function schema(){
+    $schema = parent::schema();
+    
+    $schema['default'] = LANGUAGE_NONE;
+    $schema['description'] = "Language";
+    $schema['length'] = 12;
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    //make sure it is text
+    if(parent::validate($value)){
+      //@TODO check with the language people, what kind of validation can we
+      //do here
+      return TRUE;
+    }
+    
+    return FALSE;
+  }
+}
+
+class UUIDPropertyType extends FixedSizeTextPropertyType{
+  
+  public static function schemaConditions(){
+    return array('locked' => 'length');
+  }
+  
+  public static function schema() {
+    $schema = parent::schema();
+    $schema ['description'] = 'Universally Unique Identifier';
+    $schema['length'] = 16;
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    //@TODO UUID module has a function ... steal :)
+    return TRUE;
+  }
+}
+
+class PositiveIntegerPropertyType extends IntegerPropertyType{
+  
+  public static function schema() {
+    $schema = parent::schema();
+    
+    $schema['description'] = "Positive Integer";
+    $schema['unsigned'] = TRUE;
+    
+    return $schema;
+  }
+  
+  public static function validate($value){
+    if(parent::validate($value)){
+      
+      //lets cast it in case it is string
+      $int = intval($value);
+      if($int >= 0){
+        return TRUE;
+      }
+    }
+    
+    return FALSE;
+  }
+}
