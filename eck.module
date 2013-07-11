@@ -1057,10 +1057,6 @@ function eck_eck_property_types(){
     'label' => t("Long Text"),
     'class' => "LongTextPropertyType"    
   );
-  $property_types['serial'] = array(
-    'label' => t("Serial"),
-    'class' => "SerialPropertyType"    
-  );
   $property_types['blob'] = array(
     'label' => t("Blob"),
     'class' => "BlobPropertyType"    

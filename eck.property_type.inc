@@ -123,7 +123,6 @@ class TextPropertyType implements PropertyType{
     $schema = array(
       'description' => 'Text',
       'type' => 'varchar',
-      'size' => 'normal',
       'not null' => TRUE,
       'default' => '',
       //relevant only to: varchar, char, and text
@@ -148,7 +147,6 @@ class FixedSizeTextPropertyType implements PropertyType{
     $schema = array(
       'description' => 'All of the  values of this property are text of the same size',
       'type' => 'char',
-      'size' => 'normal',
       'not null' => TRUE,
       'default' => '',
       //relevant only to: varchar, char, and text
@@ -175,7 +173,6 @@ class LongTextPropertyType implements PropertyType{
       'type' => 'text',
       'length' => 255,
       'not null' => TRUE,
-      'default' => '',
       //relevant only to: varchar, char, and text
       'length' => 255,
     );
@@ -221,31 +218,10 @@ class DecimalPropertyType implements PropertyType{
     $schema = array(
       'description' => 'Decimal/Float/Double',
       'type' => 'float',
-      'size' => 'normal',
       'not null' => TRUE,
       'default' => 0,
       //relevant only to int and float
       'unsigned' => FALSE
-    );
-    
-    return $schema;
-  }
-  
-  public static function validate($value){
-    $number = filter_var($value, FILTER_VALIDATE_FLOAT);
-    return ($number !== FALSE);
-  }
-}
-
-class SerialPropertyType implements PropertyType{
-  
-  public static function schema() {
-    $schema = array(
-      'description' => 'Decimal/Float/Double',
-      'type' => 'serial',
-      'size' => 'normal',
-      'not null' => TRUE,
-      'default' => 0,
     );
     
     return $schema;
@@ -282,7 +258,6 @@ class DateTimePropertyType implements PropertyType{
     $schema = array(
       'description' => 'Date/Time',
       'type' => 'datetime',
-      'size' => 'normal',
       'not null' => TRUE,
       'default' => 0,
     );
