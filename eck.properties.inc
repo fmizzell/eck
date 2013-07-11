@@ -288,8 +288,17 @@ function eck__property_add__form_submit($form, &$state){
         $new_schema[$new_name] = $value;
       }
     }
-
-    //$diff = array_diff($new_schema, $default_schema);
+    
+    //if the default is empty lets take it off
+    if(array_key_exists('default', $new_schema) && empty($new_schema['default'])){
+      unset($new_schema['default']);
+    }
+    //lets format the not null key to work with schema
+    if(array_key_exists('not_null', $new_schema)){
+      $temp = $new_schema['not_null'];
+      unset($new_schema['not_null']);
+      $new_schema['not null'] = $temp;
+    }
 
     $entity_type_name = $values['entity_type_name'];
     $entity_type = EntityType::loadByName($entity_type_name);
