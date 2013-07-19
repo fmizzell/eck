@@ -543,3 +543,45 @@ function eck_update_7010() {
   db_create_table('cache_eck', $schema);
 }
 
+/**
+ * Install the eck_permissions module
+ **/
+function eck_update_7011() {
+  module_enable(array("eck_permissions"));
+  //and lets clear the cache
+  drupal_flush_all_caches();
+}
+
+/**
+ * Update global permissions from 2.x to 3.x.
+ **/
+function eck_update_7012() {
+  //let update all of our permissions
+  $objects = array('entity types' => 'entity_type', 'bundles' => 'bundle', 
+    'entities' => 'entity');
+  $actions = array('add' => 'create', 'edit' => 'update', 'delete' => 'delete', 
+    'list' => 'list', 'view' => 'view');
+  
+  foreach($objects as $oc => $or){
+    foreach($actions as $ac => $ar){
+      $current = "eck {$ac} {$oc}";
+      $new = "eck {$ar} {$or}";
+      
+      $num_updated = db_update('role_permission') // Table name no longer needs {}
+      ->fields(array(
+        'permission' => $new,
+      ))->condition('module', 'eck', '=')
+        ->condition('permission', $current, '=')->execute();
+    }
+  }
+}
+
+/**
+ * In 3.x we not longer offer the all powerful admin permissions, so
+ * we want to move those into the new eck_permissions module format
+ */
+
+/**
+ * And finally we need to move the entity type and bundle specific permissions
+ * to the new eck_permissions module format
+ */
