@@ -262,7 +262,7 @@ function eck__bundle__add_submit($form, &$form_state) {
   entity_info_cache_clear();
   menu_rebuild();
 
-  drupal_goto("{$path}/{$entity_type->name}");
+  $form_state['redirect'] = "{$path}/{$entity_type->name}";
 }
 
 /**
