@@ -556,7 +556,7 @@ function eck_update_7011() {
  * Update global permissions from 2.x to 3.x.
  **/
 function eck_update_7012() {
-  //let update all of our permissions
+  //lets update all of our permissions
   $objects = array('entity types' => 'entity_type', 'bundles' => 'bundle', 
     'entities' => 'entity');
   $actions = array('add' => 'create', 'edit' => 'update', 'delete' => 'delete', 
