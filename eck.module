@@ -1082,4 +1082,72 @@ function eck_eck_property_types(){
   return $property_types;
 }
 
+function eck_fake_update(){
+  //lets get all eck related permissions
+  $query = db_select('role_permission', 't');
+  $query->fields('t', array('rid', 'permission', 'module'));
+  $query->condition("module", "eck", "=");
+  
+  $permissions = $query->execute();
+  foreach($permissions as $perm_obj){
+    $permission = $perm_obj->permission;
+    echo $permission."\n";
+    //lets parse the permission
+    $pieces = explode(" ", $permission);
+    
+    $final_pieces = array();
+    $throw_away = array_shift($pieces);
+    //the first piece we can ignore, and the second is the action
+    $action_map = array('administer' => "*",'add' => 'create','edit' => 'update'
+        , 'view' => 'view', 'list' => 'list', 'delete' => 'delete');
+    $object_map = array('entity types' => 'entity_type', 'bundles' => "bundle", 
+        'entities' => 'entity');
+    
+    $action = array_shift($pieces);
+    $final_pieces[0] = $action_map[$action];
+    
+    $object_id = "";
+    while(count($pieces) > 0){
+      $piece = array_shift($pieces);
+      
+      //this is a sign that we are talking about an entity type
+      if($piece == 'entity'){
+        $p = array_shift($pieces);
+        $piece = "$piece {$p}";
+      }
+      
+      if(in_array($piece, array('entities', 'bundles', 'entity types'))){
+        if(!empty($object_id)){
+          $final_pieces[1] = "$object_map[$piece]:{$object_id}|*";
+        }else{
+          $final_pieces[1] = "$object_map[$piece]";
+        }
+      }else{
+        if(empty($object_id)){
+          $object_id = $piece;
+        }else{
+          $object_id .= "|{$piece}";
+        }
+      }
+    }
+    
+   $new_permission = implode(" ", $final_pieces);
+   echo $new_permission."\n";
+    
+      
+      /*//lets set it up in eck_permissions module
+      $perm = new ECKPermission();
+      $perm->type = 'role';
+      $perm->oid = $perm_obj->rid;
+      $perm->permission = "* {$object}";
+      $perm->save();
+      
+      //and then delete it from drupal permissions table
+      $num_deleted = db_delete('role_permission')
+      ->condition('rid', $perm_obj->rid)
+      ->condition('permission', $perm_obj->permission)
+      ->execute();*/
+  }
+}
+
 
