@@ -30,6 +30,8 @@ function eck_property_types() {
     'language' => t('Language'),
   );
 
+  $module_default_types = module_invoke_all('eck_property_types');
+  $default_types = array_merge($default_types, $module_default_types);
   drupal_alter('eck_property_types', $default_types);
 
   // @TODO: As modules start to implement ECK hooks, this should be removed.
@@ -107,8 +109,9 @@ function eck_property_type_schema($type) {
       $schema = NULL;
       break;
   }
-  
-  drupal_alter('eck_property_type_schema', $schema);
+
+  //Don't really like this, but 3.x is coming so this will work for right now
+  drupal_alter('eck_property_type_schema', $schema, $type);
   
   return $schema;
 }
