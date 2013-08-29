@@ -862,7 +862,7 @@ function eck__entity_menu_access($action, $entity_type_name, $bundle_name, $enti
   // provided. (The latter is to allow eck__entity_access() to work similarly
   // to node_access() in the case of the "add" operation.)
   if (isset($entity_id)) {
-    if (is_object($entity_id) and $entity_id->type == $entity_type_name) {
+    if (is_object($entity_id) and $entity_id->entityType() == $entity_type_name) {
       // You already have the entity
       $entity_or_bundle = $entity_id;
     }
