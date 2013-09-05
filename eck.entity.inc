@@ -280,7 +280,7 @@ function eck__entity__build($entity_type, $bundle, $id) {
       $entity = NULL;
     }
   }
-  elseif (is_object($id) and isset($id->type) and $entity_type->name == $id->type) {
+  elseif (is_object($id) && isset($id->type) and $bundle->name == $id->type) {
     $entity = $id;
   }
   else {
@@ -318,7 +318,7 @@ function eck__entity__edit($entity_type_name, $bundle_name, $id) {
     $entities = entity_load($entity_type_name, array($id));
     $entity = $entities[$id];
   }
-  elseif (is_object($id) and isset($id->type) and $id->type == $entity_type_name) {
+  elseif (is_object($id) && isset($id->type) && $id->type == $bundle_name) {
     $entity = $id;
   }
 
@@ -539,7 +539,7 @@ function eck__entity__form_submit($form, &$state) {
  *  (mixed) ID or Entity Object being viewed
  */
 function eck__entity__view($entity_type_name, $bundle_name, $id) {
-  if (is_object($id) and $id->type == $entity_type_name) {
+  if (is_object($id) and isset($id->type) and $id->type == $bundle_name) {
     $entity = $id;
   }
   else {
