@@ -2,15 +2,18 @@ name = Entity Construction Kit
 description = ECK (Entity Construction Kit) Allows users to create and administer entity types, bundles, and entities from an easy to use UI
 package = ECK
 core = 7.x
-configure = admin/structure/entity-type
+configure = admin/structure/entity-types
 
 dependencies[] = entity
 dependencies[] = ctools
 
 ; Views integration files
-files[] = views/handlers/eck_views_handler_field_link.inc
-files[] = views/handlers/eck_views_handler_field_link_edit.inc
-files[] = views/handlers/eck_views_handler_field_link_delete.inc
+files[] = includes/views/handlers/eck_views_handler_field_link.inc
+files[] = includes/views/handlers/eck_views_handler_field_link_edit.inc
+files[] = includes/views/handlers/eck_views_handler_field_link_delete.inc
 
 ; Inline entity form integration
 files[] = includes/eck.inline_entity_form.inc
+
+; References dialog integration
+files[] = includes/eck.references_dialog.inc

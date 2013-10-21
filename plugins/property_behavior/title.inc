@@ -26,11 +26,8 @@
 
 $plugin = array(
   'label' => "Title",
-  //'entity_save' => 'eck_title_property_entity_save',
   'entity_view' => 'eck_title_property_entity_view',
-  'entity_info' => 'eck_title_property_entity_info',
-  'default_widget' => 'eck_title_property_widget',
-  'default_formatter' => 'eck_title_property_formatter'
+  'entity_info' => 'eck_title_property_entity_info'
 );
 
 /**

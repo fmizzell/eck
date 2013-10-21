@@ -1,0 +1,12 @@
+{
+    "name": "drupal/eck",
+    "require": {
+        "symfony/dependency-injection": "2.3.*@stable"
+    },
+    "authors": [
+        {
+            "name": "fmizzell",
+            "email": "fmizzell@1312210.no-reply.drupal.org"
+        }
+    ]
+}

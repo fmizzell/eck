@@ -34,10 +34,10 @@ function eck_requirements($phase){
  */
 
 function eck_disable(){
-  $entity_types = EntityType::loadAll();
+  $entity_types = ECK\Core\EntityType::loadAll();
   //lets save the name of every entity type so we can delete them in uninstall
   foreach($entity_types as $entity_type){
-    $tables[] = $entity_type->name;
+    $tables[] = $entity_type->getName();
   }
   
   variable_set('eck_tables', $tables);
@@ -93,17 +93,9 @@ function eck_schema() {
         'type' => 'text',
         'not null' => TRUE,
         'serialize' => TRUE,
-        'initial' => serialize(array()),
+        'initial' => drupal_json_encode(array()),
         'description' => 'A serialized list of properties attached to this entity.',
-      ),
-      /*DON'T NEED THIS ANY LONGER
-       * 'custom_properties' => array(
-        'type' => 'text',
-        'not null' => TRUE,
-        'serialize' => TRUE,
-        'initial' => serialize(array()),
-        'description' => 'A serialized list of custom properties attached to this entity.',
-      )*/      
+      ),    
     ),
     'primary key' => array('id', 'name'),
     'indexes' => array()
@@ -112,13 +104,6 @@ function eck_schema() {
   $schema['eck_bundle'] = array(
     'description' => "The base table for bundle information",
     'fields' => array(
-    /*Really the identifier should be some sort of combination between'
-     * the entity type the bundle belongs too, and the bundles name 
-     * but since I don't know db stuff to that extent, i will leave this
-     * useless id hanging around , well it seems liek CTools exportable
-     * do expect some sort of id beyond the machina_name, so we will
-     * leave here and added back to the types, just in case that we 
-     * use CTools exportables*/
       'id' => array(
         'description' => "The primary identifier for a bundle",
         'type' => 'serial',
@@ -158,17 +143,42 @@ function eck_schema() {
         'not null' => TRUE,
       ),
     ),
-    'primary key' => array('id'/*, 'machine_name'*/), //sad.. taken this out until I figure out how to make it work
-    'indexes' => array(
-      /*'entity_type_bundle'      => array('entity_type', 'name'),*/ //Nope, Don't need it
-    ),
+    'primary key' => array('id'), //sad.. taken this out until I figure out how to make it work
+    'indexes' => array(),
   );
 
-  // At the installation stage, eck has not been created, so what is this for?
-  // The schema is not only used during installation, it is used at many other
-  // stages and by many other processes withing drupal. Because we are creating
-  // tables dynamically with eck, we need to expose those schemas through this
-  // function, that is why we are doing this.
+  $schema['eck_permissions'] = array(
+    'description' => "The base table for entity type information",
+    'fields' => array(
+      'id' => array(
+        'description' => "The primary identifier for a bundle",
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => "Is this a user specific permission or a role permission",
+        'type' => 'varchar',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE
+      ),
+      'oid' => array(
+        'description' => "The id of the object (role or user) that this permission is relevant to.",
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'permission' => array(
+        'description' => "the permission string",
+        'type' => 'varchar',
+        'length' => 256,
+        'not null' => TRUE
+      ),   
+    ),
+    'primary key' => array('id'),
+    'indexes' => array()
+  );
   
   return $schema;
 }

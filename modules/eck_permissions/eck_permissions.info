@@ -1,7 +1,0 @@
-name = "ECK - Permissions"
-description = "Handle entity type, bundle and entity permissions with great granularity"
-
-package = ECK
-core = 7.x
-
-dependencies[] = eck
