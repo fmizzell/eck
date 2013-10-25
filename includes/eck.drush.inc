@@ -17,9 +17,10 @@ function eck_drush_command(){
 }
 
 function drush_eck($object_type, $operation, $id = NULL) {
-  $drush_interface = new ECK\UI\Drush\DrushInterface();
-  $eck = new ECK\Core\ECK($drush_interface);
-  $eck->init($operation, $object_type, $id);
+  $system = new \ECK\Core\System(new \ECK\UI\Drush\DrushInterface(), 
+          array($object_type, $operation, $id));
+  //and then we tell it to do things
+  return $system->doThings();
 }
 
 
