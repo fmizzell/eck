@@ -1,5 +1,4 @@
 <?php
-
 namespace ECK\Operations;
 use ECK\Operations\Operation;
 class Update extends Operation {

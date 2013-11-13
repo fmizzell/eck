@@ -1,17 +1,15 @@
 <?php
+namespace ECK\Operations;
+use ECK\Operations\Operation;
+class Read extends Operation {
+  
+  public function operate($user_input = NULL){
+    global $eck_system;
+    $object= $eck_system->getMainObject();
+    return $object;
+  }
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/**
- * Description of Read
- *
- * @author quickstart
- */
-class Read {
-  //put your code here
+  protected function getOperation() {
+    return 'read';
+  }
 }
-
-?>

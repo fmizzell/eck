@@ -350,6 +350,10 @@ function eck_get_widget_info($widget_type = NULL) {
   return eck_master_info_hook('eck_widget_info', $widget_type);
 }
 
+function eck_get_formatter_info($formatter_type = NULL) {
+  return eck_master_info_hook('eck_formatter_info', $formatter_type);
+}
+
 /**
  * Implementation of hook_eck_property_widget_info().
  * 
@@ -368,6 +372,16 @@ function eck_eck_widget_info() {
     'language_toggle' => array(
       'class' => 'ECK\UI\Widgets\LanguageToggle'
     ),
+  );
+  
+  return $widget_types;
+}
+
+function eck_eck_formatter_info() {
+  $widget_types = array(
+    'html_tag_wrapper' => array(
+      'class' => 'ECK\UI\Formatters\HTMLTagWrapper'
+    )
   );
   
   return $widget_types;
@@ -405,6 +419,9 @@ function eck_eck_object_type_info(){
   
   $info['widget']['class'] = "\ECK\Core\PropertyWidget";
   $info['widget']['dependencies'] = array('property');
+  
+  $info['formatter']['class'] = "\ECK\Core\PropertyFormatter";
+  $info['formatter']['dependencies'] = array('property');
   
   $info['entity']['class'] = "\ECK\Core\EEntity";
   $info['entity']['dependencies'] = array('entity_type');
@@ -453,6 +470,16 @@ function eck_eck_web_ui_menu_cluster_info(){
     )
   );
   
+  $clusters['formatter_admin'] = 
+  array(
+    'base_path' => 'admin/structure/entity-type/%eckentitytype/property/%eckproperty/formatter',
+    'object_type' => 'formatter',
+    'operations' => 
+    array(
+      0 => array('operation' => 'create', 'alias' => 'add')
+    )
+  );
+  
   $clusters['entity_admin'] = 
   array(
     'base_path' => 'admin/structure/entity-type/%eckentitytype/entity',
@@ -461,8 +488,9 @@ function eck_eck_web_ui_menu_cluster_info(){
     array(
       0 => array('operation' => 'listing','alias' => 'list'),
       1 => array('operation' => 'create', 'alias' => 'add') , 
-      2 => array('operation' => 'update', 'alias' => 'edit'),
-      3 => array('operation' => 'delete'),
+      2 => array('operation' => 'read', 'alias' => 'view'),
+      3 => array('operation' => 'update', 'alias' => 'edit'),
+      4 => array('operation' => 'delete'),
     )
   );
   
@@ -487,17 +515,20 @@ function eck_get_operation_info($operation = NULL){
 function eck_eck_operation_info(){
   $info['listing']['class'] = "\ECK\Operations\Listing";
   $info['create']['class'] = "\ECK\Operations\Create";
+  $info['read']['class'] = "\ECK\Operations\Read";
   $info['update']['class'] = "\ECK\Operations\Update";
   $info['delete']['class'] = "\ECK\Operations\Delete";
   
   $info['listing']['type'] = "class";
   $info['create']['type'] = "class";
+  $info['read']['type'] = "instance";
   $info['update']['type'] = "instance";
   $info['delete']['type'] = "instance";
   
   $info['create']['entity_type']['requirements'] = array('name');
   $info['create']['property']['requirements'] = array('name', 'type');
   $info['create']['widget']['requirements'] = array('type');
+  $info['create']['formatter']['requirements'] = array('type');
   $info['create']['entity']['requirements'] = "getRequirements";
   
   $info['update']['entity_type']['requirements'] = array('name', 'label');

@@ -73,6 +73,10 @@ class EntityProperty extends Property {
     if($this->widget){
       $array['widget'] = $this->widget->serialize();
     }
+    
+    if($this->formatter){
+      $array['formatter'] = $this->formatter->serialize();
+    }
 
     return drupal_json_encode($array);
   }
@@ -91,6 +95,10 @@ class EntityProperty extends Property {
       
       if(array_key_exists('widget', $a)){
         $property->setWidget(\ECK\Core\PropertyWidget::deserialize($property, $a['widget']));
+      }
+      
+      if(array_key_exists('formatter', $a)){
+        $property->setFormatter(\ECK\Core\PropertyFormatter::deserialize($property, $a['formatter']));
       }
 
       return $property;

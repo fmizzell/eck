@@ -1,17 +1,17 @@
 <?php
 namespace ECK\Core;
-use ECK\UI\Widgets\Widget;
-class PropertyWidget extends Widget{
+use ECK\UI\Formatters\Formatter;
+class PropertyFormatter extends Formatter{
   private $is_new;
   
   private $type;
-  private $widget;
+  private $formatter;
   
   public function __construct(\ECK\Core\Property $property, $type){
     //lets get the widget types and instantiate a widget of the appropriate type
     $this->type = $type;
-    $info = eck_get_widget_info($type);
-    $this->widget = new $info['class']($property);
+    $info = eck_get_formatter_info($type);
+    $this->formatter = new $info['class']($property);
     $this->is_new = TRUE;
     
     parent::__construct($property);
@@ -22,22 +22,22 @@ class PropertyWidget extends Widget{
   }
   
   public function getSettingDefaultValue($setting) {
-    return $this->widget->getSettingDefaultValue($setting);
+    return $this->formatter->getSettingDefaultValue($setting);
   }
   
   public function getSettings() {
-    return $this->widget->getSettings();
+    return $this->formatter->getSettings();
   }
   
-   public static function getMetaProperty($property_name, PropertyWidget $widget = NULL){
+   public static function getMetaProperty($property_name, PropertyFormatter $formatter = NULL){
     
     if ($property_name == "type"){
       $p = new Property('type', new \ECK\PropertyTypes\Text());
       $p->setLabel = "Type";
       $p->setWidget(new \ECK\UI\Widgets\Text($p));
       
-      if($widget){
-        $p->setDefaultValue($widget->getType());
+      if($formatter){
+        $p->setDefaultValue($formatter->getType());
       }
       
       return $p;
@@ -47,11 +47,11 @@ class PropertyWidget extends Widget{
   }
 
   public function display($value) {
-    return $this->widget->display($value);
+    return $this->formatter->display($value);
   }
   
   public function save(){
-    $this->property->setWidget($this);
+    $this->property->setFormatter($this);
     $this->property->save();
   }
   
@@ -64,10 +64,10 @@ class PropertyWidget extends Widget{
   
   public static function deserialize(\ECK\Core\EntityProperty $property, $string){
     $p = drupal_json_decode($string);
-    return new PropertyWidget($property, $p['type']);
+    return new PropertyFormatter($property, $p['type']);
   }
   
   public static function load($property, $name){
-    return $property->getWidget();
+    return $property->getFormatter();
   }
 }

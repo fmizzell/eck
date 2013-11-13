@@ -16,6 +16,9 @@ class Property{
   //this is exclusive to the web interface
   protected $widget;
   
+  //this is exclusive to the web interface
+  protected $formatter;
+  
   public function __construct($name, $type){
     $this->name = $name;
     $this->type = $type;
@@ -26,6 +29,7 @@ class Property{
     $this->default_value = NULL;
     $this->options = array();
     $this->widget = NULL;
+    $this->formatter = NULL;
   }
   
   public function getName(){
@@ -56,21 +60,16 @@ class Property{
     $this->widget = $widget;
   }
   
-  public function getWidget($value = NULL){
-    /*$widget_name = 'text';
-    $widget_config = array('label' => "Blah", 'required' => FALSE, 
-        "description" => "Not really");
-    $widget_type = eck_property_info_widget_types($widget_name, TRUE);
-    
-    $element = array(
-      '#title' => check_plain($widget_config['label']),
-      '#description' => field_filter_xss($widget_config['description']),
-      '#required' => (!empty($widget_config['required'])),
-      '#default_value' => $value
-    );
-    
-    return Text::Form($element, $widget_config);*/
+  public function getWidget(){
     return $this->widget;
+  }
+  
+  public function setFormatter(\ECK\UI\Formatters\Formatter $formatter){
+    $this->formatter = $formatter;
+  }
+  
+  public function getFormatter(){
+    return $this->formatter;
   }
   
   public function required(){

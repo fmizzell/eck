@@ -82,7 +82,23 @@ class WebInterface implements IUserInterface{
   }
   
   private function displayObject($object){
-    return "<p>{$object->getName()}</p>";
+    //lets cheat a little bit, and lets get our formatters code in here for entities only at the
+    //moment
+    if(get_class($object) == "ECK\Core\EEntity"){
+      $entity_type = $object->getEntityType();
+      $properties = $entity_type->getProperties();
+      $vb = new \ECK\UI\Formatters\ViewBuilder($object);
+      foreach($properties as $property){
+        /*$name = $property->getName();
+        $value = $object->{$name};
+        $html .= "<p>{$value}</p>";*/
+        $vb->addFormatter($property->getName(), $property->getFormatter());
+        $html = $vb->build();
+      }
+      return $html;
+    }else{
+      return "<p>{$object->getName()}</p>";
+    }
   }
   
   private function displayObjects($objects){
