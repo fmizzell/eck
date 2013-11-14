@@ -65,9 +65,13 @@ class EntityProperty extends Property {
    */
   public function serialize(){
     $array = array();
-    $properties = array('name', 'type', 'label', 'behavior', 'schema');
+    $properties = array('name', 'type', 'label', 'schema');
     foreach($properties as $p){
       $array[$p] = $this->{$p};
+    }
+    
+    if($this->behavior){
+      $array['behavior'] = $this->behavior->serialize();
     }
     
     if($this->widget){
@@ -90,8 +94,11 @@ class EntityProperty extends Property {
     if(array_key_exists('name', $a) && array_key_exists('type', $a)){
       $property = new EntityProperty($et, $a['name'], $a['type']);
       $property->setLabel($a['label']);
-      $property->setBehavior($a['behavior']);
       $property->setSchema($a['schema']);
+      
+      if(array_key_exists('behavior', $a)){
+        $property->setBehavior(\ECK\Core\PropertyBehavior::deserialize($property, $a['behavior']));
+      }
       
       if(array_key_exists('widget', $a)){
         $property->setWidget(\ECK\Core\PropertyWidget::deserialize($property, $a['widget']));

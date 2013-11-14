@@ -320,16 +320,6 @@ function eck_entity_presave($entity, $entity_type){
   }
 }
 
-function eck_entity_insert($entity, $entity_type){
-  $entity_type = EntityType::loadByName($entity_type);
-  
-  //this is an eck entity
-  if($entity_type){
-    eck_property_behavior_invoke_plugin($entity_type, 'entity_insert', 
-      array('entity' => $entity));
-  }
-}
-
 function eck_entity_update($entity, $entity_type){
   $entity_type = EntityType::loadByName($entity_type);
   

@@ -354,6 +354,10 @@ function eck_get_formatter_info($formatter_type = NULL) {
   return eck_master_info_hook('eck_formatter_info', $formatter_type);
 }
 
+function eck_get_behavior_info($behavior_type = NULL) {
+  return eck_master_info_hook('eck_behavior_info', $behavior_type);
+}
+
 /**
  * Implementation of hook_eck_property_widget_info().
  * 
@@ -385,6 +389,17 @@ function eck_eck_formatter_info() {
   );
   
   return $widget_types;
+}
+
+function eck_eck_behavior_info() {
+  $behavior_types = array(
+    'created' => array(
+      'class' => 'ECK\Behaviors\Created',
+      'methods' => array('entityInsert')
+    )
+  );
+  
+  return $behavior_types;
 }
 
 function _eck_form_property_value($state, $property){
@@ -422,6 +437,9 @@ function eck_eck_object_type_info(){
   
   $info['formatter']['class'] = "\ECK\Core\PropertyFormatter";
   $info['formatter']['dependencies'] = array('property');
+  
+  $info['behavior']['class'] = "\ECK\Core\PropertyBehavior";
+  $info['behavior']['dependencies'] = array('property');
   
   $info['entity']['class'] = "\ECK\Core\EEntity";
   $info['entity']['dependencies'] = array('entity_type');
@@ -480,6 +498,16 @@ function eck_eck_web_ui_menu_cluster_info(){
     )
   );
   
+  $clusters['behavior_admin'] = 
+  array(
+    'base_path' => 'admin/structure/entity-type/%eckentitytype/property/%eckproperty/behavior',
+    'object_type' => 'behavior',
+    'operations' => 
+    array(
+      0 => array('operation' => 'create', 'alias' => 'add')
+    )
+  );
+  
   $clusters['entity_admin'] = 
   array(
     'base_path' => 'admin/structure/entity-type/%eckentitytype/entity',
@@ -529,6 +557,7 @@ function eck_eck_operation_info(){
   $info['create']['property']['requirements'] = array('name', 'type');
   $info['create']['widget']['requirements'] = array('type');
   $info['create']['formatter']['requirements'] = array('type');
+  $info['create']['behavior']['requirements'] = array('type');
   $info['create']['entity']['requirements'] = "getRequirements";
   
   $info['update']['entity_type']['requirements'] = array('name', 'label');
@@ -721,4 +750,10 @@ function eck_permission() {
   $perms['manage eck permissions'] =  array('title' => "Manage ECK permissions");
   
   return $perms;
+}
+
+//Entity hooks
+
+function eck_entity_insert($entity, $entity_type){
+  \ECK\Behaviors\Behave::behave('entityInsert', array('entity' => $entity));
 }
