@@ -1,16 +1,24 @@
 <?php
 namespace ECK\Permissions;
 
-class Permission extends DBObject{
+class Permission{
+  public $id;
+  public $type;
+  public $oid;
+  public $permission;
+  
   public function __construct(){
-    parent::__construct('eck_permissions');
-    $this->config = array();
   }
   
-  public static function loadById($id){
-    $self = new ECKPermission();
-    $self->load('id', $id);
-    return $self;
+  public function save(){
+    $os = new \ECK\Core\ObjectStorer("ECK\\Permissions\\Permission", array('id') ,"eck_permissions");
+    $return = $os->save($this);
+  }
+  
+  public static function load($id){
+    $os = new \ECK\Core\ObjectStorer("ECK\\Permissions\\Permission", array('id') ,"eck_permissions");
+    $permissions = $os->load('id', $id);
+    return array_shift($permissions);
   }
   
   public static function loadAllByRole($rid){
@@ -25,7 +33,7 @@ class Permission extends DBObject{
     
     foreach($results as $result){
       $id = $result->id;
-      $perms[] = ECKPermission::loadById($id);
+      $perms[] = Permission::load($id);
     }
     return $perms;
   }
@@ -42,7 +50,7 @@ class Permission extends DBObject{
     
     foreach($results as $result){
       $id = $result->id;
-      $perms[] = ECKPermission::loadById($id);
+      $perms[] = Permission::load($id);
     }
     return $perms;
   }

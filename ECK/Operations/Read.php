@@ -9,7 +9,7 @@ class Read extends Operation {
     return $object;
   }
 
-  protected function getOperation() {
+  public function getOperation() {
     return 'read';
   }
 }

@@ -3,7 +3,7 @@
 namespace ECK\Operations;
 abstract class Operation {
   
-  protected abstract function getOperation();
+  public abstract function getOperation();
   
   /**
    *This method utilizes a system defined by eck to get object requirements

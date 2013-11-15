@@ -47,9 +47,8 @@ class MenuItem {
       'title' => $this->title,
       'description' => $this->description,
       'page callback' => 'eck_pages',
-      'page arguments' => array_merge(array($this->operation, $this->object_type), $this->args),
       'access callback' => 'eck_access',
-      'access arguments' => array($this->operation, $this->object_type)
+      'access arguments' => array_merge(array('eck', $this->operation, $this->object_type), $this->args),
     );
     
     if($this->type){

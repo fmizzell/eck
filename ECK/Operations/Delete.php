@@ -9,7 +9,7 @@ class Delete extends Operation {
     $object->delete();
   }
 
-  protected function getOperation() {
+  public function getOperation() {
     return 'delete';
   }
 }

@@ -21,6 +21,10 @@ class EntityProperty extends Property {
     $this->is_new = TRUE;
   }
   
+  public function getId(){
+    return $this->getName();
+  }
+  
   public function isNotNew(){
     $this->is_new = FALSE;
   }

@@ -3,7 +3,7 @@ namespace ECK\Operations;
 use ECK\Operations\Operation;
 class Listing extends Operation{
 
-  protected function getOperation() {
+  public function getOperation() {
     return 'listing';
   }
 

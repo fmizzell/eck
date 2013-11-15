@@ -51,6 +51,10 @@ class EntityType{
     }
   }
   
+  public function getId(){
+    return $this->getName();
+  }
+  
   public function getName(){
     return $this->name;
   }

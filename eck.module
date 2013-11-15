@@ -24,46 +24,6 @@ function eck_menu() {
     $menu += $menu_cluster->generateMenuItems();
   }
   
-  /*//Properties
-  $menu_item = new \ECK\UI\Web\MenuItem('entity-type/%eckentitytype/property', 'listing', 'property');
-  $menu += $menu_item->build();
-  
-  $menu['entity-type/%eckentitytype/property/listing'] = array(
-    'title' => "List",
-    'type' => MENU_DEFAULT_LOCAL_TASK
-  );
-  
-  $menu_item = new \ECK\UI\Web\MenuItem('entity-type/%eckentitytype/property/add', 'create', 'property');
-  $menu += $menu_item->build();
-  
-  $menu_item = new \ECK\UI\Web\MenuItem('entity-type/%eckentitytype/property/%eckproperty/edit', 'update', 'property');
-  $menu += $menu_item->build();
-  
-  $menu_item = new \ECK\UI\Web\MenuItem('entity-type/%eckentitytype/property/%eckproperty/delete', 'delete', 'property');
-  $menu += $menu_item->build();
-  
-  //Widget
-  $menu_item = new \ECK\UI\Web\MenuItem('entity-type/%eckentitytype/property/%eckproperty/widget/add', 'create', 'widget');
-  $menu += $menu_item->build();
-  
-  //Entities
-  $menu_item = new \ECK\UI\Web\MenuItem('entity-type/%eckentitytype/entity', 'listing', 'entity');
-  $menu += $menu_item->build();
-  
-  $menu['entity-type/%eckentitytype/entity/listing'] = array(
-    'title' => "List",
-    'type' => MENU_DEFAULT_LOCAL_TASK
-  );
-  
-  $menu_item = new \ECK\UI\Web\MenuItem('entity-type/%eckentitytype/entity/add', 'create', 'entity');
-  $menu += $menu_item->build();
-  
-  $menu_item = new \ECK\UI\Web\MenuItem('entity-type/%eckentitytype/entity/%eckentity/edit', 'update', 'entity');
-  $menu += $menu_item->build();
-  
-  $menu_item = new \ECK\UI\Web\MenuItem('entity-type/%eckentitytype/entity/%eckentity/delete', 'delete', 'entity');
-  $menu += $menu_item->build();*/
-  
   //Permissions
   $menu['admin/people/eck-permissions'] =
   array(
@@ -108,12 +68,10 @@ function eckentity_load($id){
 }
 
 function eck_pages(){
-  //here is the input from the user
-  $args = func_get_args();
-  //the sytem will take an interface and the input from the user
-  $system = new \ECK\Core\System(new ECK\UI\Web\WebInterface(), $args);
+  global $eck_system;
+  
   //and then we tell it to do things
-  return $system->doThings();
+  return $eck_system->doThings();
 }
   
 function eck_alphabetical_cmp( $a, $b )
@@ -685,31 +643,47 @@ function eck_entity_access($op, $entity, $account, $entity_type_name) {
   return eck_access($op, 'entity', $entity, $account);
 }
 
-function eck_access($op, $object_type, $object = NULL, $account = NULL){
+function eck_access(){
   $allow = FALSE;
+  //here is the input from the user
+  $args = func_get_args();
   
-  if(!$account){
+  if($args[0] == 'eck'){
+    unset($args[0]);
+    //lets reset args
+    $args = array_values($args);
+    //the sytem will take an interface and the input from the user
+    $system = new \ECK\Core\System(new ECK\UI\Web\WebInterface(), $args);
+
     global $user;
     $account = $user;
-  }
-  
-  $access = module_invoke_all('eck_access', $op, $object_type, $object, $account);
-  
-  if(!empty($access)){
-    foreach($access as $ac){
-      $allow = $allow || $ac;
+    
+    $operation = $system->getFromContext('operation');
+    $object_type = $system->getMainObjectType();
+    $object = $system->getMainObject();
+    
+    $access = module_invoke_all('eck_access', $operation->getOperation(), $object_type, $object, $account);
+
+    if(!empty($access)){
+      foreach($access as $ac){
+        $allow = $allow || $ac;
+      }
     }
   }
   
   return $allow;
 }
 
-function eck_eck_access($op, $object_type, $object, $account){
+function eck_eck_access($op = NULL, $object_type = NULL, $object = NULL, $account = NULL){
+  module_load_include('inc', 'eck', 'eck.permissions');
   
-  $master = "eck * {$object_type}";
-  $perm = "eck {$op} {$object_type}";
+  $allow = FALSE;
+ 
+  $access = eck_permissions_eck_access_default($op, $object_type, $object, $account);
+  $access2 = eck_permissions_eck_access($op, $object_type, $object, $account);
 
-  $allow = user_access($perm, $account) || user_access($master, $account);
+  $allow = $access || $access2;
+  
   return array($allow);
   
 }
@@ -755,5 +729,9 @@ function eck_permission() {
 //Entity hooks
 
 function eck_entity_insert($entity, $entity_type){
-  \ECK\Behaviors\Behave::behave('entityInsert', array('entity' => $entity));
+  
+  global $eck_system;
+  if($eck_system){
+    \ECK\Behaviors\Behave::behave('entityInsert', array('entity' => $entity));
+  }
 }

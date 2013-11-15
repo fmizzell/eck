@@ -6,7 +6,7 @@ class Create extends Operation {
   //this function connects this operations with the requirements system
   //defined by eck
   //for more info look at hook_eck_operation_info();
-  protected function getOperation(){
+  public function getOperation(){
     return "create";
   }
   

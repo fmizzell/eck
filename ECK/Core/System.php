@@ -45,6 +45,9 @@ class System{
     $this->user_input = array();
     $this->container = new ContainerBuilder();
     
+    //So first lets see if we can get some valid info from the user input
+    $this->interface->parseInitialUserInput($this, $this->initial_user_input);
+    
     global $eck_system;
     $eck_system = $this;
   }
@@ -97,8 +100,6 @@ class System{
   }
   
   public function doThings(){
-    //So first lets see if we can get some valid info from the user input
-    $this->interface->parseInitialUserInput($this, $this->initial_user_input);
     
     $object = $this->getMainObject();
     $operation = $this->getFromContext('operation');

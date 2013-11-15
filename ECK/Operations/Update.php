@@ -15,7 +15,7 @@ class Update extends Operation {
     $object->save();
   }
 
-  protected function getOperation() {
+  public function getOperation() {
     return 'update';
   }
 }
