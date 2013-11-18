@@ -93,6 +93,7 @@ function eck_entity_info() {
 
   // Get all the names of all the entity types from the eck table
   // for each of the created entity types add its info to the $info array.
+  
   foreach (\ECK\Core\EntityType::loadAll() as $entity_type) {
     
     $entity_type_label = $entity_type->getLabel();

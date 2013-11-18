@@ -1,5 +1,11 @@
 <?php
 
+function eck_install(){
+  //include composer's class autoloader
+  $file_path = __DIR__."/vendor/autoload.php";
+  require_once $file_path;
+}
+
 function eck_requirements($phase){
   $requirements = array();
   if($phase == 'update'){
