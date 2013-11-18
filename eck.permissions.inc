@@ -158,14 +158,14 @@ function eck_permissions_get_object_id($object_type, $object){
     if($count != 0){
       $object_id = "|".$object_id;
     }
-    $object_id = $d->getId().$object_id;
+    $object_id = $d->getIdentifier().$object_id;
     $count++;
   }
   
   if(!empty($object_id)){
-    $object_id .= "|".$object->getId();
+    $object_id .= "|".$object->getIdentifier();
   }else{
-    $object_id .= $object->getId();
+    $object_id .= $object->getIdentifier();
   }
   
   return $object_id;

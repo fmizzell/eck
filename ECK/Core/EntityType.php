@@ -51,7 +51,7 @@ class EntityType{
     }
   }
   
-  public function getId(){
+  public function getIdentifier(){
     return $this->getName();
   }
   
@@ -119,6 +119,8 @@ class EntityType{
       $this->dbtt->createTable();
     }
     $this->dbtt->performTransformations();
+    entity_info_cache_clear();
+    cache_clear_all('schema', 'cache');
   }
   
   public function delete(){

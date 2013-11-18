@@ -51,8 +51,10 @@ function eck_disable(){
 
 function eck_uninstall(){
   $tables = variable_get('eck_tables');
-  foreach($tables as $table){
-    db_drop_table("eck_{$table}");
+  if(is_array($tables)){
+    foreach($tables as $table){
+      db_drop_table("eck_{$table}");
+    }
   }
   
   variable_del('eck_tables');
@@ -103,7 +105,7 @@ function eck_schema() {
         'description' => 'A serialized list of properties attached to this entity.',
       ),    
     ),
-    'primary key' => array('id', 'name'),
+    'primary key' => array('id'),
     'indexes' => array()
   );
 
