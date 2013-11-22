@@ -5,15 +5,25 @@ class MenuCluster{
   private $base_path;
   private $object_type;
   private $operations;
+  private $connections;
   
   public function __construct($base_path, $object_type){
     $this->base_path = $base_path;
     $this->object_type = $object_type;
     $this->operations = array();
+    $this->connections = array();
   }
   
   public function addOperation($config){
     $this->operations[] = $config;
+  }
+  
+  public function addConnection($name, $cluster_name){
+    $this->connections[$name] = $cluster_name;
+  }
+  
+  public function getConnections(){
+    return $this->connections;
   }
   
   public function getOperations(){
@@ -25,7 +35,6 @@ class MenuCluster{
   }
   
   public function generateMenuItems(){
-    
     $menu = array();
     $base_path = $this->base_path;
     $object_type = $this->object_type;
@@ -100,18 +109,28 @@ class MenuCluster{
     return $string;
   }
   
+  public static function getCluster($name){
+    $cluster = eck_get_web_ui_menu_cluster_info($name);
+    $menu_cluster = new \ECK\UI\Web\MenuCluster($cluster['base_path'], $cluster['object_type']);
+    foreach($cluster['operations'] as $config){
+      $menu_cluster->addOperation($config);
+    }
+    if(array_key_exists('connections', $cluster)){
+      foreach($cluster['connections'] as $name => $cluster_name){
+        $menu_cluster->addConnection($name, $cluster_name);
+      }
+    }
+    return $menu_cluster;
+  }
+  
   public static function getClusterFromUrl($object_type, $url){
     $clusters = eck_get_web_ui_menu_cluster_info();
-    foreach($clusters as $cluster){
+    foreach($clusters as $name => $cluster){
       $base_path = $cluster['base_path'];
       $cobject_type = $cluster['object_type'];
       
       if(($object_type == $cobject_type) && MenuCluster::pathMatch($url, $base_path)){
-        $menu_cluster = new \ECK\UI\Web\MenuCluster($cluster['base_path'], $cluster['object_type']);
-        foreach($cluster['operations'] as $config){
-          $menu_cluster->addOperation($config);
-        }
-        
+        $menu_cluster = \ECK\UI\Web\MenuCluster::getCluster($name);
         return $menu_cluster;
       }
     }
@@ -184,44 +203,47 @@ class MenuCluster{
   }
   
   public function getOperationInstancePath($object, $operation){
-    global $eck_system;
     $op_info = eck_get_operation_info($operation);
+    if($op_info['type'] == 'instance'){
+      $path = $this->getOperationPath($operation);
+      $path = MenuCluster::replaceWildcards($path, $object);
+      return $path;
+    }
+    
+    return NULL;
+  }
+  
+  public static function replaceWildcards($path, $object = NULL){
+    global $eck_system;
     $obj_info = eck_get_object_type_info();
     $main_obj_type = $eck_system->getMainObjectType();
     
     $tmp = str_replace('_','',$main_obj_type);
     $main_obj_wildcard = "%eck{$tmp}";
-    if($op_info['type'] == 'instance'){
     
-      $path = $this->getOperationPath($operation);
-      
-
-      //now we need to replace the wildcards with the appropiate data
-      $pieces = explode("/", $path);
-      foreach($pieces as $key => $piece){
-        if(substr_count($piece, "%") > 0){
-          //lets see if it matches the main object type
-          if($piece == $main_obj_wildcard){
-            $pieces[$key] = $object->getName();
-          }else{
-            //now we need to match the wildcard to an object type
-            //so we can get it from the system
-            foreach($obj_info as $obj_type => $info){
-              $tmp = str_replace('_','',$obj_type);
-              $obj_wildcard = "%eck{$tmp}";
-              if($obj_wildcard == $piece){
-                $sys_obj = $eck_system->getFromContext($obj_type);
-                $pieces[$key] = $sys_obj->getName();
-                break;
-              }
+    //now we need to replace the wildcards with the appropiate data
+    $pieces = explode("/", $path);
+    foreach($pieces as $key => $piece){
+      if(substr_count($piece, "%") > 0){
+        //lets see if it matches the main object type
+        if($piece == $main_obj_wildcard){
+          $pieces[$key] = $object->getName();
+        }else{
+          //now we need to match the wildcard to an object type
+          //so we can get it from the system
+          foreach($obj_info as $obj_type => $info){
+            $tmp = str_replace('_','',$obj_type);
+            $obj_wildcard = "%eck{$tmp}";
+            if($obj_wildcard == $piece){
+              $sys_obj = $eck_system->getFromContext($obj_type);
+              $pieces[$key] = $sys_obj->getName();
+              break;
             }
           }
         }
       }
-      return implode("/", $pieces);
     }
-    
-    return NULL;
+    return implode("/", $pieces);
   }
   
   public function getOperationAlias($operation){

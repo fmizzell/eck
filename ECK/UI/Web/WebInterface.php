@@ -122,13 +122,25 @@ class WebInterface implements IUserInterface{
       $row[1] = "";
       $counter = 0;
       foreach($operations as $op){
-        
         $instance_path = $cluster->getOperationInstancePath($object, $op);
         if($instance_path){
           if($counter > 0){
             $row[1].= " | ";
           }
           $row[1] .= "<a href='/{$instance_path}'>{$cluster->getOperationAlias($op)}</a>";
+          $counter++;
+        }
+      }
+      $connections = $cluster->getConnections();
+      foreach($connections as $link_name => $cluster_name){
+        $conn_cluster = \ECK\UI\Web\MenuCluster::getCluster($cluster_name);
+        $path = $conn_cluster->getOperationPath('listing');
+        $path = MenuCluster::replaceWildcards($path, $object);
+        if($path){
+          if($counter > 0){
+            $row[1].= " | ";
+          }
+          $row[1] .= "<a href='/{$path}'>{$link_name}</a>";
           $counter++;
         }
       }

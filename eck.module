@@ -16,11 +16,9 @@ function eck_menu() {
   $menu = array();
   
   $clusters = eck_get_web_ui_menu_cluster_info();
-  foreach($clusters as $cluster){
-    $menu_cluster = new \ECK\UI\Web\MenuCluster($cluster['base_path'], $cluster['object_type']);
-    foreach($cluster['operations'] as $config){
-      $menu_cluster->addOperation($config);
-    }
+  $clusters = array_keys($clusters);
+  foreach($clusters as $name){
+    $menu_cluster = \ECK\UI\Web\MenuCluster::getCluster($name);
     $menu += $menu_cluster->generateMenuItems();
   }
   
@@ -421,7 +419,8 @@ function eck_eck_web_ui_menu_cluster_info(){
       1 => array('operation' => 'create', 'alias' => 'add') , 
       2 => array('operation' => 'update', 'alias' => 'edit'),
       3 => array('operation' => 'delete'),
-    )
+    ),
+    'connections' => array('properties' => 'property_admin', 'entities' => 'entity_admin')
   );
   
   $clusters['property_admin'] = 
