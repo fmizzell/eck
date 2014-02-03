@@ -401,8 +401,6 @@ function eck__entity__delete_form_submit($form, &$form_state) {
 
   $entity->delete();
 
-  drupal_cron_run();
-
   // Ok, lets delete the entity
   $form_state['redirect'] = $submit_redirect;
 }
