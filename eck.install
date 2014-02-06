@@ -1,6 +1,6 @@
 <?php
 
-function eck_requirements($phase){
+function eck_requirements($phase){dpm('?IN!');
   $requirements = array();
   if($phase == 'update'){
     //I guess we just need to check whether the module exists, and then the update can enable it
@@ -11,9 +11,9 @@ function eck_requirements($phase){
       'description' => "ECK uses the plugin implementation offered by the CTools module"
     );
     if(module_exists('ctools')){
-      $requirement['ctools']['severity'] = REQUIREMENT_OK;
+      $requirements['ctools']['severity'] = REQUIREMENT_OK;
     }else{
-      $requirement['ctools']['severity'] = REQUIREMENT_ERROR;
+      $requirements['ctools']['severity'] = REQUIREMENT_ERROR;
     }
   }
   
