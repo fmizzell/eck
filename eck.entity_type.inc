@@ -344,6 +344,10 @@ function eck__entity_type__schema($entity_type) {
       )
     ),
     'primary key' => array('id'),
+    // Add required schema metadata fields.
+    // @see _drupal_schema_initialize()
+    'module' => 'eck',
+    'name' => "eck_{$entity_type->name}",
   );
   
   // Add properties to schema definition.
