@@ -269,17 +269,9 @@ function eck__entity_type__form_submit($form, &$state) {
  */
 function eck__entity_type__delete($entity_type){
   
-  module_load_include('inc', 'eck', 'eck.bundle');
-  //delete all the bundles from this entity type
-  $bundles = Bundle::loadByEntityType($entity_type);
-  foreach($bundles as $bundle){
-    eck__bundle__delete($entity_type, $bundle);
-  }
-  
   $entity_type->delete();
  
   drupal_set_message("Entity type '{$entity_type->name}' has been deleted");
-  //return "<h1>Deletion Completed</h1> <h3>Entity type '{$entity_type}' has been deleted";
 }
 
 function eck__entity_type__delete_form($form, &$state, $entity_type_name){
