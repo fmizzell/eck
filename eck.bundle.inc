@@ -335,26 +335,8 @@ function eck__bundle__edit_form_submit($form, &$form_state) {
  * for more information on the EntityType and Bundle classes look at eck.classes.inc
  */
 function eck__bundle__delete($entity_type, $bundle){
-  //first delete all of the entities of this bundle
-  $query = new EntityFieldQuery();
-  $query
-  ->entityCondition('entity_type', $entity_type->name, '=')
-  ->entityCondition('bundle', $bundle->name,'=');
-  
-  $results = $query->execute();
-  
-  if(!empty($results)){
-    $ids = array_keys($results[$entity_type->name]);
-    entity_delete($entity_type->name, $ids);
-  }
-  //then we delete the bundle (field_instances)
-  field_attach_delete_bundle($entity_type->name, $bundle->name);
-  
   //and finally we delete the bundle from the eck_type table
   $bundle->delete();
-  
-  menu_rebuild();
-  drupal_flush_all_caches();
   
   drupal_set_message("The bundle '{$bundle->name}' from the entity type '{$entity_type->name}' has been deleted");
 }

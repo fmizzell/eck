@@ -288,6 +288,13 @@ class EntityType extends DBObject{
   }
   
   public function delete(){
+
+    //delete all the bundles from this entity type
+    $bundles = Bundle::loadByEntityType($this);
+    foreach($bundles as $bundle){
+      $bundle->delete();
+    }
+
     parent::delete();
     db_drop_table('eck_'.$this->name);
 
@@ -380,6 +387,29 @@ class Bundle extends DBObject{
       //the bundle
       //@todo throw soem error or exception
     }
+  }
+
+  public function delete(){
+    //first delete all of the entities of this bundle
+    $query = new EntityFieldQuery();
+
+    $query
+    ->entityCondition('entity_type', $this->entity_type, '=')
+    ->entityCondition('bundle', $this->name,'=');
+
+    $results = $query->execute();
+
+    if(!empty($results)){
+      $ids = array_keys($results[$this->entity_type]);
+      entity_delete($this->entity_type, $ids);
+    }
+    //then we delete the bundle (field_instances)
+    field_attach_delete_bundle($this->entity_type, $this->name);
+
+    parent::delete();
+
+    menu_rebuild();
+    drupal_flush_all_caches();
   }
   
   /**
