@@ -300,6 +300,10 @@ class EntityType extends DBObject{
   public static function loadByName($name){
     $self = new EntityType();
     $self->load('name', $name);
+    // If the entity type is new, then we return false, as it is not a successful load.
+    if($self->is_new){
+      return FALSE;
+    }
     return $self;
   }
   

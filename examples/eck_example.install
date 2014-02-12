@@ -52,7 +52,13 @@ function eck_example_uninstall(){
   // one. All we have to do is load the entity types that we want to delete, and
   // called the delete method.
   $entity_type = EntityType::loadByName('eck_employee');
-  $entity_type->delete();
+
+  // Even though our entity type was created from code, it is possible that it
+  // was deleted from the interface, so we check to make sure we still have
+  // and entity type.
+  if($entity_type){
+    $entity_type->delete();
+  }
 
   // After the module is uninstalled, the entity type is gone.
 }
