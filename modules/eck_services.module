@@ -6,7 +6,7 @@
  * Add option to entity type form to enable service resource.
  */
 function eck_services_form_eck__entity_type__form_alter(&$form, &$form_state, $form_id) {
-  if (module_exists('services')) {
+  if (module_exists('services') && array_key_exists(0, $form_state['build_info']['args'])) {
     $entity = $form_state['build_info']['args'][0];
     if (!empty($entity)) {
       $form['enable_services'] = array(
