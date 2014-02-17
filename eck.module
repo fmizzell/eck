@@ -955,23 +955,21 @@ function eck__entity_access($op, $entity_or_bundle, $account, $entity_type_name)
   return eck__multiple_access_check($permissions, FALSE /*TODO: should auto-load entity author here. */, $account);
 }
 
-function eck_entity_view_alter(&$view){
+function eck_entity_view_alter(&$build, $entity_type){
   $entity_types = EntityType::loadAll();
   
-  $this_entity_type = $view['#entity_type'];
-  
   foreach($entity_types as $et){
-    if($et->name == $this_entity_type){
-      $entity = $view['#entity'];
+    if ($et->name == $entity_type){
+      $entity = $build['#entity'];
       $this_bundle = $entity->type;
-      //lets add contextual links to our entities
-      //In eck you can change the paths of any of the possible operations, 
-      //since contextual links are dependent on the hierarchy of those paths,
-      //changing the paths could cause of contextual links not to work correctly
+      // Lets add contextual links to our entities
+      // in eck you can change the paths of any of the possible operations, 
+      // since contextual links are dependent on the hierarchy of those paths,
+      // changing the paths could cause of contextual links not to work correctly
       
-      $view['#contextual_links']['eck'] =
-      array(
-        "{$this_entity_type}/{$this_bundle}",array($entity->id));
+      $build['#contextual_links']['eck'] = array(
+        "{entity_type}/{$this_bundle}", array($entity->id)
+      );
     }
   }
 }
