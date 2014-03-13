@@ -968,7 +968,7 @@ function eck_entity_view_alter(&$build, $entity_type){
       // changing the paths could cause of contextual links not to work correctly
       
       $build['#contextual_links']['eck'] = array(
-        "{entity_type}/{$this_bundle}", array($entity->id)
+        "{$entity_type}/{$this_bundle}", array($entity->id)
       );
     }
   }
