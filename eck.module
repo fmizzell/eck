@@ -64,7 +64,15 @@ function eck_eck_default_properties(){
     'type' => "language",
     'behavior' => 'language'
   );
-  
+  //include uuid as default property if module_exists
+  if (module_exists('uuid')) {
+    $default_properties['uuid'] = array(
+      'label' => "UUID",
+      'type' => "text",
+      'behavior' => 'uuid'
+    );
+  }
+
   return $default_properties;
 }
 
