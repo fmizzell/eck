@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * ECK's API documentation.
+ */
 
 
 /**
