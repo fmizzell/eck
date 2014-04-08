@@ -109,12 +109,6 @@ function eck_schema() {
   $schema['eck_bundle'] = array(
     'description' => "The base table for bundle information",
     'fields' => array(
-    // Really the identifier should be some sort of combination between the
-    // entity type the bundle belongs too, and the bundles name but since I
-    // don't know db stuff to that extent, i will leave this useless id
-    // hanging around , well it seems like CTools exportable do expect some sort
-    // of id beyond the machine_name, so we will leave here and added back to
-    // the types, just in case that we use CTools exportables.
       'id' => array(
         'description' => "The primary identifier for a bundle",
         'type' => 'serial',
@@ -155,6 +149,9 @@ function eck_schema() {
       ),
     ),
     'primary key' => array('id'),
+    'unique' => array(
+      'machine_name' => array('machine_name')
+    ),
   );
 
   // At the installation stage, ECK has not been created, so what is this for?
