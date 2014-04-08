@@ -31,6 +31,11 @@ function eck_requirements($phase) {
  * Implements hook_disable().
  */
 function eck_disable() {
+  
+  drupal_set_message("Due to dependencies within the Entity system, ECK is not able"
+    . "to fully clean up during uninstall. This left over data can cause issues."
+    . " Make sure to delete all of your entity types before uninstalling ECK.", "warning");
+  
   $entity_types = EntityType::loadAll();
   // Lets save the name of every entity type so we can delete them in uninstall.
   foreach ($entity_types as $entity_type) {
