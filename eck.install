@@ -80,7 +80,6 @@ function eck_schema() {
       'name' => array(
         'description' => "The machine name of the entity",
         'type' => 'varchar',
-        'type' => 'varchar',
         'length' => 128,
         'not null' => TRUE,
       ),
@@ -538,4 +537,12 @@ function eck_update_7009() {
     'initial' => serialize(array()),
     'not null' => TRUE,
   ));
+}
+
+/**
+ * Eliminating the multiple primary ids in the bundle and entity type tables.
+ */
+function eck_update_7010() {
+  db_add_unique_key("eck_entity_type", "name", array('name'));
+  db_add_unique_key("eck_bundle", "machine_name", array('machine_name')); 
 }
