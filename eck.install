@@ -99,7 +99,10 @@ function eck_schema() {
         'description' => 'A serialized list of properties attached to this entity.',
       ),
     ),
-    'primary key' => array('id', 'name'),
+    'primary key' => array('id'),
+    'unique keys' => array(
+      'name' => array('name'),
+    ),
     'indexes' => array(),
   );
 
