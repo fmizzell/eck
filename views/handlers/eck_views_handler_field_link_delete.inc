@@ -8,7 +8,7 @@ class eck_views_handler_field_link_delete extends eck_views_handler_field_link {
 
   function render_link($entity, $values) {
     $entity_type = $entity->entityType();
-    $bundle = $entity->type;
+    $bundle = $entity->bundle();
     $action = 'delete';
 
     if (eck__multiple_access_check(

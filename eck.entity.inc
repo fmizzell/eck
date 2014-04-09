@@ -249,37 +249,17 @@ function eck__entity__add($entity_type_name, $bundle_name) {
  *   So this function handles that case as well.
  */
 function eck__entity__build($entity_type, $bundle, $id) {
-  if (is_numeric($id)) {
 
-    $entities = entity_load($entity_type->name, array($id));
-    if (array_key_exists($id, $entities)) {
-      $entity = $entities[$id];
-    }
-    else {
-      $entity = NULL;
-    }
+  if (is_object($id) && $id->entityType() == $entity_type->name && $id->bundle() == $bundle->name) {
+    return $id->view();
   }
-  elseif (is_object($id) && isset($id->type) and $bundle->name == $id->type) {
-    $entity = $id;
-  }
-  else {
-    drupal_not_found();
-    exit();
+  elseif (is_numeric($id)) {
+    $entity = entity_load_single($entity_type->name, $id);
+    return $entity->view();
   }
 
-  if (!$entity) {
-    drupal_not_found();
-    exit();
-  }
-  else {
-    if ($entity->type == $bundle->name) {
-      return $entity->view();
-    }
-    else {
-      drupal_not_found();
-      exit();
-    }
-  }
+  drupal_not_found();
+  drupal_exit();
 }
 
 /**
@@ -294,10 +274,9 @@ function eck__entity__build($entity_type, $bundle, $id) {
  */
 function eck__entity__edit($entity_type_name, $bundle_name, $id) {
   if (is_numeric($id)) {
-    $entities = entity_load($entity_type_name, array($id));
-    $entity = $entities[$id];
+    $entity = entity_load_single($entity_type_name, $id);
   }
-  elseif (is_object($id) && isset($id->type) && $id->type == $bundle_name) {
+  elseif (is_object($id) and $id->entityType() === $entity_type_name) {
     $entity = $id;
   }
 
@@ -483,7 +462,7 @@ function eck__entity__form_submit($form, &$state) {
  *   ID or Entity Object being viewed.
  */
 function eck__entity__view($entity_type_name, $bundle_name, $id) {
-  if (is_object($id) and isset($id->type) and $id->type == $bundle_name) {
+  if (is_object($id) && $id->bundle() == $bundle_name) {
     $entity = $id;
   }
   else {

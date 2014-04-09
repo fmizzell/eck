@@ -85,7 +85,7 @@ function eck_language_property_widget($property, $vars) {
  * What?.
  */
 function eck_language_bundle_multilingual($entity) {
-  if ($bundle = Bundle::loadByMachineName($entity->entityType() . '_' . $entity->type)) {
+  if ($bundle = Bundle::loadByMachineName($entity->entityType() . '_' . $entity->bundle())) {
     return isset($bundle->config['multilingual']) && $bundle->config['multilingual'];
   }
   return FALSE;
