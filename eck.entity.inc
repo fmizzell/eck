@@ -465,6 +465,12 @@ function eck__entity__view($entity_type_name, $bundle_name, $id) {
   if (is_object($id) && $id->bundle() == $bundle_name) {
     $entity = $id;
   }
+  // If the bundle does not match, we are trying to view and entity of the
+  // right type but incorrect bundle.
+  elseif (is_object($id) && $id->bundle() != $bundle_name) {
+    drupal_not_found();
+    exit();
+  }
   else {
     $entity = entity_load_single($entity_type_name, $id);
   }

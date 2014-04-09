@@ -21,7 +21,13 @@ module_load_include('inc', 'eck', 'includes/eck.references_dialog');
  * Load callback for %eckentity.
  */
 function eckentity_load($id, $type) {
-  return entity_load_single($type, $id);
+  try{
+    $entity = entity_load_single($type, $id);
+  } catch (Exception $ex) {
+    drupal_not_found();
+    exit();
+  }
+  return $entity;
 }
 
 /**
@@ -798,18 +804,18 @@ function eck__entity_access($op, $entity_or_bundle, $account, $entity_type_name)
 function eck_entity_view_alter(&$build, $entity_type) {
   $entity_types = EntityType::loadAll();
   
-  $this_entity_type = $view['#entity_type'];
+  $this_entity_type = $build['#entity_type'];
   
   foreach($entity_types as $et){
     if($et->name == $this_entity_type){
-      $entity = $view['#entity'];
+      $entity = $build['#entity'];
       $this_bundle = $entity->bundle();
       // Lets add contextual links to our entities in eck you can change
       // the paths of any of the possible operations, since contextual links
       // are dependent on the hierarchy of those paths, changing the paths
       // could cause of contextual links not to work correctly.
       
-      $view['#contextual_links']['eck'] =
+      $build['#contextual_links']['eck'] =
       array(
         "{$this_entity_type}/{$this_bundle}",array($entity->id));
     }
