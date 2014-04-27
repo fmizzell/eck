@@ -1,7 +1,7 @@
 @api
-Feature: Entity Construction Kit CRUD
+Feature: CRUD
   As a content architect
-  I want to be able to create custom entity types
+  I want to be able to create, update, read, and delete entity types, bundles and entities
   so my content will be as lean and specific as possible.
   
   Background:
