@@ -1,4 +1,4 @@
-@api
+@api @crud
 Feature: CRUD
   As a content architect
   I want to be able to create, update, read, and delete entity types, bundles and entities
@@ -20,7 +20,7 @@ Feature: CRUD
     And I fill in "Machine-readable name" with "test_12587"
     And I check "Title"
     And I press the "Save" button
-    And I should see the text "Entity type Test 12587 has been updated."
+    Then I should see the text "Entity type Test 12587 has been updated."
     
     Given I visit "/admin/structure/entity-type"
     Then I should see the text "Test 12587"
