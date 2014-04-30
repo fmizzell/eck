@@ -123,10 +123,6 @@ function eck_entity_type_features_rebuild($module) {
 
       $entity_type->save();
     }
-
-    drupal_get_schema(NULL, TRUE);
-    entity_info_cache_clear();
-    menu_rebuild();
   }
 }
 
@@ -236,10 +232,6 @@ function eck_bundle_features_rebuild($module) {
       }
       $bundle->save();
     }
-
-    drupal_get_schema(NULL, TRUE);
-    entity_info_cache_clear();
-    menu_rebuild();
   }
 }
 

@@ -225,11 +225,7 @@ function eck__entity_type__form_submit($form, &$state) {
 
     $entity_type->save();
 
-    // Clear info caches in order to pick up newly created entities.
-    drupal_get_schema(NULL, TRUE);
-    entity_info_cache_clear();
-    menu_rebuild();
-    if ($entity_type->is_new) {
+    if($entity_type->is_new){
       drupal_set_message(t('Entity type %entity_type has been created.', array('%entity_type' => $entity_type->label)));
     }
     else {

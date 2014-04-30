@@ -41,9 +41,16 @@ function eck_views_api() {
 }
 
 /**
- * Implements eck_default_properties().
+ * Implements hook_flush_caches().
  */
-function eck_eck_default_properties() {
+function eck_flush_caches() {
+  // Reload all ECK entity types.
+  EntityType::loadAll(NULL, TRUE);
+  // Reload all Bundles.
+  Bundle::loadAll(NULL, TRUE);
+}
+
+function eck_eck_default_properties(){
   $default_properties = array();
 
   $default_properties['title'] = array(
