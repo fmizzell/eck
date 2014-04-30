@@ -157,11 +157,19 @@ function eck__bundle__list($entity_type) {
       if (eck__multiple_access_check($perm_check)) {
         $allowed_operations = l(t('delete'), $uri . "/delete");
       }
-
-      $rows[] = array(
-        l($bundle_label, url($uri, array('absolute' => TRUE))),
-        $allowed_operations,
+      
+      $perm_check = array(
+        'eck administer entities',
+        'eck list entities',
       );
+      if (eck__multiple_access_check($perm_check)) {
+        $label =  l($bundle_label, url($uri, array('absolute' => TRUE)));
+      }
+      else {
+         $label = $bundle_label;
+      }
+
+      $rows[] = array($label, $allowed_operations);
     }
 
     $build['bundle_table'] = array(

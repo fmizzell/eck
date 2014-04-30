@@ -70,11 +70,15 @@ function eck__entity_type__list() {
     if (eck__multiple_access_check(array('eck administer entity types', 'eck delete entity types'))) {
       $allowed_operations = l(t("delete"), "{$path}/{$entity_type->name}/delete");
     }
+    
+    if (eck__multiple_access_check(array('eck administer entity types', 'eck administer bundles', 'eck list bundles'))) {
+      $label = l(t("{$entity_type->label}"), "{$path}/{$entity_type->name}");
+    }
+    else {
+      $label = t("{$entity_type->label}");
+    }
 
-    $rows[] = array(
-      l(t("{$entity_type->label}"), "{$path}/{$entity_type->name}"),
-      $allowed_operations,
-    );
+    $rows[] = array($label, $allowed_operations);
   }
 
   $build['entity_table'] = array(
