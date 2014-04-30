@@ -62,6 +62,9 @@ function eck_schema() {
 
   $schema = array();
 
+  // Schema for an eck only cache table.
+  $schema['cache_eck'] = drupal_get_schema_unprocessed('system', 'cache');
+
   // Schema for the eck table.
   $schema['eck_entity_type'] = array(
     'description' => "The base table for entity type information",
@@ -530,5 +533,13 @@ function eck_update_7009() {
     'initial' => serialize(array()),
     'not null' => TRUE,
   ));
+}
+
+/**
+ * Add an eck cache table.
+ **/
+function eck_update_7010() {
+  $schema = drupal_get_schema_unprocessed('system', 'cache');
+  db_create_table('cache_eck', $schema);
 }
 

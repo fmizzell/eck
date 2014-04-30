@@ -284,7 +284,10 @@ class EntityType extends DBObject{
     }
     
     parent::save();
+    EntityType::loadAll(NULL, TRUE);
     drupal_get_schema(NULL, TRUE);
+    entity_info_cache_clear();
+    variable_set('menu_rebuild_needed', TRUE);
   }
   
   public function delete(){
@@ -301,27 +304,60 @@ class EntityType extends DBObject{
     // Allow other modules to respond to the deletion of entity types.
     module_invoke_all('eck_entity_type_delete', $this);
 
+    drupal_get_schema(NULL, TRUE);
     drupal_flush_all_caches();
   }
   
-  public static function loadByName($name){
-    $self = new EntityType();
-    $self->load('name', $name);
-    // If the entity type is new, then we return false, as it is not a successful load.
-    if($self->is_new){
-      return FALSE;
-    }
-    return $self;
+  public static function loadByName($name) {
+    return EntityType::loadAll($name);
   }
+
+  public static function loadAll($entity_type_name = '', $reset = FALSE) {
+    static $entity_types;
+
+    if ($reset) {
+      $entity_types = NULL;
+      // Clear all languages.
+      cache_clear_all('entity_types', 'cache_eck', TRUE);
+    }
+
+    if (!isset($entity_types)) {
+      if ($cached = cache_get("entity_types", 'cache_eck')) {
+        $entity_types = $cached->data;
+      }
+      else {
+        $entity_types = array();
+        $results = db_select('eck_entity_type', 't')
+          ->fields('t', array('name'))
+          ->execute();
+
+        foreach($results as $result){
+          $name = $result->name;
+          $entity_type = new EntityType();
+          $entity_type->load('name', $name);
+          $entity_types[$name] = $entity_type;
+        }
+        cache_set("entity_types", $entity_types, 'cache_eck');
+      }
+    }
+
+    if (!$entity_type_name) {
+      return $entity_types;
+    }
   
-  public static function loadAll(){
+    if (isset($entity_types[$entity_type_name])) {
+      return $entity_types[$entity_type_name];
+    }
+  }
+
+  public static function loadAll() {
     $results = db_select('eck_entity_type', 't')
     ->fields('t', array('name'))
     ->execute();
     
     $entity_types = array();
     
-    foreach($results as $result){
+    foreach ($results as $result) {
       $name = $result->name;
       $entity_types[] = EntityType::loadByName($name);
     }
@@ -365,9 +401,9 @@ class Bundle extends DBObject{
       
       //if this bundle is_new we need to check that it does not exist
       //@todo we just need to change the field in the db to be unique
-      if($this->is_new){
+      if ($this->is_new) {
         $bundle = Bundle::loadByMachineName($this->machine_name);
-        if(!$bundle->is_new){
+        if (!empty($bundle) && !$bundle->is_new) {
           $save = FALSE;
         }
       }
@@ -378,6 +414,10 @@ class Bundle extends DBObject{
       
       if($save){
         parent::save();
+        Bundle::loadAll(NULL, TRUE);
+        drupal_get_schema(NULL, TRUE);
+        entity_info_cache_clear();
+        variable_set('menu_rebuild_needed', TRUE);
       }else{
         //@todo throw some error
       }
@@ -411,6 +451,12 @@ class Bundle extends DBObject{
     menu_rebuild();
     drupal_flush_all_caches();
   }
+
+  public function delete() {
+    parent::delete();
+    drupal_get_schema(NULL, TRUE);
+    drupal_flush_all_caches();
+  }
   
   /**
    * This method returns a bundle object
@@ -419,41 +465,61 @@ class Bundle extends DBObject{
    *  "{$entity_type_name}_{$bundle_name}"
    */
   public static function loadByMachineName($machine_name){
-    $self = new Bundle();
-    $self->load('machine_name', $machine_name);
-    return $self;
+    return Bundle::loadAll($machine_name);
   }
   
-  public static function loadAll(){
-    //@todo move this to a general function
-    $results = db_select('eck_bundle', 't')
-    ->fields('t', array('machine_name'))
-    ->execute();
-    
-    $bundles = array();
-    
-    foreach($results as $result){
-      $name = $result->machine_name;
-      $bundles[] = Bundle::loadByMachineName($name);
+  public static function loadAll($machine_name = NULL, $reset = FALSE) {
+    static $bundles;
+
+    if ($reset) {
+      $bundles = NULL;
+      // Clear all languages.
+      cache_clear_all('bundles', 'cache_eck', TRUE);
     }
-    return $bundles;
+
+    if (!isset($bundles)) {
+      if ($cached = cache_get("bundles", 'cache_eck')) {
+        $bundles = $cached->data;
+      }
+      else {
+        $bundles = array();
+        //@todo move this to a general function.
+        $results = db_select('eck_bundle', 't')
+          ->fields('t', array('machine_name'))
+          ->execute();
+
+        foreach($results as $result){
+          $name = $result->machine_name;
+          $bundle = new Bundle();
+          $bundle->load('machine_name', $name);
+          $bundles[$name] = $bundle;
+        }
+        cache_set("bundles", $bundles, 'cache_eck');
+      }
+    }
+
+    if (!$machine_name) return $bundles;
+
+    if (isset($bundles[$machine_name])) return $bundles[$machine_name];
   }
-  
+
   public static function loadByEntityType($entity_type){
-    //@todo move this to a general function
-    $results = db_select('eck_bundle', 't')
-    ->fields('t', array('name'))
-    ->condition('entity_type', $entity_type->name, '=')
-    ->execute();
-    
-    $bundles = array();
-    
-    foreach($results as $result){
-      $name = $result->name;
-   
-      $bundles[] = Bundle::loadByMachineName("{$entity_type->name}_{$name}");
+    $entity_bundles = &drupal_static(__FUNCTION__, array());
+
+    $entity_type_name = $entity_type->name;
+
+    if (!isset($entity_bundles[$entity_type_name])) {
+      $entity_bundles[$entity_type_name] = array();
+      $bundles = Bundle::loadAll();
+      $entity_bundles[$entity_type_name] = array_filter(
+        $bundles,
+        function ($bundle) use ($entity_type_name) {
+          return $entity_type_name == $bundle->entity_type;
+        }
+      );
     }
-    return $bundles;
+
+    return (isset($entity_bundles[$entity_type_name])) ? $entity_bundles[$entity_type_name] : array();
   }
 
  /**

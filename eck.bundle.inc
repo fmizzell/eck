@@ -258,10 +258,6 @@ function eck__bundle__add_submit($form, &$form_state) {
   drupal_set_message(t('the %bundle for entity type %entity_type has been saved', 
   array('%bundle' => $bundle_name, '%entity_type' => $entity_type->name)));
 
-  drupal_get_schema(NULL, TRUE);
-  entity_info_cache_clear();
-  menu_rebuild();
-
   $form_state['redirect'] = "{$path}/{$entity_type->name}";
 }
 
@@ -337,7 +333,7 @@ function eck__bundle__edit_form_submit($form, &$form_state) {
 function eck__bundle__delete($entity_type, $bundle){
   //and finally we delete the bundle from the eck_type table
   $bundle->delete();
-  
+
   drupal_set_message("The bundle '{$bundle->name}' from the entity type '{$entity_type->name}' has been deleted");
 }
 
