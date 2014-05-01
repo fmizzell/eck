@@ -551,9 +551,17 @@ function eck_update_7010() {
 }
 
 /**
+ * Eliminating the multiple primary ids in the bundle and entity type tables.
+ */
+function eck_update_7011() {
+  db_add_unique_key("eck_entity_type", "name", array('name'));
+  db_add_unique_key("eck_bundle", "machine_name", array('machine_name')); 
+}
+
+/**
  * Install the eck_permissions module
  **/
-function eck_update_7011() {
+function eck_update_7012() {
   module_enable(array("eck_permissions"));
   //and lets clear the cache
   drupal_flush_all_caches();
@@ -562,7 +570,7 @@ function eck_update_7011() {
 /**
  * Update global permissions from 2.x to 3.x.
  **/
-function eck_update_7012() {
+function eck_update_7013() {
     //lets get all eck related permissions
   $query = db_select('role_permission', 't');
   $query->fields('t', array('rid', 'permission', 'module'));
@@ -639,12 +647,3 @@ function eck_update_7012() {
     ->execute();
   }
 }
-
-/**
- * Eliminating the multiple primary ids in the bundle and entity type tables.
- */
-function eck_update_7013() {
-  db_add_unique_key("eck_entity_type", "name", array('name'));
-  db_add_unique_key("eck_bundle", "machine_name", array('machine_name')); 
-}
-
