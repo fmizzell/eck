@@ -1,17 +1,17 @@
 <?php
-module_load_include('inc', 'eck', 'eck.classes');
 /**
  * @file
  * All of the menu, pages, and forms related to bundle administration.
  */
 
+module_load_include('inc', 'eck', 'eck.classes');
+
 /**
- * This function creates the menu items relevant to bundle administration
+ * This function creates the menu items relevant to bundle administration.
  *
- * @param $entity_type
- *  (Object) as returned by eck__entity_type__load()
+ * @param /EntityType $entity_type
+ *   As returned by eck__entity_type__load().
  *
- * This function called is triggered from hook_menu()
  * @see eck_menu()
  */
 function eck__bundle__menu($entity_type) {
@@ -36,7 +36,8 @@ function eck__bundle__menu($entity_type) {
   $menu["{$path}/{$entity_type->name}/delete"] = array(
     'title' => "Delete",
     'description' => "Delete the '{$entity_type->label}' Entity Type",
-    'page callback' => "drupal_get_form",//"eck__entity_type__delete",
+    // "eck__entity_type__delete",
+    'page callback' => "drupal_get_form",
     'page arguments' => array("eck__entity_type__delete_form", $entity_type->name),
     'access callback' => 'eck_access',
     'access arguments' => array("delete", "entity_type", $entity_type),
@@ -127,7 +128,7 @@ function eck__bundle__menu($entity_type) {
   
   // LIST bundles of an entity type.
   $menu["{$path}/{$entity_type->name}"] = array(
-    'title' => "{$entity_type->label}" ,
+    'title' => "{$entity_type->label}",
     'description' => "View all the bundles for '{$entity_type->label}'",
     'page callback' => "eck__bundle__list",
     'page arguments' => array(3),
@@ -135,13 +136,12 @@ function eck__bundle__menu($entity_type) {
     'access arguments' => array('list', 'bundle'),
     'file' => 'eck.bundle.inc'
   );
-  
+
   $menu["{$path}/{$entity_type->name}/list"] = array(
     'title' => 'Bundle List',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 100,
   );
-
   
   //ADD bundles to an entity type
   $menu["{$path}/{$entity_type->name}/add"] = array(
@@ -153,7 +153,7 @@ function eck__bundle__menu($entity_type) {
     'access arguments' => array('create', 'bundle'),
     'type' => MENU_LOCAL_ACTION,
     'weight' => 0,
-    'file' => 'eck.bundle.inc'
+    'file' => 'eck.bundle.inc',
   );
 
   module_load_include('inc', 'eck', 'eck.entity');
@@ -165,11 +165,12 @@ function eck__bundle__menu($entity_type) {
 }
 
 /**
- * Page call back for the bundle overview table (to see and manipulate all created label of
- * a given type)
+ * Page call back for the bundle overview table.
  *
- * @param entity_type
- *  (String) entity type
+ * to see and manipulate all created label of a given type.
+ *
+ * @param string $entity_type
+ *   The name of the entity type.
  */
 function eck__bundle__list($entity_type) {
   $path = eck__entity_type__path();
@@ -180,18 +181,19 @@ function eck__bundle__list($entity_type) {
   {
     
     $header = array(t('Type'), array('data' => t('Operations'), 'colspan' => '1'));
+
     $rows = array();
-    
+
     $bundles = Bundle::loadByEntityType($entity_type);
-    usort($bundles,'eck_alphabetical_cmp');
-    
+    usort($bundles, 'eck_alphabetical_cmp');
+
     foreach ($bundles as $bundle) {
-      $bundle_label =  $bundle->label;
+      $bundle_label = $bundle->label;
 
       $admin_info = get_bundle_admin_info($entity_type->name, $bundle->name);
 
       $uri = $admin_info['path'];
-      
+
       $allowed_operations = '';
       //Check that the user has permissions to delete:
       if(eck_access('delete', 'bundle', $bundle)){
@@ -204,7 +206,7 @@ function eck__bundle__list($entity_type) {
         $rows[] = array($bundle_label, $allowed_operations);
       }
     }
- 
+
     $build['bundle_table'] = array(
       '#theme' => 'table',
       '#header' => $header,
@@ -212,20 +214,11 @@ function eck__bundle__list($entity_type) {
     );
   }
 
-
-
   return $build;
 }
 
 /**
- * ADD Entity types.
- *
- * @param $form
- *  Form array provided by the Form API
- * @param $form_state
- *  array provided by the Form API
- * @param entity_type
- *  (String) entity type
+ * Bundle add from callback.
  */
 function eck__bundle__add($form, &$form_state, $entity_type) {
   $entity_type = entity_type_load($entity_type);
@@ -246,7 +239,7 @@ function eck__bundle__add($form, &$form_state, $entity_type) {
     '#machine_name' => array(
       'exists' => '_eck_fake_exists',
       'source' => array('bundle_label'),
-    )
+    ),
   );
 
   $form['#validate'][] = 'eck__bundle__add_validate';
@@ -261,38 +254,28 @@ function eck__bundle__add($form, &$form_state, $entity_type) {
 }
 
 /**
- * Validation for bundle creation (Make sure this bundle don't exist for thie entity type)
- *
- * @param $form
- *  Form array provided by the Form API
- * @param $form_state
- *  array provided by the Form API
+ * Bundle add form validation callback.
  */
 function eck__bundle__add_validate($form, &$form_state) {
   $entity_type = $form_state['values']['entity_type'];
- 
 
   // The type does not have to be unique in the table, but it should be unique
   // to its entity so we will check that here.
   foreach (Bundle::loadByEntityType($entity_type) as $bundle) {
-    
+
     if ($bundle->name == $form_state['values']['bundle_name']) {
-      form_set_error('bundle', t("bundle {$bundle->label} already exists for this entity type"));
+      form_set_error('bundle', t("bundle @bundle_name already exists for this entity type",
+        array("@bundle_name" => $bundle->name)));
     }
   }
 }
 
 /**
- * Submit function for add form
- *
- * @param $form
- *  Form array provided by the Form API
- * @param $form_state
- *  array provided by the Form API
+ * Add bundle form callback.
  */
 function eck__bundle__add_submit($form, &$form_state) {
   $path = eck__entity_type__path();
-  
+
   $entity_type = $form_state['values']['entity_type'];
   $bundle_name = $form_state['values']['bundle_name'];
   $bundle_label = $form_state['values']['bundle_label'];
@@ -315,54 +298,107 @@ function eck__bundle__add_submit($form, &$form_state) {
 }
 
 /**
- * Delete the bundle of a given entity type
- * @param $entity_type
- *  (EntityType) The entity type of the bundle that will be deleted
- *  the entity type object can be loaded by using EntityType::loadByName($entity_type_name)
- * @param  $bundle
- *  (Bundle) The bundle to be deleted, the Bundle object can be loaded by using 
- *  Bundle::loadByMachingName($bundle_machine_name)
- * 
- * for more information on the EntityType and Bundle classes look at eck.classes.inc
+ * Form constructor for the entity bundle editing form.
+ *
+ * @param string $entity_type_name
+ *   Entity type name.
+ * @param string $bundle_name
+ *   Entity bundle name.
  */
-function eck__bundle__delete($entity_type, $bundle){
-  //and finally we delete the bundle from the eck_type table
+function eck__bundle__edit_form($form, &$form_state, $entity_type_name, $bundle_name) {
+  $path = eck__entity_type__path();
+  $entity_type = entity_type_load($entity_type_name);
+  $bundle = bundle_load($entity_type_name, $bundle_name);
+  $form = array();
+
+  $form['entity_type'] = array(
+    '#type' => 'value',
+    '#value' => $entity_type,
+  );
+
+  $form['bundle'] = array(
+    '#type' => 'value',
+    '#value' => $bundle,
+  );
+
+  // Let the behaviors to modify form.
+  $vars = eck_property_behavior_invoke_plugin_alter($entity_type, 'bundle_form', array('form' => $form, 'form_state' => $form_state));
+  $form = $vars['form'];
+  $form_state = $vars['form_state'];
+
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save bundle'),
+    '#weight' => 40,
+  );
+  return $form;
+}
+
+/**
+ * Budle edit form submit callback.
+ */
+function eck__bundle__edit_form_submit($form, &$form_state) {
+  $bundle = $form_state['values']['bundle'];
+  // Save all form values starting from 'config_' to the $bundle->config array.
+  $bundle_config = array();
+  foreach ($form_state['values'] as $name => $value) {
+    if (strpos($name, 'config_') === 0) {
+      // We don't need 'config_' prefix.
+      $bundle_config[substr($name, 7)] = $form_state['values'][$name];
+    }
+  }
+  $bundle->config = $bundle_config;
+  // Save the bundle object to the database.
+  $bundle->save();
+}
+
+/**
+ * Delete the bundle of a given entity type.
+ *
+ * @param \EntityType $entity_type
+ *   The entity type of the bundle that will be deleted.
+ * @param \Bundle $bundle
+ *   The bundle to be deleted.
+ *
+ * @see eck.classes.inc
+ */
+function eck__bundle__delete($entity_type, $bundle) {
+  // And finally we delete the bundle from the eck_type table.
   $bundle->delete();
   
   drupal_get_schema(NULL, TRUE);
   variable_set('menu_rebuild_needed', TRUE);
   drupal_flush_all_caches();
-  
+
   drupal_set_message("The bundle '{$bundle->name}' from the entity type '{$entity_type->name}' has been deleted");
 }
 
+/**
+ * Bundle delete form callback.
+ */
 function eck__bundle__delete_form($form, &$form_state, $entity_type_name, $bundle_name) {
-    $path = eck__entity_type__path();
-    $entity_type = entity_type_load($entity_type_name);
-    $bundle = bundle_load($entity_type_name, $bundle_name);
-    
-    /*dpm($entity_type);
-    dpm($bundle);*/
-    
-  $form['entity_type'] =
-      array(
-        '#type' => 'value',
-        '#value' => $entity_type,
+  $path = eck__entity_type__path();
+  $entity_type = entity_type_load($entity_type_name);
+  $bundle = bundle_load($entity_type_name, $bundle_name);
+
+  $form['entity_type'] = array(
+    '#type' => 'value',
+    '#value' => $entity_type,
   );
 
-  $form['bundle'] =
-      array(
-        '#type' => 'value',
-        '#value' => $bundle,
+  $form['bundle'] = array(
+    '#type' => 'value',
+    '#value' => $bundle,
   );
 
-  $form['submit_redirect'] =
-  array(
+  $form['submit_redirect'] = array(
     '#type' => 'value',
     '#value' => "{$path}/{$entity_type->name}",
   );
 
-  $message = t("Are you sure that you want to delete the bundle '{$bundle->name}'");
+  $message = t("Are you sure that you want to delete the bundle '@bundle_name'",
+    array("@bundle_name" => $bundle->name));
 
   $caption = t("All of the data (entities) associated with this bundle
   will be deleted. This action cannot be undone.");
@@ -371,12 +407,7 @@ function eck__bundle__delete_form($form, &$form_state, $entity_type_name, $bundl
 }
 
 /**
- * Sumbmit function for the delete functionality
- *
- * @param $form
- *  Form array provided by the Form API
- * @param $form_state
- *  array provided by the Form API
+ * Submit form callback to delete bundles.
  */
 function eck__bundle__delete_form_submit($form, &$form_state) {
   $entity_type = $form_state['values']['entity_type'];
@@ -385,46 +416,51 @@ function eck__bundle__delete_form_submit($form, &$form_state) {
 
   eck__bundle__delete($entity_type, $bundle);
 
-  // Ok, lets delete the entity
+  // Ok, lets delete the entity.
   $form_state['redirect'] = $submit_redirect;
 }
 
-function eck__bundle__field_autocomplete($entity_type, $bundle, $string = ""){
+/**
+ * Autocomplete functionality for entities using field labels.
+ */
+function eck__bundle__field_autocomplete($entity_type, $bundle, $string = "") {
   $field_label = get_bundle_field_label_info($entity_type, $bundle);
   $matches = array();
-  
-  if($field_label){
+
+  if ($field_label) {
     $field = $field_label['field'];
     $language = $field_label['language'];
     $delta = $field_label['delta'];
     $column = $field_label['column'];
     $query = new EntityFieldQuery();
-    //TODO: Remove the addmetadata() call below once http://drupal.org/node/997394 is fixed.
+    // @todo Remove the addmetadata() call below once
+    // http://drupal.org/node/997394 is fixed.
     $query->addMetadata('account', user_load(1));
 
-    $query->entityCondition('entity_type', $entity_type->name, '=')
-    ->entityCondition('bundle', $bundle->name, '=')
-    ->fieldCondition($field, $column, $string, 'CONTAINS');
-    
+    $query->entityCondition('entity_type', $entity_type->name, '=')->entityCondition('bundle', $bundle->name, '=')->fieldCondition($field, $column, $string, 'CONTAINS');
+
     $results = $query->execute();
-    
+
     $entities = entity_load($entity_type->name, array_keys($results[$entity_type->name]));
-    foreach($entities as $id => $entity){
+    foreach ($entities as $id => $entity) {
       $matches[$id] = $entity->{$field}[$language][$delta][$column];
     }
   }
-  
+
   drupal_json_output($matches);
 }
 
-function get_bundle_field_label_info($entity_type, $bundle){
-  
+/**
+ * Helper function to determine if an entity wants to define a field as lable.
+ */
+function get_bundle_field_label_info($entity_type, $bundle) {
+
   $info = entity_get_info();
-  
-  if(array_key_exists('field label', $info[$entity_type->name]['bundles'][$bundle->name])){
+
+  if (array_key_exists('field label', $info[$entity_type->name]['bundles'][$bundle->name])) {
     return $info[$entity_type->name]['bundles'][$bundle->name]['field label'];
   }
-  else{
+  else {
     return NULL;
   }
 }

@@ -20,7 +20,7 @@ function eck__properties($entity_type_name){
     'behavior' => t('Behaviour'),
     'operations' => t('Operations')
   );
-  
+
   $options = array();
   //lets process default properties first
   foreach($default_properties as $machine_name => $info){
@@ -106,20 +106,14 @@ function eck__property_add__form($form, &$state, $entity_type_name){
   $types[t('Generic')] = $property_type_options;
  
   $form["add_new_property"] = array(
-    '#markup' => '<h3>Add new property</h3>'
+    '#markup' => '<h3>Add new property</h3>',
   );
 
-   $form['property_type'] = array(
+  $form['property_type'] = array(
     '#type' => 'select',
     '#title' => t('Type'),
     '#options' => array('' => t('- Please choose -')) + $types,
     '#required' => TRUE,
-    //'#after_build' => array('_eck_deactivate_on_save'),
-    /*'#ajax' => array(
-      'callback' => 'eck_properties_property_config',
-      'wrapper' => 'eck-property-config',
-      'method' => "replace"
-    )*/
   );
    
  $form['property_select_type'] = array(
@@ -315,16 +309,20 @@ function eck_properties_property_config($form, &$state){
   return $form['eck_property_config2'];
 }
 
-function eck__properties__form_validate($form, &$state){
-  if($state['values']['op'] == t('Add Property')){
+/**
+ * Properties form validation callback.
+ */
+function eck__properties__form_validate($form, &$state) {
+  if ($state['values']['op'] == t('Add Property')) {
     if (isset($state['values']['property_behavior'])) {
       $property_behavior = $state['values']['property_behavior'];
       $behavior_plugins = ctools_get_plugins('eck', 'property_behavior');
       if (isset($behavior_plugins[$property_behavior]['unique']) && $behavior_plugins[$property_behavior]['unique']) {
         foreach ($state['values']['new_properties'] as $property_name => $property_info) {
           if ($property_info['behavior'] == $property_behavior) {
-            form_set_error('property_behavior', t('There can be only one property with \'@name\' behavior per entity.',
-              array('@name' => $behavior_plugins[$property_behavior]['label'])));
+            form_set_error('property_behavior',
+              t("There can be only one property with '@name' behavior per entity.",
+                array('@name' => $behavior_plugins[$property_behavior]['label'])));
           }
         }
       }
@@ -332,31 +330,36 @@ function eck__properties__form_validate($form, &$state){
   }
 }
 
-function eck__properties__form_submit($form, &$state){
-  if($state['values']['op'] == t('Add Property')) {
+/**
+ * Properties form submit callback.
+ */
+function eck__properties__form_submit($form, &$state) {
+  if ($state['values']['op'] == t('Add Property')) {
     $state['rebuild'] = TRUE;
   }
-  else if($state['values']['op'] == t('Save')) {
-    //Here we want to add the properties to the entity type and save it
+  elseif ($state['values']['op'] == t('Save')) {
+    // Here we want to add the properties to the entity type and save it.
     $entity_type = $state['values']['entity_type'];
-    //dpm($entity_type, "Entity Type");
-    
-    foreach($state['values']['new_properties_table'] as $property => $active){
-      if($active){
+
+    foreach ($state['values']['new_properties_table'] as $property => $active) {
+      if ($active) {
         $info = $state['values']['new_properties'][$property];
-        if(array_key_exists('behavior', $info)){
+        if (array_key_exists('behavior', $info)) {
           $entity_type->addProperty($property, $info['label'], $info['type'], $info['behavior']);
-        }else{
+        }
+        else {
           $entity_type->addProperty($property, $info['label'], $info['type']);
         }
-      }else{
+      }
+      else {
         $entity_type->removeProperty($property);
       }
     }
-    
+
     $entity_type->save();
-    
-    //lets flush the cache so new behaviors and properties will get set up correctly
+
+    // Lets flush the cache so new behaviors and properties will get set up
+    // correctly.
     drupal_flush_all_caches();
   }
 }

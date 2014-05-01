@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * ECK's API documentation.
+ */
 
 
 /**
@@ -32,6 +36,7 @@ function hook_eck_entity_type_delete(EntityType $entity_type) {
 }
 
 /**
+<<<<<<< HEAD
  * Defines ECK property widget types.
  * 
  * @return
@@ -70,7 +75,7 @@ function hook_eck_property_widget_info() {
 /**
  * Alters the widget type info returned by hook_eck_property_widget_info().
  */
-function hook_eck_property_widget_info(&$widget_types) {
+function hook_eck_property_widget_info_alter(&$widget_types) {
   // Change the label on the text widget type.
   $widget_types['text']['label'] = t('Property text box');
   // Add a newly defined property type to the allowed property types for the text widget. 
@@ -125,19 +130,6 @@ function hook_eck_property_widget_form(&$form, &$form_state, $property_name, $bu
 }
 
 /**
- * Alters the property widget form. Called for every widget type.
- * 
- * @param $element
- *   A reference to the property widget's form element.
- * @param form_state
- *   A reference to the current state of the form.
- * @param $context
- *   An array containing contextual information.
- */
-function hook_eck_property_widget_form(&$element, $form_state, $context) {
-}
-
-/**
  * Alters the property widget form. Called for the specific WIDGET_TYPE widget.
  * 
  * @param $element
@@ -169,19 +161,68 @@ function hook_eck_property_types(){
   return $property_types;
 }
 
-
-
 /**
- * Default properties, are prebuild properties with a schema and a behavior
+ * Defines default properties.
+ * 
+ * A default property shows up in the property select list when a user is
+ * first creating an entity type. These are meant to be commonly use properties
+ * that we don't want to configure constantly. There is nothing special about
+ * default properties, they are just meant to save time.
+ * 
+ * There is also an ALTER version of this hook.
  */
 function hook_eck_default_properties(){
-  
-  $default_properties['property_machine_name'] =
-  array(
-    'label' => "Property Label",
-    'type' => "property_type",
-    'behavior' => 'property_behavior'
+  $default_properties = array();
+
+  $default_properties['machine_name'] = array(
+    'label' => "My Default Property",
+    // @see eck_property_types().
+    'type' => "text",
+    // To find all of the behaviors that are available, you can use
+    // ctools_get_plugins('eck', 'property_behavior');
+    // or look at the interface under "manage properties"
+    'behavior' => 'some_behavior',
   );
-  
-  return $default_properties;
+}
+
+/**
+ * Change an entity's label dynamically.
+ * 
+ * More constrained versions of this hook also exist:
+ * hook_eck_entity_<entity_type>_label
+ * hook_eck_entity_<entity_type>_<bundle>_label
+ * 
+ * This hook is mainly useful for dynamic labels, or for using values
+ * in a field as labels.
+ * 
+ * If you are storing the label of the entity in a property already, you 
+ * should modify the entity_info array's label key, instead of using this hook.
+ * 
+ * @param Entity $entity
+ *   The entity object.
+ * @param int $entity_id
+ *   The id of the entity.
+ * 
+ * @return mixed
+ *   The label for the entity.
+ */
+function hook_eck_entity_label($entity, $entity_id){
+  return "Somethins that should be the label for this entity";
+}
+
+/**
+ * Give the schema for your custom properties.
+ * @param type $schema
+ * @param type $type
+ */
+function hook_eck_property_type_schema_alter(&$schema, $type){
+  if($type == 'email'){
+    $schema = array(
+      'description' => 'An email',
+      'type' => 'varchar',
+      'length' => 256,
+      'not null' => TRUE,
+      'default' => ''
+    );
+  }
 }
