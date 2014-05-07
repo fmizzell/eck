@@ -124,6 +124,7 @@ function eck__entity__menu($entity_type, $bundle) {
       'description' => "{$action_label} an entity of type {$entity_type->label} with bundle {$bundle->label}",
       'page callback' => "eck__entity__{$action}",
       'page arguments' => $args,
+      'load arguments' => array($entity_type->name),
       'access callback' => 'eck_access',
       'access arguments' => $perm_args,
       'file' => 'eck.entity.inc',

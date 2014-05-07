@@ -982,7 +982,7 @@ function eck_entity_delete($entity, $entity_type) {
   }
 }
 
-function eck_entity_view_alter(&$view){
+function eck_entity_view_alter(&$build){
   $entity_types = EntityType::loadAll();
   
   $this_entity_type = $build['#entity_type'];

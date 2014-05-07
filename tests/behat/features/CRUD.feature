@@ -40,6 +40,12 @@ Feature: CRUD
   @entity
   Scenario: I am able to create and view entities
     Given I visit "/admin/structure/entity-type/test_12587/bundle_19756"
+    And I click "Manage fields"
+    And I fill in "edit-fields-eck-add-extra-field-field-name" with "title"
+    And I fill in "edit-fields-eck-add-extra-field-label" with "Title"
+    And I fill in "edit-fields-eck-add-extra-field-widget-type" with "text"
+    And I press the "Save" button
+    And I click "Entity List"
     And I click "Add Bundle 19756"
     And I fill in "Title" with "Entity 1239"
     And I press the "Save" button
