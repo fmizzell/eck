@@ -19,7 +19,7 @@ Feature: Permissions
     And I click <add_link>
     And I fill in "Title" with <entity_title>
     And I press the "Save" button
-    And the cache has been cleared
+    And I visit "admin/people/permissions"
 
     Examples: 
       | type_label | type      | bundle_label | bundle | entity_title   | link                                       | add_link  |
@@ -71,11 +71,11 @@ Feature: Permissions
     When I click <type_label>
     Then I should get a "200" HTTP response
 
-    Examples:
-    | type_label |
-    | "Vehicle"  |
-    | "Animal"   |
-  
+    Examples: 
+      | type_label |
+      | "Vehicle"  |
+      | "Animal"   |
+
   @bundle
   Scenario: Users with the right permission can access the bundle's overview page (specific)
     Given I am logged in as a user with the "Use the administration pages and help,View Entity Type List,View List of Vehicle Bundles" permissions
@@ -91,7 +91,7 @@ Feature: Permissions
     Given I am logged in as a user with the "View Bundle Lists" permissions
     And I visit "/admin/structure/entity-type/vehicle"
     Then I should not see the link "Add bundle"
-    
+
   @bundle
   Scenario Outline: Users with the right permission can add bundles from the overview page (global)
     Given I am logged in as a user with the "View Bundle Lists,Add Bundles" permissions
@@ -100,10 +100,10 @@ Feature: Permissions
     When I click "Add bundle"
     Then I should get a "200" HTTP response
 
-  Examples:
-  |link                                    |
-  | "/admin/structure/entity-type/vehicle" |
-  | "/admin/structure/entity-type/animal"  |
+    Examples: 
+      | link                                   |
+      | "/admin/structure/entity-type/vehicle" |
+      | "/admin/structure/entity-type/animal"  |
 
   @bundle
   Scenario: Users with the right permission can add bundles from the overview page (specific)
@@ -112,10 +112,8 @@ Feature: Permissions
     Then I should see the link "Add bundle"
     When I click "Add bundle"
     Then I should get a "200" HTTP response
-    
     And I visit "/admin/structure/entity-type/animal"
     Then I should not see the link "Add bundle"
-
 
   @bundle
   Scenario: Users without the right permission can not delete bundles from the overview page
@@ -130,11 +128,11 @@ Feature: Permissions
     Then I should see the link "delete"
     When I click "delete"
     Then I should get a "200" HTTP response
-    
-  Examples:
-  |link                                    |
-  | "/admin/structure/entity-type/vehicle" |
-  | "/admin/structure/entity-type/animal"  |
+
+    Examples: 
+      | link                                   |
+      | "/admin/structure/entity-type/vehicle" |
+      | "/admin/structure/entity-type/animal"  |
 
   @bundle
   Scenario: Users with the right permission can delete bundles from the overview page (specific)
@@ -143,7 +141,6 @@ Feature: Permissions
     Then I should see the link "delete"
     When I click "delete"
     Then I should get a "200" HTTP response
-
     And I visit "/admin/structure/entity-type/animal"
     Then I should not see the link "delete"
 
@@ -162,10 +159,10 @@ Feature: Permissions
     When I click <link>
     Then I should get a "200" HTTP response
 
-  Examples:
-  | path                                   | link  |
-  | "/admin/structure/entity-type/vehicle" | "Car" |
-  | "/admin/structure/entity-type/animal"  | "Dog" |
+    Examples: 
+      | path                                   | link  |
+      | "/admin/structure/entity-type/vehicle" | "Car" |
+      | "/admin/structure/entity-type/animal"  | "Dog" |
 
   @entity
   Scenario: Users with the right permission can access the entity's overview page (specific)
@@ -174,7 +171,6 @@ Feature: Permissions
     Then I should see the link "Car"
     When I click "Car"
     Then I should get a "200" HTTP response
-  
     And I visit "/admin/structure/entity-type/animal"
     Then I should see the link "Dog"
     But I should see the text "Dog"
@@ -192,11 +188,11 @@ Feature: Permissions
     Then I should see the link <link>
     When I click <link>
     Then I should get a "200" HTTP response
-  
-  Examples:
-  | path                                       | link      |
-  | "/admin/structure/entity-type/vehicle/car" | "Add Car" |
-  | "/admin/structure/entity-type/animal/dog"  | "Add Dog" |
+
+    Examples: 
+      | path                                       | link      |
+      | "/admin/structure/entity-type/vehicle/car" | "Add Car" |
+      | "/admin/structure/entity-type/animal/dog"  | "Add Dog" |
 
   @entity
   Scenario: Users with the right permission can add entities from the overview page (specific)
@@ -205,7 +201,6 @@ Feature: Permissions
     Then I should see the link "Add Car"
     When I click "Add Car"
     Then I should get a "200" HTTP response
-
     And I visit "/admin/structure/entity-type/animal/dog"
     Then I should not see the link "Add Dog"
 
@@ -222,11 +217,11 @@ Feature: Permissions
     Then I should see the link "delete"
     When I click "delete"
     Then I should get a "200" HTTP response
-  
-  Examples:
-  | path                                       | 
-  | "/admin/structure/entity-type/vehicle/car" |
-  | "/admin/structure/entity-type/animal/dog"  | 
+
+    Examples: 
+      | path                                       |
+      | "/admin/structure/entity-type/vehicle/car" |
+      | "/admin/structure/entity-type/animal/dog"  |
 
   @entity
   Scenario: Users with the right permission can delete entities from the overview page (specific)
@@ -235,10 +230,9 @@ Feature: Permissions
     Then I should see the link "delete"
     When I click "delete"
     Then I should get a "200" HTTP response
-
     And I visit "/admin/structure/entity-type/animal/dog"
     Then I should not see the link "delete"
-  
+
   @cleanup
   Scenario Outline: This is a clean up step
     Given I am logged in as a user with the "administrator" role
