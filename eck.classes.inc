@@ -378,6 +378,7 @@ class EntityType extends DBObject {
     EntityType::loadAll(NULL, TRUE);
     drupal_get_schema(NULL, TRUE);
     entity_info_cache_clear();
+    entity_flush_caches();
     variable_set('menu_rebuild_needed', TRUE);
   }
 
@@ -397,8 +398,11 @@ class EntityType extends DBObject {
     // Allow other modules to respond to the deletion of entity types.
     module_invoke_all('eck_entity_type_delete', $this);
 
+    EntityType::loadAll(NULL, TRUE);
     drupal_get_schema(NULL, TRUE);
-    drupal_flush_all_caches();
+    entity_info_cache_clear();
+    entity_flush_caches();
+    variable_set('menu_rebuild_needed', TRUE);
   }
   
   public static function loadByName($name) {
@@ -538,8 +542,10 @@ class Bundle extends DBObject {
     field_attach_delete_bundle($this->entity_type, $this->name);
 
     parent::delete();
+    Bundle::loadAll(NULL, TRUE);
     drupal_get_schema(NULL, TRUE);
-    drupal_flush_all_caches();
+    entity_info_cache_clear();
+    variable_set('menu_rebuild_needed', TRUE);
   }
   
   /**

@@ -4,7 +4,6 @@
  * @file
  * Useful functions and hook implementations for ECK.
  */
-
 ctools_include('plugins');
 module_load_include('inc', 'eck', 'eck.classes');
 module_load_include('inc', 'eck', 'eck.entity_type');
@@ -834,4 +833,11 @@ function eck_entity_view_alter(&$build, $entity_type) {
  */
 function eck_alphabetical_cmp($a, $b) {
   return strcasecmp($a->name, $b->name);
+}
+
+function eck_init() {
+  if (variable_get("menu_rebuild_needed", FALSE)) {
+    variable_set("menu_rebuild_needed", FALSE);
+    menu_rebuild();
+  }
 }
