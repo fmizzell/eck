@@ -596,12 +596,12 @@ class Bundle extends DBObject {
     if (!isset($entity_bundles[$entity_type_name])) {
       $entity_bundles[$entity_type_name] = array();
       $bundles = Bundle::loadAll();
-      $entity_bundles[$entity_type_name] = array_filter(
-        $bundles,
-        function ($bundle) use ($entity_type_name) {
-          return $entity_type_name == $bundle->entity_type;
+      
+      foreach ($bundles as $bundle) {
+        if ($entity_type_name == $bundle->entity_type) {
+          $entity_bundles[$entity_type_name][] = $bundle; 
         }
-      );
+      }
     }
 
     return (isset($entity_bundles[$entity_type_name])) ? $entity_bundles[$entity_type_name] : array();
