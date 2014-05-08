@@ -161,6 +161,7 @@ function eck__bundle__list($entity_type) {
       $perm_check = array(
         'eck administer entities',
         'eck list entities',
+        "eck list {$entity_type->name} {$bundle->name} entities",
       );
       if (eck__multiple_access_check($perm_check)) {
         $label =  l($bundle_label, url($uri, array('absolute' => TRUE)));

@@ -19,7 +19,6 @@ Feature: Permissions
     And I click <add_link>
     And I fill in "Title" with <entity_title>
     And I press the "Save" button
-    And I visit "admin/people/permissions"
 
     Examples: 
       | type_label | type      | bundle_label | bundle | entity_title   | link                                       | add_link  |
@@ -28,6 +27,7 @@ Feature: Permissions
 
   @entity-type
   Scenario: Only allowed users can access the entity type's overview page
+    Given the cache has been cleared
     Given I am logged in as a user with the "Use the administration pages and help" permission
     And I visit "/admin/structure"
     Then I should not see the text "Entity types"
@@ -58,6 +58,7 @@ Feature: Permissions
 
   @bundle
   Scenario: Users without the right permission can not access the bundle's overview page
+    Given the cache has been cleared
     Given I am logged in as a user with the "Use the administration pages and help,View Entity Type List" permissions
     And I visit "/admin/structure/entity-type"
     Then I should see the text "Vehicle"
@@ -146,6 +147,7 @@ Feature: Permissions
 
   @entity
   Scenario: Users without the right permission can not access the entity's overview page
+    Given the cache has been cleared
     Given I am logged in as a user with the "View Bundle Lists" permissions
     And I visit "/admin/structure/entity-type/vehicle"
     Then I should see the text "Car"
@@ -166,13 +168,13 @@ Feature: Permissions
 
   @entity
   Scenario: Users with the right permission can access the entity's overview page (specific)
-    Given I am logged in as a user with the "View Bundle Lists,View Entity Lists" permissions
+    Given I am logged in as a user with the "View Bundle Lists,View List of Vehicle Car Entities" permissions
     And I visit "/admin/structure/entity-type/vehicle"
     Then I should see the link "Car"
     When I click "Car"
     Then I should get a "200" HTTP response
     And I visit "/admin/structure/entity-type/animal"
-    Then I should see the link "Dog"
+    Then I should not see the link "Dog"
     But I should see the text "Dog"
 
   @entity
