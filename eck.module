@@ -851,3 +851,18 @@ function eck_init() {
     menu_rebuild();
   }
 }
+
+/**
+ * Implements hook_system_info_alter().
+ *
+ * If there are entity types created, let's not let the user disable the module.
+ */
+function eck_system_info_alter(&$info, $file, $type) {
+  if($type == "module" && array_key_exists("name", $info) && $info['name'] == "Entity Construction Kit") {
+    $entity_types = EntityType::loadAll();
+    if(!empty($entity_types)) {
+      $info['required'] = TRUE;
+      $info['explanation'] = "Entity types created by ECK are still present in the system.";
+    }
+  }
+}
