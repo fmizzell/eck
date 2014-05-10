@@ -94,7 +94,8 @@ function eck__bundle__menu($entity_type) {
     'access callback' => 'eck__multiple_access_check',
     'access arguments' => array(array(
       'eck administer bundles',
-      'eck add bundles', 
+      'eck add bundles',
+      "eck administer {$entity_type->name} bundles",
       "eck add {$entity_type->name} bundles",
     )),
     'type' => MENU_LOCAL_ACTION,

@@ -215,10 +215,20 @@ function entity_table($entities, $select = FALSE) {
       $delete_path = str_replace('%eckentity', $id, $crud_info['delete']['path']);
       $allowed_operations .= (($allowed_operations) ? '<br />' : '') . l(t('delete'), $delete_path, array('query' => $destination));
     }
-    $uri = entity_uri($entity_type, $entity);
-    $row = array(
-      l(entity_label($entity_type, $entity), $uri['path'], $uri['options']),
-    );
+    
+    // Check that the user has permissions to view.
+    if (eck__entity_menu_access('view', $entity_type, $bundle, $id)) {
+      $uri = entity_uri($entity_type, $entity);
+      $row = array(
+        l(entity_label($entity_type, $entity), $uri['path'], $uri['options']),
+      );
+    }
+    else {
+      $row = array(
+        entity_label($entity_type, $entity),
+      );
+    }
+   
     $row[] = array('data' => $allowed_operations);
     $info['entity'] = $entity;
     drupal_alter("entity_{$entity_type}_{$bundle}_tr", $row, $info);
