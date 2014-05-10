@@ -19,7 +19,7 @@ function eck__entity_type__menu() {
   $menu = array();
   $path = eck__entity_type__path();
 
-  // OVERVIEW Entity Type.
+  // LIST Entity Types.
   // View all of the created entity types.
   $menu[$path] = array(
     'title' => 'Entity types',
@@ -30,7 +30,7 @@ function eck__entity_type__menu() {
     'file' => 'eck.entity_type.inc',
   );
 
-  // ADD Entity.
+  // ADD Entity Types.
   $menu["{$path}/add"] = array(
     'title' => 'Add entity type',
     'description' => 'Add a new entity type',
@@ -71,10 +71,10 @@ function eck__entity_type__list() {
       $allowed_operations = l(t("delete"), "{$path}/{$entity_type->name}/delete");
     }
     
-    if (eck__multiple_access_check(array(
-      'eck administer entity types', 
+    if (eck__multiple_access_check(array( 
       'eck administer bundles', 
       'eck list bundles', 
+      "eck administer {$entity_type->name} bundles",
       "eck list {$entity_type->name} bundles",
     ))) {
       $label = l(t("{$entity_type->label}"), "{$path}/{$entity_type->name}");
