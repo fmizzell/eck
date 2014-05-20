@@ -376,7 +376,13 @@ class EntityType extends DBObject {
 
     parent::save();
     global $eck_entity_types_cache;
-    $eck_entity_types_cache->reset();
+    
+    $cache_enabled = isset($eck_entity_types_cache)?TRUE:FALSE;
+    
+    if($cache_enabled) {
+      $eck_entity_types_cache->reset();
+    }
+    
     variable_set('eck_clear_caches', TRUE);
   }
   /**
@@ -395,7 +401,12 @@ class EntityType extends DBObject {
     // Allow other modules to respond to the deletion of entity types.
     module_invoke_all('eck_entity_type_delete', $this);
     global $eck_entity_types_cache;
-    $eck_entity_types_cache->reset();
+    
+    $cache_enabled = isset($eck_entity_types_cache)?TRUE:FALSE;
+    
+    if($cache_enabled) {
+      $eck_entity_types_cache->reset();
+    }
     variable_set('eck_clear_caches', TRUE);
   }
   
@@ -507,7 +518,13 @@ class Bundle extends DBObject {
       if ($save) {
         parent::save();
         global $eck_bundles_cache;
-        $eck_bundles_cache->reset();
+        
+        $cache_enabled = isset($eck_bundles_cache)?TRUE:FALSE;
+    
+        if($cache_enabled) {
+          $eck_bundles_cache->reset();
+        }
+        
         variable_set('eck_clear_caches', TRUE);
       }else{
         //@todo throw some error
@@ -541,7 +558,13 @@ class Bundle extends DBObject {
 
     parent::delete();
     global $eck_bundles_cache;
-    $eck_bundles_cache->reset();
+    
+    $cache_enabled = isset($eck_bundles_cache)?TRUE:FALSE;
+    
+    if($cache_enabled) {
+      $eck_bundles_cache->reset();
+    }
+    
     variable_set('eck_clear_caches', TRUE);
   }
   
