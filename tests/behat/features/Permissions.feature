@@ -15,10 +15,13 @@ Feature: Permissions
     And I fill in "edit-bundle-name" with <bundle>
     And I check "Title"
     And I press the "Save" button
-    And I visit <link>
+    And I visit "/admin/structure/entity-type"
+    And I click <type_label>
+    And I click <bundle_label>
     And I click <add_link>
     And I fill in "Title" with <entity_title>
     And I press the "Save" button
+    And I visit "admin/people/permissions"
 
     Examples: 
       | type_label | type      | bundle_label | bundle | entity_title   | link                                       | add_link  |
@@ -35,8 +38,8 @@ Feature: Permissions
     And I visit "/admin/structure"
     And I click "Entity types"
     Then I should get a "200" HTTP response
-    
-    Examples:
+
+    Examples: 
       | permissions                                                     |
       | "Use the administration pages and help,View Entity Type List"   |
       | "Use the administration pages and help,Administer Entity Types" |
@@ -51,7 +54,7 @@ Feature: Permissions
     And I click "Add entity type"
     Then I should get a "200" HTTP response
 
-    Examples:
+    Examples: 
       | permissions                                                                           |
       | "Use the administration pages and help,View Entity Type List,Add Entity Types"        |
       | "Use the administration pages and help,View Entity Type List,Administer Entity Types" |
@@ -65,8 +68,8 @@ Feature: Permissions
     And I visit "/admin/structure/entity-type"
     And I click "delete" in the "Vehicle" row
     Then I should get a "200" HTTP response
-    
-    Examples:
+
+    Examples: 
       | permissions                                                                           |
       | "Use the administration pages and help,View Entity Type List,Delete Entity Types"     |
       | "Use the administration pages and help,View Entity Type List,Administer Entity Types" |
@@ -176,9 +179,9 @@ Feature: Permissions
     And I visit "/admin/structure/entity-type/animal"
     Then I should not see the link "delete"
 
-     Examples: 
-      | permissions                                |
-      | "View Bundle Lists,Delete Vehicle Bundles" |
+    Examples: 
+      | permissions                                    |
+      | "View Bundle Lists,Delete Vehicle Bundles"     |
       | "View Bundle Lists,Administer Vehicle Bundles" |
 
   @entity
@@ -198,9 +201,9 @@ Feature: Permissions
     Then I should get a "200" HTTP response
 
     Examples: 
-      | path                                   | link  | permissions                            |
-      | "/admin/structure/entity-type/vehicle" | "Car" | "View Bundle Lists,View Entity Lists"  |
-      | "/admin/structure/entity-type/animal"  | "Dog" | "View Bundle Lists,View Entity Lists"  |
+      | path                                   | link  | permissions                             |
+      | "/admin/structure/entity-type/vehicle" | "Car" | "View Bundle Lists,View Entity Lists"   |
+      | "/admin/structure/entity-type/animal"  | "Dog" | "View Bundle Lists,View Entity Lists"   |
       | "/admin/structure/entity-type/vehicle" | "Car" | "View Bundle Lists,Administer Entities" |
       | "/admin/structure/entity-type/animal"  | "Dog" | "View Bundle Lists,Administer Entities" |
 
@@ -215,7 +218,7 @@ Feature: Permissions
     Then I should not see the link "Dog"
     But I should see the text "Dog"
 
-    Examples:
+    Examples: 
       | permissions                                           |
       | "View Bundle Lists,View List of Vehicle Car Entities" |
       | "View Bundle Lists,Administer Vehicle Car Entities"   |
@@ -251,7 +254,7 @@ Feature: Permissions
     And I visit "/admin/structure/entity-type/animal/dog"
     Then I should not see the link "Add Dog"
 
-    Examples:
+    Examples: 
       | permissions                                         |
       | "View Entity Lists,Add Vehicle Car Entities"        |
       | "View Entity Lists,Administer Vehicle Car Entities" |
@@ -287,7 +290,7 @@ Feature: Permissions
     And I visit "/admin/structure/entity-type/animal/dog"
     Then I should not see the link "Snoopy"
 
-    Examples:
+    Examples: 
       | permissions                                         |
       | "View Entity Lists,View Vehicle Car Entities"       |
       | "View Entity Lists,Administer Vehicle Car Entities" |
@@ -307,9 +310,9 @@ Feature: Permissions
     Then I should get a "200" HTTP response
 
     Examples: 
-      | path                                       | permissions                           |
-      | "/admin/structure/entity-type/vehicle/car" | "View Entity Lists,Edit Any Entity"   |
-      | "/admin/structure/entity-type/animal/dog"  | "View Entity Lists,Edit Any Entity"   |
+      | path                                       | permissions                             |
+      | "/admin/structure/entity-type/vehicle/car" | "View Entity Lists,Edit Any Entity"     |
+      | "/admin/structure/entity-type/animal/dog"  | "View Entity Lists,Edit Any Entity"     |
       | "/admin/structure/entity-type/vehicle/car" | "View Entity Lists,Administer Entities" |
       | "/admin/structure/entity-type/animal/dog"  | "View Entity Lists,Administer Entities" |
 
@@ -323,7 +326,7 @@ Feature: Permissions
     And I visit "/admin/structure/entity-type/animal/dog"
     Then I should not see the link "edit"
 
-    Examples:
+    Examples: 
       | permissions                                         |
       | "View Entity Lists,Edit Vehicle Car Entities"       |
       | "View Entity Lists,Administer Vehicle Car Entities" |
@@ -359,7 +362,7 @@ Feature: Permissions
     And I visit "/admin/structure/entity-type/animal/dog"
     Then I should not see the link "delete"
 
-    Examples:
+    Examples: 
       | permissions                                         |
       | "View Entity Lists,Delete Vehicle Car Entities"     |
       | "View Entity Lists,Administer Vehicle Car Entities" |
