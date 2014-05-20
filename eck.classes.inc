@@ -375,13 +375,10 @@ class EntityType extends DBObject {
     }
 
     parent::save();
-    EntityType::loadAll(NULL, TRUE);
-    drupal_get_schema(NULL, TRUE);
-    entity_info_cache_clear();
-    entity_flush_caches();
-    variable_set('menu_rebuild_needed', TRUE);
+    global $eck_entity_types_cache;
+    $eck_entity_types_cache->reset();
+    variable_set('eck_clear_caches', TRUE);
   }
-
   /**
    * Delete.
    */
@@ -397,12 +394,9 @@ class EntityType extends DBObject {
 
     // Allow other modules to respond to the deletion of entity types.
     module_invoke_all('eck_entity_type_delete', $this);
-
-    EntityType::loadAll(NULL, TRUE);
-    drupal_get_schema(NULL, TRUE);
-    entity_info_cache_clear();
-    entity_flush_caches();
-    variable_set('menu_rebuild_needed', TRUE);
+    global $eck_entity_types_cache;
+    $eck_entity_types_cache->reset();
+    variable_set('eck_clear_caches', TRUE);
   }
   
   public static function loadByName($name) {
@@ -410,46 +404,52 @@ class EntityType extends DBObject {
   }
 
   public static function loadAll($entity_type_name = '', $reset = FALSE) {
-    static $entity_types;
-
-    if ($reset) {
-      $entity_types = NULL;
-      // Clear all languages.
-      cache_clear_all('entity_types', 'cache_eck', TRUE);
-    }
-
-    if (!isset($entity_types)) {
-      if ($cached = cache_get("entity_types", 'cache_eck')) {
-        $entity_types = $cached->data;
+    $entity_types = array();
+    
+    global $eck_entity_types_cache;
+    
+    $cache_enabled = isset($eck_entity_types_cache)?TRUE:FALSE;
+    
+    if($cache_enabled) {
+      if ($reset) {
+        $eck_entity_types_cache->reset();
       }
-      else {
-        $entity_types = array();
-        $results = db_select('eck_entity_type', 't')
-          ->fields('t', array('name'))
-          ->execute();
 
-        foreach($results as $result){
-          $name = $result->name;
-          $entity_type = new EntityType();
-          $entity_type->load('name', $name);
-          $entity_types[$name] = $entity_type;
-        }
-        cache_set("entity_types", $entity_types, 'cache_eck');
+      $entity_types = $eck_entity_types_cache->get();
+    }
+    
+    if (empty($entity_types)) {
+      $entity_types = array();
+      $results = db_select('eck_entity_type', 't')
+        ->fields('t', array('name'))
+        ->execute();
+
+      foreach($results as $result){
+        $name = $result->name;
+        $entity_type = new EntityType();
+        $entity_type->load('name', $name);
+        $entity_types[$name] = $entity_type;
+      }
+      
+      if($cache_enabled) {
+        $eck_entity_types_cache->set($entity_types);
       }
     }
 
     if (!$entity_type_name) {
       return $entity_types;
     }
-  
-    if (isset($entity_types[$entity_type_name])) {
+    else if (array_key_exists($entity_type_name, $entity_types)) {
       return $entity_types[$entity_type_name];
+    }
+    else {
+     return array(); 
     }
   }
 }
 
 class Bundle extends DBObject {
-
+  
   /**
    * Constructor.
    */
@@ -506,11 +506,9 @@ class Bundle extends DBObject {
 
       if ($save) {
         parent::save();
-
-        Bundle::loadAll(NULL, TRUE);
-        drupal_get_schema(NULL, TRUE);
-        entity_info_cache_clear();
-        variable_set('menu_rebuild_needed', TRUE);
+        global $eck_bundles_cache;
+        $eck_bundles_cache->reset();
+        variable_set('eck_clear_caches', TRUE);
       }else{
         //@todo throw some error
       }
@@ -542,10 +540,9 @@ class Bundle extends DBObject {
     field_attach_delete_bundle($this->entity_type, $this->name);
 
     parent::delete();
-    Bundle::loadAll(NULL, TRUE);
-    drupal_get_schema(NULL, TRUE);
-    entity_info_cache_clear();
-    variable_set('menu_rebuild_needed', TRUE);
+    global $eck_bundles_cache;
+    $eck_bundles_cache->reset();
+    variable_set('eck_clear_caches', TRUE);
   }
   
   /**
@@ -560,40 +557,50 @@ class Bundle extends DBObject {
   }
   
   public static function loadAll($machine_name = NULL, $reset = FALSE) {
-    static $bundles;
+    $bundles = array();
+    
+    global $eck_bundles_cache;
+    
+    $cache_enabled = isset($eck_bundles_cache)?TRUE:FALSE;
+    
+    if($cache_enabled) {
+      if ($reset) {
+        $eck_bundles_cache->reset();
+      }
 
-    if ($reset) {
-      $bundles = NULL;
-      // Clear all languages.
-      cache_clear_all('bundles', 'cache_eck', TRUE);
+      $bundles = $eck_bundles_cache->get();
+    }
+    
+    if (empty($bundles)) {
+      $bundles = array();
+      //@todo move this to a general function.
+      $results = db_select('eck_bundle', 't')
+        ->fields('t', array('machine_name'))
+        ->execute();
+
+      foreach($results as $result){
+        $name = $result->machine_name;
+        $bundle = new Bundle();
+        $bundle->load('machine_name', $name);
+        $bundles[$name] = $bundle;
+      }
+      
+      if ($cache_enabled) {
+        $eck_bundles_cache->set($bundles);
+      }
     }
 
-    if (!isset($bundles)) {
-      if ($cached = cache_get("bundles", 'cache_eck')) {
-        $bundles = $cached->data;
-      }
-      else {
-        $bundles = array();
-        //@todo move this to a general function.
-        $results = db_select('eck_bundle', 't')
-          ->fields('t', array('machine_name'))
-          ->execute();
-
-        foreach($results as $result){
-          $name = $result->machine_name;
-          $bundle = new Bundle();
-          $bundle->load('machine_name', $name);
-          $bundles[$name] = $bundle;
-        }
-        cache_set("bundles", $bundles, 'cache_eck');
-      }
+    if (!$machine_name) {
+      return $bundles;
     }
-
-    if (!$machine_name) return $bundles;
-
-    if (isset($bundles[$machine_name])) return $bundles[$machine_name];
+    else if (array_key_exists($machine_name, $bundles)) {
+      return $bundles[$machine_name];
+    }
+    else {
+     return array(); 
+    }
   }
-
+      
   public static function loadByEntityType($entity_type){
     $entity_bundles = &drupal_static(__FUNCTION__, array());
 
@@ -680,5 +687,55 @@ class Bundle extends DBObject {
       $instance += $options['instance'];
     }
     return field_create_instance($instance);
+  }
+}
+
+class ECKCache {
+  
+  private $id;
+  private $data;
+  
+  private $no_cache;
+  
+  public function __construct($id) {
+    $this->id = $id;
+    $this->no_cache = FALSE;
+    
+    if (!db_table_exists('cache_eck')) {
+      $this->no_cache = TRUE;
+    }
+    
+  }
+  
+  public function set($data) {
+    if($this->no_cache) return;
+    
+    cache_set($this->id, $data, "cache_eck");
+    $this->data = $data;
+  }
+  
+  public function get() {
+    if($this->no_cache) return NULL;
+    
+    if($this->data) {
+      return $this->data;
+    }
+    else{
+      $cached_data = cache_get($this->id, "cache_eck");
+      if($cached_data) {
+        $this->data = $cached_data->data;
+        return $this->data;
+      }
+      else {
+        return NULL;
+      }
+    }
+  }
+  
+  public function reset() {
+    if($this->no_cache) return;
+    
+    $this->data = NULL;
+    cache_clear_all($this->id, 'cache_eck');
   }
 }
