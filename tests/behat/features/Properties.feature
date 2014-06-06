@@ -1,5 +1,5 @@
-@api @crud
-Feature: CRUD
+@api @properties
+Feature: Properties
   As a content architect
   I want to be able to forge my entities with custom attributes (properties)
   so my content will do exactly what it needs to do
@@ -15,34 +15,50 @@ Feature: CRUD
     And I fill in "edit-entity-type-name" with "vehicle"
     And I fill in "edit-bundle-label" with "Car"
     And I fill in "edit-bundle-name" with "car"
+    # And I check "Title"
     And I press the "Save" button
 
   Scenario Outline: I should be able to create a property set a value and then delete it
-    Given I visit "/admin/structure/entity-type/vehicle/properties"
+    # Add the property
+    Given I visit "/admin/structure/entity-type/vehicle/property"
+    And I click "Add property"
     And I fill in "edit-property-type" with <type>
+    And I press the "Select Property Type" button
     And I fill in "edit-property-label" with <label>
     And I fill in "edit-property-name" with <name>
-    And I fill in "edit-property-behavior" with "title"
-    And I press the "edit-property-add" button
-    And I check the box <checkbox>
-    And I press the "Save" button
-    
-    Given I visit "admin/structure/entity-type/vehicle/car/add"
-    And I fill in <label> with <value>
-    And I press the "Save" button
-    Then I should see the text <value>
+    And I press the "Add Property" button
+    When I visit "/admin/structure/entity-type/vehicle/property"
+    Then I should see the text <label>
 
-    Given I visit "/admin/structure/entity-type/vehicle/properties"
-    And I uncheck the box <checkbox>
+    # Configure the widget
+    Given I visit "/admin/structure/entity-type/vehicle/car/fields"
+    And I fill in "edit-fields-eck-add-extra-field-label" with <label>
+    And I fill in "edit-fields-eck-add-extra-field-field-name" with <name>
+    And I fill in "edit-fields-eck-add-extra-field-widget-type" with "text"
     And I press the "Save" button
+    Then I should see the text <label>
 
-    Examples: 
-      | type               | label | name | checkbox                   | value          |
-      | "text"             | "T"   | "t"  | "new_properties_table[t]"  | "Toyota Prius" |
-      | "integer"          | "I"   | "i"  | "new_properties_table[i]"  | "-123456"      |
-      | "decimal"          | "D"   | "d"  | "new_properties_table[d]"  | "45.98"        |
-      | "positive_integer" | "PI"  | "pi" | "new_properties_table[pi]" | "987"          |
-      | "language"         | "L"   | "l"  | "new_properties_table[l]"  | "en"           |
+    # Create a test entity
+    Given I visit "/admin/structure/entity-type/vehicle/car"
+    And I click "Add Car"
+    And I fill in <element id> with <value>
+    And I press the "Save" button
+    Then I should see the text "has been saved"
+
+    # @todo: Go to edit page
+    Then the <element id> field should contain <value>
+
+    # @todo: add behavior tests
+    # @todo: delete individual properties
+
+
+    Examples:
+      | type               | label | name | element id        | value          |
+      | "text"             | "T"   | "t"  | "edit-t"  | "Toyota Prius" |
+      | "integer"          | "I"   | "i"  | "edit-i"  | "-123456"      |
+      | "decimal"          | "D"   | "d"  | "edit-d"  | "45.98"        |
+      | "positive_integer" | "PI"  | "pi" | "edit-pi" | "987"          |
+      | "language"         | "L"   | "l"  | "edit-l"  | "en"           |
 
   @cleanup
   Scenario: This is a clean up step
