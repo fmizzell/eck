@@ -74,7 +74,18 @@ function eck_entity_access($op, $entity, $account, $entity_type_name) {
   return eck_access($op, 'entity', $entity, $account);
 }
 
-function eck_access($op, $object_type, $object = NULL, $account = NULL){
+/**
+ * 
+ * @global type $user
+ * @param type $op
+ * @param string $object_type
+ *   Somehow admin_menu is calling eck_access, and producing a warning that is 
+ *   prevented by the 'entity' default.
+ * @param type $object
+ * @param type $account
+ * @return type
+ */
+function eck_access($op, $object_type = 'entity', $object = NULL, $account = NULL){
   $allow = FALSE;
   
   if(!$account){
