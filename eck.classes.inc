@@ -362,7 +362,7 @@ class EntityType extends DBObject{
 
           // Now we check to see whether it is a default or a custom property
           // it is not custom so lets get the schema and add the field.
-          $schema = eck_property_type_schema($property['type']);
+          $schema = eck_get_property_type_schema($property['type']);
           db_add_field("eck_{$this->name}", $name, $schema);
         }
       }
