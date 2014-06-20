@@ -77,7 +77,7 @@ function eck__entity_type__list() {
       }
     }
     
-    if(eck_access("list", "bundle")){
+    if(eck_access("list", "bundle") || eck_access("list", "bundle", $entity_type)){
       $rows[] = array(l(t("{$entity_type->label}"), "{$path}/{$entity_type->name}"), $allowed_operations);
     }else{
       $rows[] = array(t("{$entity_type->label}"), $allowed_operations);

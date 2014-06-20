@@ -17,7 +17,7 @@ function eck__entity__menu($entity_type, $bundle) {
     'page callback' => "drupal_get_form",
     'page arguments' => array('eck__bundle__delete_form', 3, 4),
     'access callback' => 'eck_access',
-    'access arguments' => array('delete', 'bundle', $bundle),
+    'access arguments' => array('delete', 'bundle', $entity_type),
     'file' => 'eck.bundle.inc',
     'type' => MENU_LOCAL_TASK,
   );

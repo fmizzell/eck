@@ -1,10 +1,29 @@
 <?php
 
 function eck_permission_label($string){
-  $label = str_replace("eck", "", $string);
-  $label = str_replace("_", " ", $label);
+  
+  $replacements = array(
+    "eck" => "",
+    "*" => "administer",
+    "bundle" => "bundles",
+    "_" => " ",
+  );
+  
+  $label = $string;
+  
+  foreach($replacements as $current => $final) {
+    $label = str_replace($current, $final, $label);
+  }
+  
+  if(substr_count($label, "type") > 0) {
+    $label = str_replace("entity type", "Entity Types", $label);
+  }
+  else {
+    $label = str_replace("entity", "Entities", $label);
+  }
+  
   $label= trim($label);
-  $label = ucfirst($label);
+  $label = ucwords($label);
   
   return $label;
 }
@@ -19,7 +38,7 @@ function eck_permission_label($string){
 function eck_permission() {
   $perms = array();
   
-  $actions = array('list', 'create', "update", "delete", "view");
+  $actions = array('*', 'list', 'create', "update", "delete", "view");
   $objects = array("entity_type", "bundle", "entity");
   
   foreach($objects as $object){
@@ -31,7 +50,7 @@ function eck_permission() {
   
   //properties permissions
   $perm = "eck update property";
-  $perms[$perm] = array("title" => "Update property");
+  $perms[$perm] = array("title" => "Update Properties");
 
   return $perms;
 }
@@ -106,7 +125,7 @@ function eck_access($op, $object_type = 'entity', $object = NULL, $account = NUL
 
 function eck_eck_access($op, $object_type, $object, $account){
   
-  $opb = in_array($op, array('list', 'create', 'update', 'delete', 'view'));
+  $opb = in_array($op, array('*', 'list', 'create', 'update', 'delete', 'view'));
   $otb = strcmp($object_type, "entity_type") == 0  || strcmp($object_type, "bundle") == 0 
           || strcmp($object_type, "entity") == 0 || strcmp($object_type, "property") == 0;
   //$ob = !isset($object);

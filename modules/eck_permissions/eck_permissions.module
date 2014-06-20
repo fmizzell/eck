@@ -234,43 +234,56 @@ function eck_permissions_eck_access($op, $object_type, $object, $account){
 
     
     foreach($perms as $p){
-      $perm = $p->permission;
-      $object_id = eck_permissions_object_id($object_type, $object);
-      
-      $cperm = "{$op} {$object_type}:{$object_id}";
-      if(strcmp($perm, $cperm) == 0){
-        $allow = TRUE;
-      }
-      
-      //we also want to deal with general options of permissions
-      $pieces = explode("|", $object_id);
-      
-      //how many possible permissions can be generated
-      $binary_string = "";
-      for($i = 0; $i < count($pieces); $i++){
-        $binary_string .= 1;
-      }
-      
-      $total_permissions = bindec($binary_string);
-      
-      for($i = 0; $i <= $total_permissions; $i++){
-        
-        $binary = decbin($i);
-        $binary = strrev($binary);
-        $pc = $pieces;
-        
-        for($j = 0; $j < count($pieces); $j++){
-          $bit = substr($binary, $j, 1);
-          if($bit == 1){
-            $pc[$j] = "*";
-          }
+      $ops = array($op, "*");
+      foreach($ops as $op){
+        $perm = $p->permission;
+        $object_id = eck_permissions_object_id($object_type, $object);
+
+        $cperm = "{$op} {$object_type}:{$object_id}";
+        if($object_type == "bundle") {
+          watchdog("eck_permissions","$perm -- $cperm");
         }
-        
-        $new_object_id = implode("|", $pc);
-        
-        $cperm = "{$op} {$object_type}:{$new_object_id}";
-        if(strcmp($perm, $cperm) == 0){
+
+        $code = strcmp($perm, $cperm);
+        if($code == 0){
           $allow = TRUE;
+          watchdog("eck_permissions", "Allowed");
+        }
+
+        if($object_type == "bundle") {
+          watchdog("eck_permissions", $code);
+        }
+
+        //we also want to deal with general options of permissions
+        $pieces = explode("|", $object_id);
+
+        //how many possible permissions can be generated
+        $binary_string = "";
+        for($i = 0; $i < count($pieces); $i++){
+          $binary_string .= 1;
+        }
+
+        $total_permissions = bindec($binary_string);
+
+        for($i = 0; $i <= $total_permissions; $i++){
+
+          $binary = decbin($i);
+          $binary = strrev($binary);
+          $pc = $pieces;
+
+          for($j = 0; $j < count($pieces); $j++){
+            $bit = substr($binary, $j, 1);
+            if($bit == 1){
+              $pc[$j] = "*";
+            }
+          }
+
+          $new_object_id = implode("|", $pc);
+
+          $cperm = "{$op} {$object_type}:{$new_object_id}";
+          if(strcmp($perm, $cperm) == 0){
+            $allow = TRUE;
+          }
         }
       }
     }
@@ -300,7 +313,11 @@ function eck_permissions_object_id($object_type, $object){
   if($object_type == "entity_type"){
     return $object->name;
   }else if($object_type == "bundle"){
-    return "{$object->entity_type}|{$object->name}";
+    if(get_class($object) == "EntityType") {
+      return "{$object->name}|*";
+    } else {
+      return "{$object->entity_type}|{$object->name}";
+    }
   }else if($object_type == "entity"){
     return "{$object->entityType()}|{$object->type}|{$object->id}";
   }

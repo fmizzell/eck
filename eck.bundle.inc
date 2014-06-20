@@ -133,7 +133,7 @@ function eck__bundle__menu($entity_type) {
     'page callback' => "eck__bundle__list",
     'page arguments' => array(3),
     'access callback' => 'eck_access',
-    'access arguments' => array('list', 'bundle'),
+    'access arguments' => array('list', 'bundle', $entity_type),
     'file' => 'eck.bundle.inc'
   );
 
@@ -150,7 +150,7 @@ function eck__bundle__menu($entity_type) {
     'page callback' => "drupal_get_form",
     'page arguments' => array('eck__bundle__add', 3),
     'access callback' => 'eck_access',
-    'access arguments' => array('create', 'bundle'),
+    'access arguments' => array('create', 'bundle', $entity_type),
     'type' => MENU_LOCAL_ACTION,
     'weight' => 0,
     'file' => 'eck.bundle.inc',
@@ -177,8 +177,7 @@ function eck__bundle__list($entity_type) {
   $entity_type = entity_type_load($entity_type);
   
   //Check that the user has permissions to view bundle lists:
-  if(eck_access('list', 'bundle'))
-  {
+  if(eck_access('list', 'bundle') || eck_access('list', "bundle", $entity_type)) {
     
     $header = array(t('Type'), array('data' => t('Operations'), 'colspan' => '1'));
 
