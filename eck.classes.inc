@@ -236,7 +236,7 @@ class EntityType extends DBObject {
       $this->recordFieldChange('add', $name);
     }
 
-    $p = $this->properties;
+    $p = $p2 = $this->properties;
     // @todo check that type is an actual type.
     $p[$name] = array(
       'label' => $label,
@@ -245,6 +245,13 @@ class EntityType extends DBObject {
     );
 
     $this->properties = $p;
+
+    // If the property did not exist already, let the behaviors execute some code.
+    if(!array_key_exists($name, $p2)){
+      eck_property_behavior_invoke_plugin($this, 'property_add',
+        array('name' => $name, 'property' => $p[$name], 'entity_type' => $this));
+    }
+
   }
 
   /**
@@ -256,6 +263,11 @@ class EntityType extends DBObject {
   public function removeProperty($name) {
     $p = $this->properties;
     if (array_key_exists($name, $p)) {
+
+      // Let the behaviors execute some code.
+      eck_property_behavior_invoke_plugin($this, 'property_remove',
+      array('name' => $name, 'property' => $p[$name], 'entity_type' => $this));
+
       unset($p[$name]);
       $this->properties = $p;
       if (!$this->is_new) {
