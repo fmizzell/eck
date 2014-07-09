@@ -433,10 +433,7 @@ function eck__entity__form_submit($form, &$state) {
   }
 
   // Let the behaviors to modify the entity.
-  $entity_altered = eck_property_behavior_invoke_plugin_alter($entity_type, 'entity_form_submit', array('entity' => $entity, 'form' => $form, 'form_state' => $state));
-  if (!empty($entity_altered) && is_object($entity_altered)) {
-    $entity = $entity_altered;
-  }
+  eck_property_behavior_invoke_plugin($entity_type, 'entity_save', array('entity' => $entity, 'form' => $form, 'form_state' => $state));
 
   $entity->save();
 

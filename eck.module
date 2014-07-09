@@ -169,6 +169,14 @@ function eck_schema_alter(&$schema) {
       // The function eck__entity_type__schema returns a schema for that
       // entity type given and entity_type object.
       $schema = array_merge($schema, array("eck_{$entity_type->name}" => eck__entity_type__schema($entity_type)));
+      
+      // Allow properties to modify the schema
+      $entity_type_schema =
+      eck_property_behavior_invoke_plugin_alter($entity_type, 'schema', array('entity_type' => $entity_type, 'schema' => $schema));
+
+      if ($entity_type_schema) {
+        $schema = array_merge($schema, $entity_type_schema);
+      }
     }
   }
 }
@@ -633,20 +641,6 @@ function entity_table_select($form, &$state, $entity_type, $bundle, $header, $ro
  * Base class for ECK entites.
  */
 class ECKEntity extends Entity {}
-
-/**
- * Implements hook_entity_presave().
- */
-function eck_entity_presave($entity, $entity_type) {
-  $entity_type = EntityType::loadByName($entity_type);
-
-  // This is an eck entity.
-  if ($entity_type) {
-    eck_property_behavior_invoke_plugin($entity_type, 'entity_save',
-      array('entity' => $entity)
-    );
-  }
-}
 
 /**
  * Implements hook_entity_insert().
