@@ -171,11 +171,15 @@ function eck_schema_alter(&$schema) {
       $schema = array_merge($schema, array("eck_{$entity_type->name}" => eck__entity_type__schema($entity_type)));
       
       // Allow properties to modify the schema
-      $entity_type_schema =
-      eck_property_behavior_invoke_plugin_alter($entity_type, 'schema', array('entity_type' => $entity_type, 'schema' => $schema));
-
-      if ($entity_type_schema) {
-        $schema = array_merge($schema, $entity_type_schema);
+      $vars = array('entity_type' => $entity_type, 'schema' => $schema);
+      
+      // The behavior hook should return its modifications in the same format that
+      // they were sent to it. So we would be expecting an array with an
+      // entity_type key, and a schema key.
+      $vars = eck_property_behavior_invoke_plugin_alter($entity_type, 'schema', $vars);
+      
+      if (array_key_exists('schema', $vars) && isset($vars['schema'])) {
+        $schema = array_merge($schema, $vars['schema']);
       }
     }
   }
