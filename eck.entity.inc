@@ -60,12 +60,14 @@ function eck__entity__menu($entity_type, $bundle) {
     'page callback' => "eck__entity__list",
     'page arguments' => array($entity_type->name, $bundle->name),
     'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array(array(
-      'eck administer entities',
-      "eck list entities",
-      "eck administer {$entity_type->name} {$bundle->name} entities",
-      "eck list {$entity_type->name} {$bundle->name} entities",
-    )),
+    'access arguments' => array(
+      array(
+        'eck administer entities',
+        "eck list entities",
+        "eck administer {$entity_type->name} {$bundle->name} entities",
+        "eck list {$entity_type->name} {$bundle->name} entities",
+      ),
+    ),
     'weight' => 0,
     'file' => 'eck.entity.inc',
   );
@@ -433,7 +435,8 @@ function eck__entity__form_submit($form, &$state) {
   }
 
   // Let the behaviors to modify the entity.
-  eck_property_behavior_invoke_plugin($entity_type, 'entity_save', array('entity' => $entity, 'form' => $form, 'form_state' => $state));
+  eck_property_behavior_invoke_plugin($entity_type, 'entity_save',
+    array('entity' => $entity, 'form' => $form, 'form_state' => $state));
 
   $entity->save();
 

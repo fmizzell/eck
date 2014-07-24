@@ -122,7 +122,7 @@ function eck_schema() {
     ),
     'primary key' => array('id'),
     'unique' => array(
-      'machine_name' => array('machine_name')
+      'machine_name' => array('machine_name'),
     ),
   );
 
@@ -517,15 +517,13 @@ function eck_update_7009() {
  */
 function eck_update_7010() {
   db_add_unique_key("eck_entity_type", "name", array('name'));
-  db_add_unique_key("eck_bundle", "machine_name", array('machine_name')); 
+  db_add_unique_key("eck_bundle", "machine_name", array('machine_name'));
 }
 
 /**
  * Add an eck cache table.
- **/
+ */
 function eck_update_7011() {
   $schema = drupal_get_schema_unprocessed('system', 'cache');
   db_create_table('cache_eck', $schema);
 }
-
-
