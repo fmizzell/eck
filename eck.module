@@ -212,6 +212,18 @@ function eck_schema_alter(&$schema) {
       // The function eck__entity_type__schema returns a schema for that
       // entity type given and entity_type object.
       $schema = array_merge($schema, array("eck_{$entity_type->name}" => eck__entity_type__schema($entity_type)));
+
+      // Allow properties to modify the schema.
+      $vars = array('entity_type' => $entity_type, 'schema' => $schema);
+
+      // The behavior hook should return its modifications in the same format
+      // that they were sent to it. So we would be expecting an array with an
+      // entity_type key, and a schema key.
+      $vars = eck_property_behavior_invoke_plugin_alter($entity_type, 'schema', $vars);
+
+      if (array_key_exists('schema', $vars) && isset($vars['schema'])) {
+        $schema = array_merge($schema, $vars['schema']);
+      }
     }
   }
 }
@@ -247,14 +259,14 @@ function entity_table($entities, $select = FALSE) {
 
     $allowed_operations = '';
     $destination = drupal_get_destination();
-    
+
     // Check that the user has permissions to edit.
     if (eck_access('update', 'entity', $entity)) {
       $edit_path = str_replace('%', $id, $crud_info['edit']['path']);
 
       $allowed_operations = l(t('edit'), $edit_path, array('query' => $destination));
     }
-    
+
     // Check that the user has permissions to delete.
     if (eck_access('delete', 'entity', $entity)) {
       $delete_path = str_replace('%', $id, $crud_info['delete']['path']);
@@ -267,7 +279,7 @@ function entity_table($entities, $select = FALSE) {
       $row = array(entity_label($entity_type, $entity));
     }
     $row[] = array('data' => $allowed_operations); //"admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
-     
+
     $info['entity'] = $entity;
     drupal_alter("entity_{$entity_type}_{$bundle}_tr", $row, $info);
     $info['bundle'] = $bundle;
@@ -626,7 +638,7 @@ function eck_property_widget_type_options($property_type = NULL, $by_label = FAL
  * @param $widget_type
  *   (optional) A widget type name. If omitted, all widget types will be
  *   returned.
- * 
+ *
  * @param $reset
  *   Forces rebuild of the property widget cache.
  *
@@ -690,9 +702,9 @@ function eck_property_info_widget_types($widget_type = NULL, $reset = FALSE) {
 
 /**
  * Implementation of hook_eck_property_widget_info().
- * 
+ *
  * Defines some default property widgets that come with ECK.
- * 
+ *
  * @see eck_property_info_widget_types().
  **/
 function eck_eck_property_widget_info() {
@@ -715,7 +727,7 @@ function eck_eck_property_widget_info() {
       'file' => 'eck.property_widgets',
     ),
   );
-  
+
   return $widget_types;
 }
 
@@ -956,18 +968,6 @@ function eck_form_field_ui_field_overview_form_submit($form, &$form_state) {
   }
 }
 
-//Entity Hooks
-function eck_entity_presave($entity, $entity_type){
-  $entity_type = EntityType::loadByName($entity_type);
-
-  // This is an eck entity.
-  if ($entity_type) {
-    eck_property_behavior_invoke_plugin($entity_type, 'entity_update',
-      array('entity' => $entity)
-    );
-  }
-}
-
 /**
  * Implements hook_entity_delete().
  */
@@ -984,9 +984,9 @@ function eck_entity_delete($entity, $entity_type) {
 
 function eck_entity_view_alter(&$build){
   $entity_types = EntityType::loadAll();
-  
+
   $this_entity_type = $build['#entity_type'];
-  
+
   foreach($entity_types as $et){
     if($et->name == $this_entity_type){
       $entity = $build['#entity'];
@@ -995,7 +995,7 @@ function eck_entity_view_alter(&$build){
       // the paths of any of the possible operations, since contextual links
       // are dependent on the hierarchy of those paths, changing the paths
       // could cause of contextual links not to work correctly.
-      
+
       $build['#contextual_links']['eck'] =
       array(
         "{$this_entity_type}/{$this_bundle}",array($entity->id));
@@ -1008,53 +1008,53 @@ function eck_entity_view_alter(&$build){
  */
 function eck_alphabetical_cmp($a, $b) {
   return strcasecmp($a->name, $b->name);
-} 
+}
 
 function eck_eck_property_types(){
   $property_types = array();
-  
+
   $property_types['decimal'] = array(
     'label' => t("Decimal"),
-    'class' => "DecimalPropertyType"    
+    'class' => "DecimalPropertyType"
   );
   $property_types['integer'] = array(
     'label' => t("Integer"),
-    'class' => "IntegerPropertyType"    
+    'class' => "IntegerPropertyType"
   );
   $property_types['text'] = array(
     'label' => t("Text"),
-    'class' => "TextPropertyType"    
+    'class' => "TextPropertyType"
   );
   $property_types['fixed_size_text'] = array(
     'label' => t("Fixed Size Text"),
-    'class' => "FixedSizeTextPropertyType"    
+    'class' => "FixedSizeTextPropertyType"
   );
   $property_types['long_text'] = array(
     'label' => t("Long Text"),
-    'class' => "LongTextPropertyType"    
+    'class' => "LongTextPropertyType"
   );
   $property_types['blob'] = array(
     'label' => t("Blob"),
-    'class' => "BlobPropertyType"    
+    'class' => "BlobPropertyType"
   );
   $property_types['datetime'] = array(
     'label' => t("Date/Time"),
-    'class' => "DatetimePropertyType"    
+    'class' => "DatetimePropertyType"
   );
-  
+
   $property_types['language'] = array(
     'label' => t("Language"),
-    'class' => "LanguagePropertyType"    
+    'class' => "LanguagePropertyType"
   );
   $property_types['uuid'] = array(
     'label' => t("UUID"),
-    'class' => "UUIDPropertyType"    
+    'class' => "UUIDPropertyType"
   );
   $property_types['positive_integer'] = array(
     'label' => t("Positive Integer"),
-    'class' => "PositiveIntegerPropertyType"    
+    'class' => "PositiveIntegerPropertyType"
   );
-  
+
   return $property_types;
 }
 
@@ -1062,10 +1062,10 @@ function eck_init() {
   // Let's initialize our global caches
   global $eck_entity_types_cache;
   global $eck_bundles_cache;
-  
+
   $eck_entity_types_cache = new ECKCache("entity_types");
   $eck_bundles_cache = new ECKCache("bundles");
-  
+
   if (variable_get("eck_clear_caches", FALSE)) {
     variable_set("eck_clear_caches", FALSE);
     eck_clean_up();

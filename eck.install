@@ -28,36 +28,6 @@ function eck_requirements($phase) {
 }
 
 /**
- * Implements hook_disable().
- */
-function eck_disable() {
-  
-  drupal_set_message("Due to dependencies within the Entity system, ECK is not able"
-    . "to fully clean up during uninstall. This left over data can cause issues."
-    . " Make sure to delete all of your entity types before uninstalling ECK.", "warning");
-  
-  $entity_types = EntityType::loadAll();
-  // Lets save the name of every entity type so we can delete them in uninstall.
-  foreach ($entity_types as $entity_type) {
-    $tables[] = $entity_type->name;
-  }
-
-  variable_set('eck_tables', $tables);
-}
-
-/**
- * Implements hook_uninstall().
- */
-function eck_uninstall() {
-  $tables = variable_get('eck_tables');
-  foreach ($tables as $table) {
-    db_drop_table("eck_{$table}");
-  }
-
-  variable_del('eck_tables');
-}
-
-/**
  * Implements hook_schema().
  *
  * Create the database table that will store the entities information.
@@ -555,7 +525,7 @@ function eck_update_7010() {
  */
 function eck_update_7011() {
   db_add_unique_key("eck_entity_type", "name", array('name'));
-  db_add_unique_key("eck_bundle", "machine_name", array('machine_name')); 
+  db_add_unique_key("eck_bundle", "machine_name", array('machine_name'));
 }
 
 /**
@@ -575,46 +545,46 @@ function eck_update_7013() {
   $query = db_select('role_permission', 't');
   $query->fields('t', array('rid', 'permission', 'module'));
   $query->condition("module", "eck", "=");
-  
+
   $permissions = $query->execute();
   foreach($permissions as $perm_obj){
     $permission = $perm_obj->permission;
-   
+
     //echo "OLD: ".$permission."\n";
     //lets parse the permission
     $pieces = explode(" ", $permission);
     $final_pieces = array();
-    
+
     $throw_away = array_shift($pieces);
     //the first piece we can ignore, and the second is the action
     $action_map = array('administer' => "*",'add' => 'create','edit' => 'update'
         , 'view' => 'view', 'list' => 'list', 'delete' => 'delete');
-    $object_map = array('entity types' => 'entity_type', 'bundles' => "bundle", 
+    $object_map = array('entity types' => 'entity_type', 'bundles' => "bundle",
         'entities' => 'entity');
-    
+
     $action = array_shift($pieces);
-    
+
     if(array_key_exists($action, $action_map)){
       $final_pieces[0] = $action_map[$action];
     }
-    
+
     //we have a permission that breaks all our patters, so lets deal with
     //it right away
     if(substr_count($permission, 'manage') > 0){
       $pieces = array();
       $final_pieces = array('update', 'property');
     }
-    
+
     $object_id = "";
     while(count($pieces) > 0){
       $piece = array_shift($pieces);
-      
+
       //this is a sign that we are talking about an entity type
       if($piece == 'entity'){
         $p = array_shift($pieces);
         $piece = "$piece {$p}";
       }
-      
+
       if(in_array($piece, array('entities', 'bundles', 'entity types'))){
         if(!empty($object_id)){
           $final_pieces[1] = "$object_map[$piece]:{$object_id}|*";
@@ -629,17 +599,17 @@ function eck_update_7013() {
         }
       }
     }
-    
+
     $new_permission = implode(" ", $final_pieces);
     //echo "NEW: ".$new_permission."\n";
-    
+
     //lets set it up in eck_permissions module
     $perm = new ECKPermission();
     $perm->type = 'role';
     $perm->oid = $perm_obj->rid;
     $perm->permission = $new_permission;
     $perm->save();
-      
+
     //and then delete it from drupal permissions table
     $num_deleted = db_delete('role_permission')
     ->condition('rid', $perm_obj->rid)

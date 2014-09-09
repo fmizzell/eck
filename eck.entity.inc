@@ -479,6 +479,12 @@ function eck__entity__form_submit($form, &$state) {
 
   field_attach_submit($entity->entityType(), $entity, $form, $state);
 
+  $entity_type = EntityType::loadByName($entity->entityType());
+
+  // Let the behaviors to modify the entity.
+  eck_property_behavior_invoke_plugin($entity_type, 'entity_save',
+    array('entity' => $entity, 'form' => $form, 'form_state' => $state));
+
   $entity->save();
 
   drupal_set_message(t("Entity @entity_id - @entity_label has been saved",

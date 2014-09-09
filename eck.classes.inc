@@ -127,7 +127,7 @@ class DBObject implements Iterator {
 
   /**
    * Load.
-   * 
+   *
    * @param string $property
    *   The property we will use to search for the record.
    * @param mixed $value
@@ -152,7 +152,7 @@ class DBObject implements Iterator {
       $this->is_new = FALSE;
     }
   }
-  
+
   /**
    * Delete.
    */
@@ -228,7 +228,7 @@ class EntityType extends DBObject{
 
   /**
    * Add a new property to the entity type.
-   * 
+   *
    * @param string $name
    *   The name.
    * @param string $label
@@ -243,7 +243,7 @@ class EntityType extends DBObject{
       $this->recordFieldChange('add', $name);
     }
 
-    $p = $this->properties;
+    $p = $p2 = $this->properties;
 
     // @todo check that type is an actual type.
     $p[$name] = array(
@@ -254,17 +254,29 @@ class EntityType extends DBObject{
     );
 
     $this->properties = $p;
+
+    // If the property did not exist already, let the behaviors execute some
+    // code.
+    if (!array_key_exists($name, $p2)) {
+      eck_property_behavior_invoke_plugin($this, 'property_add',
+        array('name' => $name, 'property' => $p[$name], 'entity_type' => $this));
+    }
   }
 
   /**
    * Remove a property.
-   * 
+   *
    * @param string $name
    *   The name of the property.
    */
   public function removeProperty($name){
     $p = $this->properties;
     if (array_key_exists($name, $p)) {
+
+      // Let the behaviors execute some code.
+      eck_property_behavior_invoke_plugin($this, 'property_remove',
+      array('name' => $name, 'property' => $p[$name], 'entity_type' => $this));
+
       unset($p[$name]);
       $this->properties = $p;
       if (!$this->is_new) {
@@ -275,10 +287,10 @@ class EntityType extends DBObject{
 
   /**
    * Change the behavior of a property.
-   * 
+   *
    * @param string $name
    *   The name of the property.
-   * 
+   *
    * @param string $behavior
    *   the name of the behavior.
    */
@@ -300,7 +312,7 @@ class EntityType extends DBObject{
 
   /**
    * Remove behavior.
-   * 
+   *
    * @param string $name
    *   The name of the behavior.
    */
@@ -319,7 +331,7 @@ class EntityType extends DBObject{
           if (!array_key_exists($name, $p)) {
             $c[$op][] = $name;
           }
-          break; 
+          break;
         case  'remove':
           // If there is an add in the changes take it out, otherwise add a
           // remove.
@@ -379,13 +391,13 @@ class EntityType extends DBObject{
     parent::save();
 
     global $eck_entity_types_cache;
-    
+
     $cache_enabled = isset($eck_entity_types_cache)?TRUE:FALSE;
-    
+
     if($cache_enabled) {
       $eck_entity_types_cache->reset();
     }
-    
+
     variable_set('eck_clear_caches', TRUE);
   }
   /**
@@ -405,26 +417,26 @@ class EntityType extends DBObject{
     module_invoke_all('eck_entity_type_delete', $this);
 
     global $eck_entity_types_cache;
-    
+
     $cache_enabled = isset($eck_entity_types_cache)?TRUE:FALSE;
-    
+
     if($cache_enabled) {
       $eck_entity_types_cache->reset();
     }
     variable_set('eck_clear_caches', TRUE);
   }
-  
+
   public static function loadByName($name) {
     return EntityType::loadAll($name);
   }
 
   public static function loadAll($entity_type_name = '', $reset = FALSE) {
     $entity_types = array();
-    
+
     global $eck_entity_types_cache;
-    
+
     $cache_enabled = isset($eck_entity_types_cache)?TRUE:FALSE;
-    
+
     if($cache_enabled) {
       if ($reset) {
         $eck_entity_types_cache->reset();
@@ -432,7 +444,7 @@ class EntityType extends DBObject{
 
       $entity_types = $eck_entity_types_cache->get();
     }
-    
+
     if (empty($entity_types)) {
       $entity_types = array();
       $results = db_select('eck_entity_type', 't')
@@ -445,7 +457,7 @@ class EntityType extends DBObject{
         $entity_type->load('name', $name);
         $entity_types[$name] = $entity_type;
       }
-      
+
       if($cache_enabled) {
         $eck_entity_types_cache->set($entity_types);
       }
@@ -457,13 +469,13 @@ class EntityType extends DBObject{
       return $entity_types[$entity_type_name];
     }
     else {
-     return array(); 
+     return array();
     }
   }
 }
 
 class Bundle extends DBObject {
-  
+
   /**
    * Constructor.
    */
@@ -521,13 +533,13 @@ class Bundle extends DBObject {
       if ($save) {
         parent::save();
         global $eck_bundles_cache;
-        
+
         $cache_enabled = isset($eck_bundles_cache)?TRUE:FALSE;
-    
+
         if($cache_enabled) {
           $eck_bundles_cache->reset();
         }
-        
+
         variable_set('eck_clear_caches', TRUE);
       }else{
         //@todo throw some error
@@ -562,19 +574,19 @@ class Bundle extends DBObject {
     parent::delete();
 
     global $eck_bundles_cache;
-    
+
     $cache_enabled = isset($eck_bundles_cache)?TRUE:FALSE;
-    
+
     if($cache_enabled) {
       $eck_bundles_cache->reset();
     }
-    
+
     variable_set('eck_clear_caches', TRUE);
   }
-  
+
   /**
    * This method returns a bundle object.
-   * 
+   *
    * @param string $machine_name
    *   A string composed of the entity type name and the bundle name.
    *   "{$entity_type_name}_{$bundle_name}"
@@ -585,11 +597,11 @@ class Bundle extends DBObject {
 
   public static function loadAll($machine_name = NULL, $reset = FALSE) {
     $bundles = array();
-    
+
     global $eck_bundles_cache;
-    
+
     $cache_enabled = isset($eck_bundles_cache)?TRUE:FALSE;
-    
+
     if($cache_enabled) {
       if ($reset) {
         $eck_bundles_cache->reset();
@@ -597,7 +609,7 @@ class Bundle extends DBObject {
 
       $bundles = $eck_bundles_cache->get();
     }
-    
+
     if (empty($bundles)) {
       $bundles = array();
       //@todo move this to a general function.
@@ -611,7 +623,7 @@ class Bundle extends DBObject {
         $bundle->load('machine_name', $name);
         $bundles[$name] = $bundle;
       }
-      
+
       if ($cache_enabled) {
         $eck_bundles_cache->set($bundles);
       }
@@ -624,10 +636,10 @@ class Bundle extends DBObject {
       return $bundles[$machine_name];
     }
     else {
-     return array(); 
+     return array();
     }
   }
-      
+
   public static function loadByEntityType($entity_type){
     $entity_bundles = &drupal_static(__FUNCTION__, array());
 
@@ -651,13 +663,13 @@ class Bundle extends DBObject {
    * Adds a field to this bundle.
    *
    * @param string $field_type
-   *   The type of field to add. One of the keys as defined by any field module 
+   *   The type of field to add. One of the keys as defined by any field module
    *   using hook_field_info.
-   * 
+   *
    * @param array $options
    *   This is an optional array. Its properties can include:
-   *   _use existing_: If TRUE and if a 'field_name' property is specified in 
-   *   the 'field' property below and the field already exists, then a new 
+   *   _use existing_: If TRUE and if a 'field_name' property is specified in
+   *   the 'field' property below and the field already exists, then a new
    *   instance will be created using the existing field. All specified 'field
    *   options provided other then the field name will be ignored. If FALSE,
    *   and an existing field is found then a new field_name will be generated.
@@ -667,7 +679,7 @@ class Bundle extends DBObject {
    *   field_create_field(). Default 'field_name'generation.
    *
    * @return bool
-   *   The $instance array with the id property filled in as returned by 
+   *   The $instance array with the id property filled in as returned by
    *   field_create_instance().
    *
    * See: @link field Field API data structures @endlink.
@@ -823,32 +835,32 @@ class ECKEntity extends Entity{
 }
 
 class ECKCache {
-  
+
   private $id;
   private $data;
-  
+
   private $no_cache;
-  
+
   public function __construct($id) {
     $this->id = $id;
     $this->no_cache = FALSE;
-    
+
     if (!db_table_exists('cache_eck')) {
       $this->no_cache = TRUE;
     }
-    
+
   }
-  
+
   public function set($data) {
     if($this->no_cache) return;
-    
+
     cache_set($this->id, $data, "cache_eck");
     $this->data = $data;
   }
-  
+
   public function get() {
     if($this->no_cache) return NULL;
-    
+
     if($this->data) {
       return $this->data;
     }
@@ -863,10 +875,10 @@ class ECKCache {
       }
     }
   }
-  
+
   public function reset() {
     if($this->no_cache) return;
-    
+
     $this->data = NULL;
     cache_clear_all($this->id, 'cache_eck');
   }
