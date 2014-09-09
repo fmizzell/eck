@@ -34,7 +34,7 @@ class FeatureContext extends Drupal\DrupalExtension\Context\DrupalContext
    * @Given /^the last user has the ECK permission "([^"]*)" "([^"]*)" "([^"]*)"$/
    */
   public function theLastUserHasTheEckPermission($operation, $object_type, $object_id) {
-    dpm("Creating ECK perm: $operation $object_type $object_id \n");
+    // print_r("Creating ECK perm: $operation $object_type $object_id \n");
     $user = $this->user;
     try {
       $perm = new ECKPermission();

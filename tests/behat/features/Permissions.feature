@@ -103,19 +103,12 @@ Feature: Permissions
   @bundle @eck-perm
   Scenario Outline: Users with the right permission can access the bundle's overview page (specific)
     Given I am logged in as a user with the "Use the administration pages and help,List Entity Types" permissions
-    #And show last response
     And the last user has the ECK permission <operation> "bundle" <object_id>
-    #And show last response
     And I visit "/admin/structure/entity-type"
-    #And show last response
     Then I should see the link "Vehicle"
-    #And show last response
     And I should not see the link "Animal"
-    #And show last response
     And I should see the text "Animal"
-    #And show last response
     When I click "Vehicle"
-    #And show last response
     Then I should get a "200" HTTP response
 
     Examples: 
@@ -144,7 +137,7 @@ Feature: Permissions
       | "/admin/structure/entity-type/vehicle" | "List Bundles,Administer Bundles" |
       | "/admin/structure/entity-type/animal"  | "List Bundles,Administer Bundles" |
 
-  @bundle
+  @bundle @eck-perm
   Scenario Outline: Users with the right permission can add bundles from the overview page (specific)
     Given I am logged in as a user with the "List Bundles" permissions
     And the last user has the ECK permission <operation> "bundle" <object_id>
@@ -181,7 +174,7 @@ Feature: Permissions
       | "/admin/structure/entity-type/vehicle" | "List Bundles,Administer Bundles" |
       | "/admin/structure/entity-type/animal"  | "List Bundles,Administer Bundles" |
 
-  @bundle
+  @bundle @eck-perm
   Scenario Outline: Users with the right permission can delete bundles from the overview page (specific)
     Given I am logged in as a user with the "List Bundles" permissions
     And the last user has the ECK permission <operation> "bundle" <object_id>
@@ -220,30 +213,29 @@ Feature: Permissions
       | "/admin/structure/entity-type/vehicle" | "Car" | "List Bundles,Administer Entities" |
       | "/admin/structure/entity-type/animal"  | "Dog" | "List Bundles,Administer Entities" |
 
-  @entity
+  @entity @eck-perm
   Scenario Outline: Users with the right permission can access the entity's overview page (specific)
-    Given I am logged in as a user with the <permissions> permissions
+    Given I am logged in as a user with the "Use the administration pages and help,List Bundles" permissions
+    And the last user has the ECK permission <operation> "entity" <object_id>
     And I visit "/admin/structure/entity-type/vehicle"
     Then I should see the link "Car"
     When I click "Car"
     Then I should get a "200" HTTP response
-    And I visit "/admin/structure/entity-type/animal"
-    Then I should not see the link "Dog"
-    But I should see the text "Dog"
 
     Examples: 
-      | permissions                                           |
-      | "List Bundles,View List of Vehicle Car Entities" |
-      | "List Bundles,Administer Vehicle Car Entities"   |
+      | operation | object_id   |
+      | "list"    | "vehicle\|car\|*" |
+      | "*"       | "vehicle\|car\|*" |
 
   @entity @drupal-perm
-  Scenario: Users without the right permission can not add entities from the overview page
+  Scenario: Users without the right permission can not add entities
+    Given the cache has been cleared
     Given I am logged in as a user with the "List Entities" permissions
     And I visit "/admin/structure/entity-type/vehicle/car"
     Then I should not see the link "Add Car"
 
   @entity @drupal-perm
-  Scenario Outline: Users with the right permission can add entities from the overview page (global)
+  Scenario Outline: Users with the right permission can add entities (global)
     Given I am logged in as a user with the <permissions> permissions
     And I visit <path>
     Then I should see the link <link>
@@ -251,71 +243,35 @@ Feature: Permissions
     Then I should get a "200" HTTP response
 
     Examples: 
-      | path                                       | link      | permissions                             |
-      | "/admin/structure/entity-type/vehicle/car" | "Add Car" | "List Entities,Create Entities"        |
-      | "/admin/structure/entity-type/animal/dog"  | "Add Dog" | "List Entities,Create Entities"        |
-      | "/admin/structure/entity-type/vehicle/car" | "Add Car" | "List Entities,Administer Entities" |
-      | "/admin/structure/entity-type/animal/dog"  | "Add Dog" | "List Entities,Administer Entities" |
+      | path                                       | link      | permissions                     |
+      | "/admin/structure/entity-type/vehicle/car" | "Add Car" | "List Entities,Create Entities" |
+      | "/admin/structure/entity-type/animal/dog"  | "Add Dog" | "List Entities,Create Entities" |
+      | "/admin/structure/entity-type/vehicle/car" | "Add Car" | "Administer Entities"           |
+      | "/admin/structure/entity-type/animal/dog"  | "Add Dog" | "Administer Entities"           |
 
-  @entity
-  Scenario Outline: Users with the right permission can add entities from the overview page (specific)
-    Given I am logged in as a user with the <permissions> permissions
+  @entity @eck-perm
+  Scenario Outline: Users with the right permission can add entities (specific)
+    Given I am logged in as a user with the "Use the administration pages and help,List Entities" permissions
+    And the last user has the ECK permission <operation> "entity" <object_id>
     And I visit "/admin/structure/entity-type/vehicle/car"
     Then I should see the link "Add Car"
     When I click "Add Car"
     Then I should get a "200" HTTP response
-    And I visit "/admin/structure/entity-type/animal/dog"
-    Then I should not see the link "Add Dog"
 
     Examples: 
-      | permissions                                         |
-      | "List Entities,Add Vehicle Car Entities"        |
-      | "List Entities,Administer Vehicle Car Entities" |
+      | operation | object_id   |
+      | "create"    | "vehicle\|car\|*" |
+      | "*"       | "vehicle\|car\|*" |
 
   @entity @drupal-perm
-  Scenario: Users without the right permission can not view entities from the overview page
-    Given I am logged in as a user with the "List Entities" permissions
-    And I visit "/admin/structure/entity-type/vehicle/car"
-    Then I should not see the link "Toyota Prius"
-
-  @entity @drupal-perm
-  Scenario Outline: Users with the right permission can view entities from the overview page (global)
-    Given I am logged in as a user with the <permissions> permissions
-    And I visit <path>
-    Then I should see the link <link>
-    When I click <link>
-    Then I should get a "200" HTTP response
-
-    Examples: 
-      | path                                       | link           | permissions                             |
-      | "/admin/structure/entity-type/vehicle/car" | "Toyota Prius" | "List Entities,View Entities"     |
-      | "/admin/structure/entity-type/animal/dog"  | "Snoopy"       | "List Entities,View Entities"     |
-      | "/admin/structure/entity-type/vehicle/car" | "Toyota Prius" | "List Entities,Administer Entities" |
-      | "/admin/structure/entity-type/animal/dog"  | "Snoopy"       | "List Entities,Administer Entities" |
-
-  @entity
-  Scenario Outline: Users with the right permission can view entities from the overview page (specific)
-    Given I am logged in as a user with the <permissions> permissions
-    And I visit "/admin/structure/entity-type/vehicle/car"
-    Then I should see the link "Toyota Prius"
-    When I click "Toyota Prius"
-    Then I should get a "200" HTTP response
-    And I visit "/admin/structure/entity-type/animal/dog"
-    Then I should not see the link "Snoopy"
-
-    Examples: 
-      | permissions                                         |
-      | "List Entities,View Vehicle Car Entities"       |
-      | "List Entities,Administer Vehicle Car Entities" |
-
-  @entity @drupal-perm
-  Scenario: Users without the right permission can not edit entities from the overview page
+  Scenario: Users without the right permission can not edit entities
+    Given the cache has been cleared
     Given I am logged in as a user with the "List Entities" permissions
     And I visit "/admin/structure/entity-type/vehicle/car"
     Then I should not see the link "edit"
 
   @entity @drupal-perm
-  Scenario Outline: Users with the right permission can edit entities from the overview page (global)
+  Scenario Outline: Users with the right permission can edit entities (global)
     Given I am logged in as a user with the <permissions> permissions
     And I visit <path>
     Then I should see the link "edit"
@@ -323,35 +279,35 @@ Feature: Permissions
     Then I should get a "200" HTTP response
 
     Examples: 
-      | path                                       | permissions                             |
-      | "/admin/structure/entity-type/vehicle/car" | "List Entities,Update Entities"     |
-      | "/admin/structure/entity-type/animal/dog"  | "List Entities,Update Entities"     |
-      | "/admin/structure/entity-type/vehicle/car" | "List Entities,Administer Entities" |
-      | "/admin/structure/entity-type/animal/dog"  | "List Entities,Administer Entities" |
+      | path                                       | permissions                     |
+      | "/admin/structure/entity-type/vehicle/car" | "List Entities,Update Entities" |
+      | "/admin/structure/entity-type/animal/dog"  | "List Entities,Update Entities" |
+      | "/admin/structure/entity-type/vehicle/car" | "Administer Entities"           |
+      | "/admin/structure/entity-type/animal/dog"  | "Administer Entities"           |
 
-  @entity
-  Scenario Outline: Users with the right permission can delete entities from the overview page (specific)
-    Given I am logged in as a user with the <permissions> permissions
+  @entity @eck-perm
+  Scenario Outline: Users with the right permission can edit entities (specific)
+    Given I am logged in as a user with the "Use the administration pages and help,List Entities" permissions
+    And the last user has the ECK permission <operation> "entity" <object_id>
     And I visit "/admin/structure/entity-type/vehicle/car"
     Then I should see the link "edit"
     When I click "edit"
     Then I should get a "200" HTTP response
-    And I visit "/admin/structure/entity-type/animal/dog"
-    Then I should not see the link "edit"
 
     Examples: 
-      | permissions                                         |
-      | "List Entities,Edit Vehicle Car Entities"       |
-      | "List Entities,Administer Vehicle Car Entities" |
+      | operation | object_id         |
+      | "update"  | "vehicle\|car\|*" |
+      | "*"       | "vehicle\|car\|*" |
 
-  @entity @drupal-perm
-  Scenario: Users without the right permission can not delete entities from the overview page
+ @entity @drupal-perm
+  Scenario: Users without the right permission can not delete entities
+    Given the cache has been cleared
     Given I am logged in as a user with the "List Entities" permissions
     And I visit "/admin/structure/entity-type/vehicle/car"
     Then I should not see the link "delete"
 
   @entity @drupal-perm
-  Scenario Outline: Users with the right permission can delete entities from the overview page (global)
+  Scenario Outline: Users with the right permission can delete entities (global)
     Given I am logged in as a user with the <permissions> permissions
     And I visit <path>
     Then I should see the link "delete"
@@ -359,26 +315,26 @@ Feature: Permissions
     Then I should get a "200" HTTP response
 
     Examples: 
-      | path                                       | permissions                             |
-      | "/admin/structure/entity-type/vehicle/car" | "List Entities,Delete Entities"   |
-      | "/admin/structure/entity-type/animal/dog"  | "List Entities,Delete Entities"   |
-      | "/admin/structure/entity-type/vehicle/car" | "List Entities,Administer Entities" |
-      | "/admin/structure/entity-type/animal/dog"  | "List Entities,Administer Entities" |
+      | path                                       | permissions                     |
+      | "/admin/structure/entity-type/vehicle/car" | "List Entities,Delete Entities" |
+      | "/admin/structure/entity-type/animal/dog"  | "List Entities,Delete Entities" |
+      | "/admin/structure/entity-type/vehicle/car" | "Administer Entities"           |
+      | "/admin/structure/entity-type/animal/dog"  | "Administer Entities"           |
 
-  @entity
-  Scenario Outline: Users with the right permission can delete entities from the overview page (specific)
-    Given I am logged in as a user with the <permissions> permissions
+  @entity @eck-perm
+  Scenario Outline: Users with the right permission can delete entities (specific)
+    Given I am logged in as a user with the "Use the administration pages and help,List Entities" permissions
+    And the last user has the ECK permission <operation> "entity" <object_id>
     And I visit "/admin/structure/entity-type/vehicle/car"
     Then I should see the link "delete"
     When I click "delete"
     Then I should get a "200" HTTP response
-    And I visit "/admin/structure/entity-type/animal/dog"
-    Then I should not see the link "delete"
 
     Examples: 
-      | permissions                                         |
-      | "List Entities,Delete Vehicle Car Entities"     |
-      | "List Entities,Administer Vehicle Car Entities" |
+      | operation | object_id         |
+      | "delete"  | "vehicle\|car\|*" |
+      | "*"       | "vehicle\|car\|*" |
+
 
   @cleanup
   Scenario Outline: This is a clean up step

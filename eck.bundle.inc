@@ -18,7 +18,7 @@ function eck__bundle__menu($entity_type) {
   // Create the menus relavant to types.
   $path = eck__entity_type__path();
   $menu = array();
-  
+
   // EDIT an entity type
   $menu["{$path}/{$entity_type->name}/edit"] = array(
     'title' => "Edit",
@@ -45,7 +45,7 @@ function eck__bundle__menu($entity_type) {
     'type' => MENU_LOCAL_TASK,
     'weight' => 3,
   );
-  
+
   //MANAGE Entity Type Properties
   $menu["{$path}/{$entity_type->name}/property"] = array(
     'title' => "Manage properties",
@@ -58,7 +58,7 @@ function eck__bundle__menu($entity_type) {
     'type' => MENU_LOCAL_TASK,
     'weight' => 4,
   );
-  
+
   //Add a property
   $menu["{$path}/{$entity_type->name}/property/add"] = array(
     'title' => "Add property",
@@ -71,7 +71,7 @@ function eck__bundle__menu($entity_type) {
     'type' => MENU_LOCAL_ACTION,
     'weight' => 4,
   );
-    
+
   //Activate a default property
   $menu["{$path}/{$entity_type->name}/property/%/activate"] = array(
     'title' => "Activate default property",
@@ -81,7 +81,7 @@ function eck__bundle__menu($entity_type) {
     'access arguments' => array("update", "property"),
     'file' => 'eck.default_properties.inc',
   );
-    
+
   //Dectivate a default property
   $menu["{$path}/{$entity_type->name}/property/%/deactivate"] = array(
     'title' => "Activate default property",
@@ -91,7 +91,7 @@ function eck__bundle__menu($entity_type) {
     'access arguments' => array("update", "property"),
     'file' => 'eck.default_properties.inc',
   );
-  
+
   //Edit a property
   $menu["{$path}/{$entity_type->name}/property/%/edit"] = array(
     'title' => "Edit property",
@@ -102,7 +102,7 @@ function eck__bundle__menu($entity_type) {
     'access arguments' => array("update", "property"),
     'file' => 'eck.properties.inc',
   );
-  
+
   //Delete a property
   $menu["{$path}/{$entity_type->name}/property/%/delete"] = array(
     'title' => "Delete property",
@@ -113,7 +113,7 @@ function eck__bundle__menu($entity_type) {
     'access arguments' => array("update", "property"),
     'file' => 'eck.properties.inc',
   );
-    
+
   //Modify (add/change/delete) the behavior on a property
  //Edit a property
   $menu["{$path}/{$entity_type->name}/property/%/behavior"] = array(
@@ -125,7 +125,7 @@ function eck__bundle__menu($entity_type) {
     'access arguments' => array("update", "property"),
     'file' => 'eck.properties.inc',
   );
-  
+
   // LIST bundles of an entity type.
   $menu["{$path}/{$entity_type->name}"] = array(
     'title' => "{$entity_type->label}",
@@ -142,7 +142,7 @@ function eck__bundle__menu($entity_type) {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 100,
   );
-  
+
   //ADD bundles to an entity type
   $menu["{$path}/{$entity_type->name}/add"] = array(
     'title' => "Add bundle ",
@@ -175,10 +175,10 @@ function eck__bundle__menu($entity_type) {
 function eck__bundle__list($entity_type) {
   $path = eck__entity_type__path();
   $entity_type = entity_type_load($entity_type);
-  
+
   //Check that the user has permissions to view bundle lists:
   if(eck_access('list', 'bundle') || eck_access('list', "bundle", $entity_type)) {
-    
+
     $header = array(t('Type'), array('data' => t('Operations'), 'colspan' => '1'));
 
     $rows = array();
@@ -198,8 +198,8 @@ function eck__bundle__list($entity_type) {
       if(eck_access('delete', 'bundle', $bundle)){
         $allowed_operations = l(t('delete'), $uri."/delete");
       }
-      
-      if(eck_access('list', 'entity')){
+
+      if(eck_access('list', 'entity') || eck_access('list', 'entity', $bundle)){
         $rows[] = array(l($bundle_label, url($uri, array('absolute' => TRUE))), $allowed_operations);
       }else{
         $rows[] = array($bundle_label, $allowed_operations);
@@ -285,7 +285,7 @@ function eck__bundle__add_submit($form, &$form_state) {
   $bundle->entity_type = $entity_type->name;
   $bundle->save();
 
-  drupal_set_message(t('the %bundle for entity type %entity_type has been saved', 
+  drupal_set_message(t('the %bundle for entity type %entity_type has been saved',
   array('%bundle' => $bundle_name, '%entity_type' => $entity_type->name)));
 
   Bundle::loadAll(NULL, TRUE);
@@ -365,7 +365,7 @@ function eck__bundle__edit_form_submit($form, &$form_state) {
 function eck__bundle__delete($entity_type, $bundle) {
   // And finally we delete the bundle from the eck_type table.
   $bundle->delete();
-  
+
   drupal_get_schema(NULL, TRUE);
   variable_set('menu_rebuild_needed', TRUE);
   drupal_flush_all_caches();
@@ -470,7 +470,7 @@ function get_bundle_field_label_info($entity_type, $bundle) {
 
 /**
  * Form for managing the extra field settings for a given entity property.
- * 
+ *
  * @param $form
  *   The entity property extra field management form. For configuration of extra
  *   field settings like its label.
@@ -482,7 +482,7 @@ function get_bundle_field_label_info($entity_type, $bundle) {
  *   The machine name of the bundle type.
  * @param $property_name
  *   The machine name of the entity property being included as an extra field.
- * 
+ *
  * @return
  *   An array comprising the form for managing the settings for the extra field.
  */
@@ -497,7 +497,7 @@ function eck__manage_extra_field_form($form, &$form_state, $entity_type_name, $b
   }
   $bundle_property_config = $bundle->config['extra_fields'][$property_name]['form'];
   $widget_type = eck_property_info_widget_types($bundle_property_config['widget']['type']);
-  
+
   $form = array (
     '#entity_type' => $entity_type,
     '#bundle' => $bundle,
@@ -526,12 +526,12 @@ function eck__manage_extra_field_form($form, &$form_state, $entity_type_name, $b
     '#description' => t('Instructions to present to the user below this property field on the editing form.<br />Allowed HTML tags: @tags', array('@tags' => _field_filter_xss_display_allowed_tags())),
     '#weight' => -5,
   );
-  
+
   // Include external module file dependency if one is required.
   if (function_exists('drupal_get_path') && $widget_type['file']) {
     form_load_include($form_state, $widget_type['file type'], $widget_type['module'], $widget_type['file']);
   }
-  
+
   // Add additional widget settings from the property's widget type module.
   $additions = module_invoke($widget_type['module'], 'eck_property_widget_settings_form', $entity_type, $bundle, $property_name, $bundle_property_config);
   if (is_array($additions)) {
@@ -542,7 +542,7 @@ function eck__manage_extra_field_form($form, &$form_state, $entity_type_name, $b
     );
     $form['widget']['settings'] = $additions;
   }
-  
+
   // Add handling for default value if not provided by any other module.
   if (empty($bundle_property_config['default_value_function'])) {
     $function = $widget_type['module'] . '_eck_property_widget_form';
@@ -636,10 +636,10 @@ function eck__manage_extra_field_form_submit($form, &$form_state) {
 
 /**
  * Helper function for extracting the value for a property from its widget form.
- * 
+ *
  * If one is available the 'value callback' function for the widget is called to
  * processe the values returned.
- * 
+ *
  * @param $entity_type
  *   The ECK entity_type object.
  * @param $bundle
@@ -652,7 +652,7 @@ function eck__manage_extra_field_form_submit($form, &$form_state) {
  *   The submitted form array.
  * @param $form_state
  *   The array containing the current state information for the form.
- * 
+ *
  * @return
  *   The value that should be saved for this property.
  */
@@ -672,7 +672,7 @@ function eck_property_widget_extract_value($entity_type, $bundle, $property_name
 
 /**
  * Form for changing the widget type for a given entity property.
- * 
+ *
  * @param $form
  *   The property widget form.
  * @param $form_state
@@ -683,7 +683,7 @@ function eck_property_widget_extract_value($entity_type, $bundle, $property_name
  *   The machine name of the bundle type.
  * @param $property_name
  *   The machine name of the entity property being included as an extra field.
- * 
+ *
  * @return
  *   An array comprising the form for changing the property's widget.
  */
@@ -693,7 +693,7 @@ function eck__extra_field_widget_form($form, &$form_state, $entity_type_name, $b
   drupal_set_title($bundle->config['extra_fields'][$property_name]['form']['label']);
 
   $default_widget = (!empty($bundle->config['extra_fields'][$property_name]['form']['widget']['type'])) ? $bundle->config['extra_fields'][$property_name]['form']['widget']['type'] : '';
-  
+
   $form = array (
     '#entity_type' => $entity_type,
     '#bundle' => $bundle,
@@ -701,10 +701,10 @@ function eck__extra_field_widget_form($form, &$form_state, $entity_type_name, $b
     '#default_widget' => $default_widget,
   );
   $form['widget'] = array(
-    '#type' => 'fieldset', 
-    '#title' => t('Change Widget'), 
-    '#weight' => 5, 
-    '#collapsible' => FALSE, 
+    '#type' => 'fieldset',
+    '#title' => t('Change Widget'),
+    '#weight' => 5,
+    '#collapsible' => FALSE,
   );
 
   $form['widget']['widget_type'] = array(
@@ -715,7 +715,7 @@ function eck__extra_field_widget_form($form, &$form_state, $entity_type_name, $b
     '#description' => t('The type of form element you would like to present to the user when managing this property for the %bundle type.', array('%type' => $bundle->label)),
     '#default_value' => $default_widget,
   );
-  
+
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type' => 'submit',
@@ -778,7 +778,7 @@ function eck__extra_field_widget_form_submit($form, &$form_state) {
 
 /**
  * Form for removing the property from an entity's list of extra fields.
- * 
+ *
  * @param $form
  *   The property widget form.
  * @param $form_state
@@ -789,7 +789,7 @@ function eck__extra_field_widget_form_submit($form, &$form_state) {
  *   The machine name of the bundle type.
  * @param $property_name
  *   The machine name of the entity property being included as an extra field.
- * 
+ *
  * @return
  *   An array comprising the form for changing the property's widget.
  */
@@ -801,7 +801,7 @@ function eck__remove_extra_field_form($form, &$form_state, $entity_type, $bundle
     '#bundle' => $bundle,
     '#property_name' => $property_name,
   );
-  return confirm_form($form, 
+  return confirm_form($form,
     t('Are you sure you want to remove %title as a property field for the %bundle bundle?', array('%title' => $property_name, '%bundle' => $bundle->label)),
     'admin/structure/entity-type/' . $entity_type . '/' . $bundle_type . '/properties/' . $property_name,
     t('This will remove the property as an extra field on the %bundle bundle\'s field management page, but it does not delete the property from the entity type. This cannot be undone.', array('%bundle' => $bundle->label)),
