@@ -27,7 +27,7 @@ function eck__entity_type__menu() {
     'page callback' => 'eck__entity_type__list',
     'access callback' => 'eck_access',
     'access arguments' => array("list", "entity_type"),
-    'file' => 'eck.entity_type.inc'
+    'file' => 'eck.entity_type.inc',
   );
 
   // ADD Entity.
@@ -58,7 +58,7 @@ function eck__entity_type__menu() {
  */
 function eck__entity_type__list() {
   $allowed_operations = "";
-  
+
   $path = eck__entity_type__path();
   $header = array(t('Name'), array('data' => t('Operations'), 'colspan' => '1'));
   $rows = array();
@@ -67,25 +67,37 @@ function eck__entity_type__list() {
   usort($entity_types, 'eck_alphabetical_cmp');
 
   foreach ($entity_types as $entity_type) {
-    //Check that the user has permissions to operate on the entity types
+    // Check that the user has permissions to operate on the entity types.
     $actions = array("update" => "edit", "delete" => "delete");
-    foreach($actions  as $action => $menu){
-      
-      if(eck_access($action, 'entity_type', $entity_type)) {
-        $allowed_operations = isset($allowed_operations)?$allowed_operations." | ":"";
-        $allowed_operations .= l(t($menu), "{$path}/{$entity_type->name}/{$menu}");      
+    foreach ($actions as $action => $menu) {
+
+      if (eck_access($action, 'entity_type', $entity_type)) {
+        $allowed_operations = isset($allowed_operations) ? $allowed_operations . " | " : "";
+        $allowed_operations .= l(t("@menu", array("@menu" => $menu)), "{$path}/{$entity_type->name}/{$menu}");
       }
     }
-    
-    if(eck_access("list", "bundle") || eck_access("list", "bundle", $entity_type)){
-      $rows[] = array(l(t("{$entity_type->label}"), "{$path}/{$entity_type->name}"), $allowed_operations);
-    }else{
-      $rows[] = array(t("{$entity_type->label}"), $allowed_operations);
+
+    if (eck_access("list", "bundle") || eck_access("list", "bundle", $entity_type)) {
+      $link = "{$path}/{$entity_type->name}";
+
+      $link_text = t("@entity_type_label", array(
+        "@entity_type_label" => $entity_type->label,
+      ));
+
+      $rows[] = array(l($link_text, $link), $allowed_operations);
     }
-    
+    else {
+      $rows[] = array(
+        t("@entity_type_label", array(
+          "@entity_type_label" => $entity_type->label)
+        ),
+        $allowed_operations,
+      );
+    }
+
     $allowed_operations = NULL;
   }
-  
+
   $build['entity_table'] = array(
     '#theme' => 'table',
     '#header' => $header,
@@ -217,7 +229,7 @@ function eck__entity_type__form_submit($form, &$state) {
         $bundle_label = $entity_type_label;
       }
 
-      // Let's set up the object and save it to the db.
+      // Lets set up the object and save it to the db.
       $bundle = new Bundle();
       $bundle->entity_type = $entity_type->name;
       $bundle->name = $bundle_name;
@@ -230,14 +242,14 @@ function eck__entity_type__form_submit($form, &$state) {
     eck__default_properties__form_submit($form, $state, $entity_type);
 
     $entity_type->save();
-    
-    //Clear info caches in order to pick up newly created entities.
+
+    // Clear info caches in order to pick up newly created entities.
     EntityType::loadAll(NULL, TRUE);
     drupal_get_schema(NULL, TRUE);
     entity_info_cache_clear();
     variable_set('menu_rebuild_needed', TRUE);
 
-    if($entity_type->is_new){
+    if ($entity_type->is_new) {
       drupal_set_message(t('Entity type %entity_type has been created.', array('%entity_type' => $entity_type->label)));
     }
     else {
@@ -248,12 +260,12 @@ function eck__entity_type__form_submit($form, &$state) {
 
 /**
  * Delete the entity type.
- * 
- * @param EntityType $entity_type 
+ *
+ * @param EntityType $entity_type
  *   Entity type to be deleted, the $entity_type object can be loaded by using
  *   the method EntityType::loadByName($entity_type_name).
- * 
- * @see eck.classes.inc 
+ *
+ * @see eck.classes.inc
  */
 function eck__entity_type__delete($entity_type) {
 
@@ -337,24 +349,33 @@ function eck__entity_type__schema($entity_type) {
   return $schema;
 }
 
-function eck__entity_type__properties_schema($entity_type){
+/**
+ * Property schema.
+ *
+ * @param object $entity_type
+ *   Entity type object.
+ *
+ * @return array
+ *   A schema array for an entity type.
+ */
+function eck__entity_type__properties_schema($entity_type) {
   $schema = array();
-  foreach($entity_type->properties as $property => $property_info){
+  foreach ($entity_type->properties as $property => $property_info) {
     $property_type_class = eck_get_property_type_class($property_info['type']);
     $schema[$property] = $property_type_class::schema();
-    if(array_key_exists('schema', $property_info) && !empty($property_info['schema'])){
-      
-      //if the default was empty, then we took it off the property schema, so we need
-      //to make sure we don't add it back during the merge
-      if(array_key_exists('default', $schema[$property]) && 
-              !array_key_exists('default', $property_info['schema'])){
+    if (array_key_exists('schema', $property_info) && !empty($property_info['schema'])) {
+
+      // If the default was empty, then we took it off the property schema, so
+      // we need to make sure we don't add it back during the merge.
+      if (array_key_exists('default', $schema[$property]) &&
+              !array_key_exists('default', $property_info['schema'])) {
         unset($schema[$property]['default']);
       }
-      
+
       $schema[$property] = array_merge($schema[$property], $property_info['schema']);
     }
   }
-  
+
   return $schema;
 }
 
@@ -368,12 +389,12 @@ function eck__entity_type__info($entity_type) {
   module_load_include('inc', 'eck', 'eck.bundle');
   $info = array();
   $entity_type_label = $entity_type->label;
-  
+
   $entity_class = "ECKEntity";
   $controller_class = "EntityAPIController";
 
   $info[$entity_type->name] = array(
-    'label' => t($entity_type_label),
+    'label' => t("@entity_type_label", array("@entity_type_label" => $entity_type_label)),
     'base table' => "eck_{$entity_type->name}",
     'entity class' => $entity_class,
     'controller class' => $controller_class,
@@ -416,8 +437,7 @@ function eck__entity_type__info($entity_type) {
       'admin' => array(
         'path' => $path,
         'access callback' => 'eck_access',
-        'access arguments' => 
-         array('update', 'bundle')
+        'access arguments' => array('update', 'bundle'),
       ),
       'crud' => array(
         'add' => array(

@@ -6,6 +6,9 @@
 
 class DBObject implements Iterator {
   // Wheteher this object was loaded or just created.
+  // I believe that entity api expects this to be a public property that
+  // does not match drupal coding standards, lets not change it until we
+  // are sure that that is not the case.
   public $is_new;
 
   // Iterator variable.
@@ -18,7 +21,7 @@ class DBObject implements Iterator {
   private $vars;
   private $data;
 
-  private $primary_keys;
+  private $primaryKeys;
   private $serialize;
 
   /**
@@ -36,7 +39,7 @@ class DBObject implements Iterator {
     // Is this a real table? If it is, check it.
     if ($schema = drupal_get_schema($table)) {
       $this->table = $table;
-      $this->primary_keys = $schema["primary key"];
+      $this->primaryKeys = $schema["primary key"];
       $this->vars = array_keys($schema['fields']);
 
       // Do we want to handle searialized variables by default? let's do it
@@ -94,31 +97,29 @@ class DBObject implements Iterator {
   /**
    * Save.
    */
-  public function save(){
-
-    //before we save, lets serialize the properties that require it
-    foreach($this->serialize as $property){
-
+  public function save() {
+    // Before we save, lets serialize the properties that require it.
+    foreach ($this->serialize as $property) {
       $this->{$property} = drupal_json_encode($this->{$property});
     }
 
-    if($this->is_new){
-      $this->id =
-      db_insert($this->table)
+    if ($this->is_new) {
+      $this->id = db_insert($this->table)
       ->fields($this->data)
       ->execute();
-    }else{
-      //well I need to know what the primary id is to set up the condition;
-      $primary_key = $this->primary_keys[0];
+    }
+    else {
+      // Well I need to know what the primary id is to set up the condition.
+      $primary_key = $this->primaryKeys[0];
       db_update($this->table)
       ->condition($primary_key, $this->{$primary_key}, '=')
       ->fields($this->data)
       ->execute();
     }
 
-    //now that we are done saving lets deserialize in case that for some
-    //reason we will continue manipulating the properties
-    foreach($this->serialize as $property){
+    // Now that we are done saving lets deserialize in case that for some
+    // reason we will continue manipulating the properties.
+    foreach ($this->serialize as $property) {
       $this->{$property} = drupal_json_decode($this->{$property});
     }
 
@@ -133,17 +134,16 @@ class DBObject implements Iterator {
    * @param mixed $value
    *   the value the property should match.
    */
-  protected function load($property, $value){
-    $result =
-    db_select($this->table, 't')
+  protected function load($property, $value) {
+    $result = db_select($this->table, 't')
     ->fields('t')
-    ->condition($property, $value,'=')
+    ->condition($property, $value, '=')
     ->execute()
     ->fetchAssoc();
 
-    if($result){
-      foreach($result as $property => $value){
-        if(in_array($property, $this->serialize)){
+    if ($result) {
+      foreach ($result as $property => $value) {
+        if (in_array($property, $this->serialize)) {
           $value = drupal_json_decode($value);
         }
         $this->{$property} = $value;
@@ -156,11 +156,11 @@ class DBObject implements Iterator {
   /**
    * Delete.
    */
-  public function delete(){
-    //we can only deleted if its a loaded object, or if it has been saved
-    if(!$this->is_new){
+  public function delete() {
+    // We can only deleted if its a loaded object, or if it has been saved.
+    if (!$this->is_new) {
       $query = db_delete($this->table);
-      $primary_key = $this->primary_keys[0];
+      $primary_key = $this->primaryKeys[0];
       $query->condition($primary_key, $this->{$primary_key}, '=');
       $query->execute();
 
@@ -173,8 +173,8 @@ class DBObject implements Iterator {
   /**
    * From Iterator Interface.
    */
-  function rewind() {
-      $this->position = 0;
+  public function rewind() {
+    $this->position = 0;
   }
 
   /**
@@ -212,7 +212,7 @@ class DBObject implements Iterator {
 }
 
 
-class EntityType extends DBObject{
+class EntityType extends DBObject {
 
   // If an entity type is new, we can create its table from the current data of
   // the object, but if this is a loaded object, we need to actually keep
@@ -220,7 +220,10 @@ class EntityType extends DBObject{
   // appropiately.
   private $changes;
 
-  public function __construct(){
+  /**
+   * Constructor.
+   */
+  public function __construct() {
     parent::__construct('eck_entity_type');
     $this->properties = array();
     $this->changes = array();
@@ -238,8 +241,8 @@ class EntityType extends DBObject{
    * @param string $behavior
    *   A behavior to attach to the property.
    */
-  public function addProperty($name, $label, $type, $behavior = NULL, $schema = NULL){
-    if(!$this->is_new){
+  public function addProperty($name, $label, $type, $behavior = NULL, $schema = NULL) {
+    if (!$this->is_new) {
       $this->recordFieldChange('add', $name);
     }
 
@@ -269,7 +272,7 @@ class EntityType extends DBObject{
    * @param string $name
    *   The name of the property.
    */
-  public function removeProperty($name){
+  public function removeProperty($name) {
     $p = $this->properties;
     if (array_key_exists($name, $p)) {
 
@@ -294,7 +297,7 @@ class EntityType extends DBObject{
    * @param string $behavior
    *   the name of the behavior.
    */
-  public function changeBehavior($name, $behavior){
+  public function changeBehavior($name, $behavior) {
     $p = $this->properties;
     // @todo check that type is an actual type.
     if (array_key_exists($name, $p)) {
@@ -316,13 +319,16 @@ class EntityType extends DBObject{
    * @param string $name
    *   The name of the behavior.
    */
-  public function removeBehavior($name){
+  public function removeBehavior($name) {
     $this->changeBehavior($name, NULL);
   }
 
-  private function recordFieldChange($op, $name){
-    //If it is not new we need to keep track of stuff
-    if(!$this->is_new){
+  /**
+   * Record field changes.
+   */
+  private function recordFieldChange($op, $name) {
+    // If it is not new we need to keep track of stuff.
+    if (!$this->is_new) {
       $p = $this->properties;
       $c = $this->changes;
       switch ($op) {
@@ -332,10 +338,11 @@ class EntityType extends DBObject{
             $c[$op][] = $name;
           }
           break;
+
         case  'remove':
           // If there is an add in the changes take it out, otherwise add a
           // remove.
-          if(array_key_exists('add', $c)){
+          if (array_key_exists('add', $c)) {
             $key = array_search($name, $c['add']);
             if ($key != FALSE) {
               unset($c['add'][$key]);
@@ -354,8 +361,8 @@ class EntityType extends DBObject{
   /**
    * Save.
    */
-  public function save(){
-    if($this->is_new){
+  public function save() {
+    if ($this->is_new) {
       module_load_include('inc', 'eck', 'eck.entity_type');
       $schema = eck__entity_type__schema($this);
       db_create_table("eck_{$this->name}", $schema);
@@ -390,12 +397,12 @@ class EntityType extends DBObject{
 
     parent::save();
 
-    global $eck_entity_types_cache;
+    global $_eck_entity_types_cache;
 
-    $cache_enabled = isset($eck_entity_types_cache)?TRUE:FALSE;
+    $cache_enabled = isset($_eck_entity_types_cache) ? TRUE : FALSE;
 
-    if($cache_enabled) {
-      $eck_entity_types_cache->reset();
+    if ($cache_enabled) {
+      $_eck_entity_types_cache->reset();
     }
 
     variable_set('eck_clear_caches', TRUE);
@@ -416,33 +423,39 @@ class EntityType extends DBObject{
     // Allow other modules to respond to the deletion of entity types.
     module_invoke_all('eck_entity_type_delete', $this);
 
-    global $eck_entity_types_cache;
+    global $_eck_entity_types_cache;
 
-    $cache_enabled = isset($eck_entity_types_cache)?TRUE:FALSE;
+    $cache_enabled = isset($_eck_entity_types_cache) ? TRUE : FALSE;
 
-    if($cache_enabled) {
-      $eck_entity_types_cache->reset();
+    if ($cache_enabled) {
+      $_eck_entity_types_cache->reset();
     }
     variable_set('eck_clear_caches', TRUE);
   }
 
+  /**
+   * Load by name.
+   */
   public static function loadByName($name) {
     return EntityType::loadAll($name);
   }
 
+  /**
+   * Load all.
+   */
   public static function loadAll($entity_type_name = '', $reset = FALSE) {
     $entity_types = array();
 
-    global $eck_entity_types_cache;
+    global $_eck_entity_types_cache;
 
-    $cache_enabled = isset($eck_entity_types_cache)?TRUE:FALSE;
+    $cache_enabled = isset($_eck_entity_types_cache) ? TRUE : FALSE;
 
-    if($cache_enabled) {
+    if ($cache_enabled) {
       if ($reset) {
-        $eck_entity_types_cache->reset();
+        $_eck_entity_types_cache->reset();
       }
 
-      $entity_types = $eck_entity_types_cache->get();
+      $entity_types = $_eck_entity_types_cache->get();
     }
 
     if (empty($entity_types)) {
@@ -451,25 +464,25 @@ class EntityType extends DBObject{
         ->fields('t', array('name'))
         ->execute();
 
-      foreach($results as $result){
+      foreach ($results as $result) {
         $name = $result->name;
         $entity_type = new EntityType();
         $entity_type->load('name', $name);
         $entity_types[$name] = $entity_type;
       }
 
-      if($cache_enabled) {
-        $eck_entity_types_cache->set($entity_types);
+      if ($cache_enabled) {
+        $_eck_entity_types_cache->set($entity_types);
       }
     }
     if (!$entity_type_name) {
       return $entity_types;
     }
-    else if (array_key_exists($entity_type_name, $entity_types)) {
+    elseif (array_key_exists($entity_type_name, $entity_types)) {
       return $entity_types[$entity_type_name];
     }
     else {
-     return array();
+      return array();
     }
   }
 }
@@ -517,11 +530,11 @@ class Bundle extends DBObject {
       // Lets set the machine name.
       $this->createMachineName();
 
-      //if this bundle is_new we need to check that it does not exist
-      //@todo we just need to change the field in the db to be unique
+      // If this bundle is_new we need to check that it does not exist.
+      // @todo we just need to change the field in the db to be unique.
       if ($this->is_new) {
         $bundle = Bundle::loadByMachineName($this->machine_name);
-        if($bundle && !$bundle->is_new){
+        if ($bundle && !$bundle->is_new) {
           $save = FALSE;
         }
       }
@@ -532,17 +545,18 @@ class Bundle extends DBObject {
 
       if ($save) {
         parent::save();
-        global $eck_bundles_cache;
+        global $_eck_bundles_cache;
 
-        $cache_enabled = isset($eck_bundles_cache)?TRUE:FALSE;
+        $cache_enabled = isset($_eck_bundles_cache) ? TRUE : FALSE;
 
-        if($cache_enabled) {
-          $eck_bundles_cache->reset();
+        if ($cache_enabled) {
+          $_eck_bundles_cache->reset();
         }
 
         variable_set('eck_clear_caches', TRUE);
-      }else{
-        //@todo throw some error
+      }
+      else {
+        // @todo throw some error.
       }
     }
     else {
@@ -573,12 +587,12 @@ class Bundle extends DBObject {
 
     parent::delete();
 
-    global $eck_bundles_cache;
+    global $_eck_bundles_cache;
 
-    $cache_enabled = isset($eck_bundles_cache)?TRUE:FALSE;
+    $cache_enabled = isset($_eck_bundles_cache) ? TRUE : FALSE;
 
-    if($cache_enabled) {
-      $eck_bundles_cache->reset();
+    if ($cache_enabled) {
+      $_eck_bundles_cache->reset();
     }
 
     variable_set('eck_clear_caches', TRUE);
@@ -591,33 +605,36 @@ class Bundle extends DBObject {
    *   A string composed of the entity type name and the bundle name.
    *   "{$entity_type_name}_{$bundle_name}"
    */
-  public static function loadByMachineName($machine_name){
+  public static function loadByMachineName($machine_name) {
     return Bundle::loadAll($machine_name);
   }
 
+  /**
+   * Load All.
+   */
   public static function loadAll($machine_name = NULL, $reset = FALSE) {
     $bundles = array();
 
-    global $eck_bundles_cache;
+    global $_eck_bundles_cache;
 
-    $cache_enabled = isset($eck_bundles_cache)?TRUE:FALSE;
+    $cache_enabled = isset($_eck_bundles_cache) ? TRUE : FALSE;
 
-    if($cache_enabled) {
+    if ($cache_enabled) {
       if ($reset) {
-        $eck_bundles_cache->reset();
+        $_eck_bundles_cache->reset();
       }
 
-      $bundles = $eck_bundles_cache->get();
+      $bundles = $_eck_bundles_cache->get();
     }
 
     if (empty($bundles)) {
       $bundles = array();
-      //@todo move this to a general function.
+      // @todo move this to a general function.
       $results = db_select('eck_bundle', 't')
         ->fields('t', array('machine_name'))
         ->execute();
 
-      foreach($results as $result){
+      foreach ($results as $result) {
         $name = $result->machine_name;
         $bundle = new Bundle();
         $bundle->load('machine_name', $name);
@@ -625,22 +642,25 @@ class Bundle extends DBObject {
       }
 
       if ($cache_enabled) {
-        $eck_bundles_cache->set($bundles);
+        $_eck_bundles_cache->set($bundles);
       }
     }
 
     if (!$machine_name) {
       return $bundles;
     }
-    else if (array_key_exists($machine_name, $bundles)) {
+    elseif (array_key_exists($machine_name, $bundles)) {
       return $bundles[$machine_name];
     }
     else {
-     return array();
+      return array();
     }
   }
 
-  public static function loadByEntityType($entity_type){
+  /**
+   * Load by entity type.
+   */
+  public static function loadByEntityType($entity_type) {
     $entity_bundles = &drupal_static(__FUNCTION__, array());
 
     $entity_type_name = $entity_type->name;
@@ -651,7 +671,7 @@ class Bundle extends DBObject {
       $entity_bundles[$entity_type_name] = array_filter(
         $bundles,
         function ($bundle) use ($entity_type_name) {
-          return $entity_type_name == $bundle->entity_type;
+        return $entity_type_name == $bundle->entity_type;
         }
       );
     }
@@ -729,36 +749,42 @@ class Bundle extends DBObject {
   }
 }
 
-class ECKEntity extends Entity{
+class ECKEntity extends Entity {
 
-  //this flag only gets set so we can make our properties public again
-  //before we save the object;
-  protected $ignore_validation;
+  // This flag only gets set so we can make our properties public again
+  // before we save the object.
+  protected $ignoreValidation;
 
-  protected $property_values = array();
+  protected $PropertyValues = array();
 
-  public function __construct(array $values = array(), $entityType = NULL){
+  /**
+   * Constructor.
+   */
+  public function __construct(array $values = array(), $entity_type = NULL) {
 
-    $this->ignore_validation = FALSE;
+    $this->ignoreValidation = FALSE;
 
-    parent::__construct($values, $entityType);
+    parent::__construct($values, $entity_type);
 
-    //I have this stupid crap.. fixing drupals mess ups.
+    // I have this stupid crap.. fixing drupals mess ups.
     $entity_type_name = $this->entityType();
     $entity_type = EntityType::loadByName($entity_type_name);
     $properties = $entity_type->properties;
     $property_names = array_keys($properties);
 
-    foreach($property_names as $pn){
+    foreach ($property_names as $pn) {
       $value = $this->{$pn};
       unset($this->$pn);
       $this->{$pn} = $value;
     }
   }
 
+  /**
+   * Magic set.
+   */
   public function __set($name, $value) {
-    //let's implement non restrictive validation.
-    //if it is a property validate, if it isn't just set it
+    // Lets implement non restrictive validation.
+    // If it is a property validate, if it isn't just set it.
 
     // Try to load the entityType and property information.
     if ($entity_type_name = $this->entityType()) {
@@ -769,40 +795,45 @@ class ECKEntity extends Entity{
       }
     }
 
-    //TODO: should look into loading the entity info through entity_get_info() and determining validation that way.
-    //      Currently we don't validate when the ECKEntityType has not been instantiated yet. Not sure if it is needed though.
-    if (isset($property_names) && in_array($name, $property_names) && !$this->ignore_validation) {
+    // @todo should look into loading the entity info through entity_get_info()
+    // and determining validation that way.
+    // Currently we don't validate when the ECKEntityType has not been
+    // instantiated yet. Not sure if it is needed though.
+    if (isset($property_names) && in_array($name, $property_names) && !$this->ignoreValidation) {
       $property_type = $properties[$name]['type'];
       $property_type_class = eck_get_property_type_class($property_type);
 
       if (!isset($value)) {
         $schema = $property_type_class::schema();
         if (isset($schema['default'])) {
-          $this->property_values[$name] = $schema['default'];
+          $this->PropertyValues[$name] = $schema['default'];
         }
       }
       elseif ($property_type_class::validate($value)) {
-        $this->property_values[$name] = $value;
+        $this->PropertyValues[$name] = $value;
       }
       else {
         throw new Exception("Invalid value {$value} for property {$name} of type {$property_type} in
         Entity type: {$entity_type_name}");
       }
 
-    } else {
+    }
+    else {
       $this->{$name} = $value;
     }
   }
 
-
+  /**
+   * Magic get.
+   */
   public function __get($name) {
-    if (array_key_exists($name, $this->property_values)){
-      return $this->property_values[$name];
+    if (array_key_exists($name, $this->PropertyValues)) {
+      return $this->PropertyValues[$name];
     }
-    else if (isset($this->{$name})){
+    elseif (isset($this->{$name})) {
       return $this->{$name};
     }
-    else if ($field = field_info_field($name)) {
+    elseif ($field = field_info_field($name)) {
       if ($this->entityType) {
         if ($bundle = $this->bundle()) {
           if (in_array($bundle, $field['bundles'][$this->entityType])) {
@@ -815,19 +846,26 @@ class ECKEntity extends Entity{
     return NULL;
   }
 
+  /**
+   * Magic set.
+   */
   public function __isset($name) {
-    if(array_key_exists($name, $this->property_values)){
+    if (array_key_exists($name, $this->PropertyValues)) {
       return TRUE;
-    }else if(isset($this->{$name})){
+    }
+    elseif (isset($this->{$name})) {
       return TRUE;
     }
     return FALSE;
   }
 
-  public function save(){
-    //going back to public properties
-    $this->ignore_validation = TRUE;
-    foreach($this->property_values as $property => $value){
+  /**
+   * Save.
+   */
+  public function save() {
+    // Going back to public properties.
+    $this->ignoreValidation = TRUE;
+    foreach ($this->PropertyValues as $property => $value) {
       $this->{$property} = $value;
     }
     return parent::save();
@@ -839,34 +877,46 @@ class ECKCache {
   private $id;
   private $data;
 
-  private $no_cache;
+  private $noCache;
 
+  /**
+   * Constructor.
+   */
   public function __construct($id) {
     $this->id = $id;
-    $this->no_cache = FALSE;
+    $this->noCache = FALSE;
 
     if (!db_table_exists('cache_eck')) {
-      $this->no_cache = TRUE;
+      $this->noCache = TRUE;
     }
-
   }
 
+  /**
+   * Set.
+   */
   public function set($data) {
-    if($this->no_cache) return;
+    if ($this->noCache) {
+      return;
+    }
 
     cache_set($this->id, $data, "cache_eck");
     $this->data = $data;
   }
 
+  /**
+   * Get.
+   */
   public function get() {
-    if($this->no_cache) return NULL;
+    if ($this->noCache) {
+      return NULL;
+    }
 
-    if($this->data) {
+    if ($this->data) {
       return $this->data;
     }
-    else{
+    else {
       $cached_data = cache_get($this->id, "cache_eck");
-      if($cached_data) {
+      if ($cached_data) {
         $this->data = $cached_data->data;
         return $this->data;
       }
@@ -876,8 +926,13 @@ class ECKCache {
     }
   }
 
+  /**
+   * Reset.
+   */
   public function reset() {
-    if($this->no_cache) return;
+    if ($this->noCache) {
+      return;
+    }
 
     $this->data = NULL;
     cache_clear_all($this->id, 'cache_eck');

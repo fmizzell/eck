@@ -1,6 +1,13 @@
 <?php
+/**
+ * @file
+ * ECK Permissions Install.
+ */
 
-function eck_permissions_schema(){
+/**
+ * Implements hook_schema().
+ */
+function eck_permissions_schema() {
   // Schema for the eck permissions table.
   $schema['eck_permissions'] = array(
     'description' => "The base table for entity type information",
@@ -16,7 +23,7 @@ function eck_permissions_schema(){
         'type' => 'varchar',
         'type' => 'varchar',
         'length' => 128,
-        'not null' => TRUE
+        'not null' => TRUE,
       ),
       'oid' => array(
         'description' => "The id of the object (role or user) that this permission is relevant to.",
@@ -28,11 +35,11 @@ function eck_permissions_schema(){
         'description' => "the permission string",
         'type' => 'varchar',
         'length' => 256,
-        'not null' => TRUE
-      ),   
+        'not null' => TRUE,
+      ),
     ),
     'primary key' => array('id'),
-    'indexes' => array()
+    'indexes' => array(),
   );
 
   return $schema;

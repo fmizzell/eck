@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Features context.
+ */
 
 use Behat\Behat\Context\ClosuredContextInterface,
     Behat\Behat\Context\TranslatedContextInterface,
@@ -14,20 +18,11 @@ use Behat\Gherkin\Node\PyStringNode,
 //   require_once 'PHPUnit/Framework/Assert/Functions.php';
 //
 
-/**
- * Features context.
- */
-class FeatureContext extends Drupal\DrupalExtension\Context\DrupalContext
-{
+class FeatureContext extends Drupal\DrupalExtension\Context\DrupalContext {
   /**
-   * Initializes context.
-   * Every scenario gets its own context object.
-   *
-   * @param array $parameters context parameters (set them up through behat.yml)
+   * {@inheritdoc}
    */
-  public function __construct(array $parameters)
-  {
-      // Initialize your context here
+  public function __construct(array $parameters) {
   }
 
   /**

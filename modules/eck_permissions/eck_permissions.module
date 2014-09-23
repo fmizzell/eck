@@ -74,7 +74,7 @@ function eck_permissions($object_type = NULL, $object_id = NULL){
     $rows = array();
 
     if(isset($object_type) && isset($object_id)){
-      //let's present a table with the permissions assigned already
+      // Lets present a table with the permissions assigned already.
       $permissions = array();
 
       if($object_type == 'role'){

@@ -2,15 +2,15 @@
 /**
  * @file
  * Author Behavior.
- * 
- * Save the user id of the user when the entity is created. 
+ *
+ * Save the user id of the user when the entity is created.
  */
 
 $plugin = array(
   'label' => "Author",
   'entity_save' => 'eck_author_property_entity_save',
   'property_info' => 'eck_author_property_property_info',
-  'permissions' => 'eck_author_property_permissions'
+  'permissions' => 'eck_author_property_permissions',
 );
 
 /**
@@ -32,18 +32,21 @@ function eck_author_property_property_info($property, $vars) {
   return $vars;
 }
 
-function eck_author_property_permissions($property, $vars){
+/**
+ * Augmenting the permission system with own permissions.
+ */
+function eck_author_property_permissions($property, $vars) {
   $op = $vars['op'];
   $perms = $vars['permissions'];
   $account = $vars['account'];
   $entity = $vars['entity'];
-  
+
   $allow = FALSE;
-  foreach($perms as $perm){
+  foreach ($perms as $perm) {
     $p = $perm->permission;
     $property = $entity->{$property};
     $uid = $account->uid;
-    if((strcmp($p, "{$op} own entity") == 0) && ( $property == $uid)){
+    if ((strcmp($p, "{$op} own entity") == 0) && ($property == $uid)) {
       $allow = TRUE;
     }
   }

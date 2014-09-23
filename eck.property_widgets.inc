@@ -3,7 +3,7 @@
 /**
  * @file
  * Contains the hooks for implementing ECK's default property widgets.
- * 
+ *
  * @see eck_property_info_widget_types().
  * @see hook_eck_property_widget_info().
  * @see hook_eck_property_widget_form().
@@ -12,11 +12,11 @@
 
 /**
  * Implements hook_eck_property_widget_settings_form().
- * 
+ *
  * Returns the widget settings forms for various ECK defined property widgets.
- * 
- * @see eck_eck_property_widget_info().
- * @see hook_eck_property_widget_settings_form().
+ *
+ * @see eck_eck_property_widget_info()
+ * @see hook_eck_property_widget_settings_form()
  */
 function eck_eck_property_widget_settings_form($entity_type, $bundle, $property_name, $bundle_property_config) {
   $widget = (isset($bundle_property_config['widget'])) ? $bundle_property_config['widget'] : array('type' => '');
@@ -30,7 +30,7 @@ function eck_eck_property_widget_settings_form($entity_type, $bundle, $property_
         '#required' => TRUE,
         '#element_validate' => array('element_validate_integer_positive'),
       ),
-      // The maximum length for a 'text' widget
+      // The maximum length for a 'text' widget.
       'max_length' => array(
         '#type' => 'textfield',
         '#title' => t('Maximum length'),
@@ -40,7 +40,8 @@ function eck_eck_property_widget_settings_form($entity_type, $bundle, $property_
         '#element_validate' => array('element_validate_integer_positive'),
       ),
     );
-  } elseif ($widget['type'] == 'options') {
+  }
+  elseif ($widget['type'] == 'options') {
     return array(
       // The allowed options for the options widget.
       'options' => array(
@@ -57,13 +58,13 @@ function eck_eck_property_widget_settings_form($entity_type, $bundle, $property_
 
 /**
  * Implements hook_eck_property_widget_form().
- * 
+ *
  * Returns the widget forms for various ECK defined property widgets. These
  * forms allow the user to update property data when creating/editing entities.
- * 
- * @see eck_eck_property_widget_info().
- * @see hook_eck_property_widget_form().
- * @see hook_eck_property_widget_settings_form().
+ *
+ * @see eck_eck_property_widget_info()
+ * @see hook_eck_property_widget_form()
+ * @see hook_eck_property_widget_settings_form()
  */
 function eck_eck_property_widget_form(&$form, &$form_state, $property_name, $bundle_property_config, $language, $value, $element) {
   if ($bundle_property_config['widget']['type'] == 'text') {
@@ -78,10 +79,10 @@ function eck_eck_property_widget_form(&$form, &$form_state, $property_name, $bun
   if ($bundle_property_config['widget']['type'] == 'options') {
     $options = array();
     $options_string = $bundle_property_config['widget']['settings']['options'];
-    if(!empty($options_string)){
+    if (!empty($options_string)) {
       $option_lines = explode("\n", $options_string);
 
-      foreach($option_lines as $line){
+      foreach ($option_lines as $line) {
         $kv = explode("|", $line);
         $options[$kv[0]] = $kv[1];
       }
@@ -90,7 +91,7 @@ function eck_eck_property_widget_form(&$form, &$form_state, $property_name, $bun
     $element += array(
       '#type' => 'radios',
       '#default_value' => isset($value) ? $value : NULL,
-      '#options' => $options
+      '#options' => $options,
     );
   }
   if ($bundle_property_config['widget']['type'] == 'language_toggle') {
@@ -101,7 +102,8 @@ function eck_eck_property_widget_form(&$form, &$form_state, $property_name, $bun
         '#default_value' => isset($value) ? $value : $language->language,
         '#options' => array(LANGUAGE_NONE => t('Language neutral')) + locale_language_list('name'),
       );
-    } else {
+    }
+    else {
       $element += array(
         '#type' => 'value',
         '#value' => !isset($value) ? $value : $language->language,
@@ -111,12 +113,15 @@ function eck_eck_property_widget_form(&$form, &$form_state, $property_name, $bun
   return $element;
 }
 
+/**
+ * Widget validate.
+ */
 function eck_property_widget_options_validate($element, &$form_state) {
   $value = $element['#value'];
   $options = explode("\n", $value);
-  foreach($options as $option){
+  foreach ($options as $option) {
     $key_value = explode("|", $option);
-    if(count($key_value) != 2){
+    if (count($key_value) != 2) {
       form_error($element, t('%name: incorrect format.', array('%name' => $element['#title'])));
     }
   }

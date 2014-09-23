@@ -122,7 +122,7 @@ function eck_schema() {
     ),
     'primary key' => array('id'),
     'unique' => array(
-      'machine_name' => array('machine_name')
+      'machine_name' => array('machine_name'),
     ),
   );
 
@@ -346,7 +346,7 @@ function eck_update_7006() {
   module_enable(array('ctools'));
 
   // Lets start with then entity type table
-  // Let's add an id field to the entity_type table, and set it up as a primary
+  // Lets add an id field to the entity_type table, and set it up as a primary
   // key.
   db_drop_primary_key('eck_entity_type');
 
@@ -357,7 +357,7 @@ function eck_update_7006() {
     'not null' => TRUE,
   ), array('primary key' => array('id', 'name')));
 
-  // Let's take the properties and translate them to the new form.
+  // Lets take the properties and translate them to the new form.
   $results = db_select('eck_entity_type', 't')->fields('t')->execute();
 
   foreach ($results as $record) {
@@ -464,7 +464,7 @@ function eck_update_7006() {
  */
 function eck_update_7007() {
 
-  // Let's generate the machine names for each bundle.
+  // Lets generate the machine names for each bundle.
   $results = db_select('eck_bundle', 't')->fields('t')->execute();
 
   foreach ($results as $record) {
@@ -514,7 +514,7 @@ function eck_update_7009() {
 
 /**
  * Add an eck cache table.
- **/
+ */
 function eck_update_7010() {
   $schema = drupal_get_schema_unprocessed('system', 'cache');
   db_create_table('cache_eck', $schema);
@@ -529,88 +529,100 @@ function eck_update_7011() {
 }
 
 /**
- * Install the eck_permissions module
- **/
+ * Install the eck_permissions module.
+ */
 function eck_update_7012() {
   module_enable(array("eck_permissions"));
-  //and lets clear the cache
+  // And lets clear the cache.
   drupal_flush_all_caches();
 }
 
 /**
  * Update global permissions from 2.x to 3.x.
- **/
+ */
 function eck_update_7013() {
-    //lets get all eck related permissions
+  // Lets get all eck related permissions.
   $query = db_select('role_permission', 't');
   $query->fields('t', array('rid', 'permission', 'module'));
   $query->condition("module", "eck", "=");
 
   $permissions = $query->execute();
-  foreach($permissions as $perm_obj){
+  foreach ($permissions as $perm_obj) {
     $permission = $perm_obj->permission;
 
-    //echo "OLD: ".$permission."\n";
-    //lets parse the permission
+    // Lets parse the permission.
     $pieces = explode(" ", $permission);
     $final_pieces = array();
 
     $throw_away = array_shift($pieces);
-    //the first piece we can ignore, and the second is the action
-    $action_map = array('administer' => "*",'add' => 'create','edit' => 'update'
-        , 'view' => 'view', 'list' => 'list', 'delete' => 'delete');
-    $object_map = array('entity types' => 'entity_type', 'bundles' => "bundle",
-        'entities' => 'entity');
+
+    // The first piece we can ignore, and the second is the action.
+    $action_map = array(
+      'administer' => "*",
+      'add' => 'create',
+      'edit' => 'update',
+      'view' => 'view',
+      'list' => 'list',
+      'delete' => 'delete',
+    );
+
+    $object_map = array(
+      'entity types' => 'entity_type',
+      'bundles' => "bundle",
+      'entities' => 'entity',
+    );
 
     $action = array_shift($pieces);
 
-    if(array_key_exists($action, $action_map)){
+    if (array_key_exists($action, $action_map)) {
       $final_pieces[0] = $action_map[$action];
     }
 
-    //we have a permission that breaks all our patters, so lets deal with
-    //it right away
-    if(substr_count($permission, 'manage') > 0){
+    // We have a permission that breaks all our patters, so lets deal with
+    // it right away.
+    if (substr_count($permission, 'manage') > 0) {
       $pieces = array();
       $final_pieces = array('update', 'property');
     }
 
     $object_id = "";
-    while(count($pieces) > 0){
+    while (count($pieces) > 0) {
       $piece = array_shift($pieces);
 
-      //this is a sign that we are talking about an entity type
-      if($piece == 'entity'){
+      // This is a sign that we are talking about an entity type.
+      if ($piece == 'entity') {
         $p = array_shift($pieces);
         $piece = "$piece {$p}";
       }
 
-      if(in_array($piece, array('entities', 'bundles', 'entity types'))){
-        if(!empty($object_id)){
+      if (in_array($piece, array('entities', 'bundles', 'entity types'))) {
+        if (!empty($object_id)) {
           $final_pieces[1] = "$object_map[$piece]:{$object_id}|*";
-        }else{
+        }
+        else {
           $final_pieces[1] = "$object_map[$piece]";
         }
-      }else{
-        if(empty($object_id)){
+      }
+      else {
+        if (empty($object_id)) {
           $object_id = $piece;
-        }else{
+        }
+        else {
           $object_id .= "|{$piece}";
         }
       }
     }
 
     $new_permission = implode(" ", $final_pieces);
-    //echo "NEW: ".$new_permission."\n";
 
-    //lets set it up in eck_permissions module
+    // Lets set it up in eck_permissions module.
     $perm = new ECKPermission();
     $perm->type = 'role';
     $perm->oid = $perm_obj->rid;
     $perm->permission = $new_permission;
     $perm->save();
 
-    //and then delete it from drupal permissions table
+    // And then delete it from Drupal permissions table.
     $num_deleted = db_delete('role_permission')
     ->condition('rid', $perm_obj->rid)
     ->condition('permission', $perm_obj->permission)

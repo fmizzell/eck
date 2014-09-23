@@ -1,110 +1,136 @@
 <?php
+/**
+ * @file
+ * Properties.
+ */
 
-function eck__properties($entity_type_name){
+/**
+ * Properties page.
+ *
+ * @param string $entity_type_name
+ *   The name of an entity type.
+ *
+ * @return array
+ *   The page build.
+ */
+function eck__properties($entity_type_name) {
   $current_path = current_path();
-  
+
   $entity_type = EntityType::loadByName($entity_type_name);
-  
-  //lets get the default properties
+
+  // Lets get the default properties.
   $default_properties = eck_get_default_properties();
-  //let get the actual properties of the entity type
+
+  // Let get the actual properties of the entity type.
   $entity_type_properties = $entity_type->properties;
-  
-  //lets arrenge the table with the appropiate action links
-  
-  //This is the table where all properties are shown.
+
+  // Lets arrenge the table with the appropiate action links.
+
+  // This is the table where all properties are shown.
   $header = array(
     'machine_name' => t('Machine Name'),
     'name' => t('Name'),
     'type' => t('Type'),
     'behavior' => t('Behaviour'),
-    'operations' => t('Operations')
+    'operations' => t('Operations'),
   );
 
   $options = array();
-  //lets process default properties first
-  foreach($default_properties as $machine_name => $info){
+
+  // Lets process default properties first.
+  foreach ($default_properties as $machine_name => $info) {
     $default_property_row = array();
     $info['machine_name'] = $machine_name;
-    foreach($header as $key => $label){
-      if($key == 'name'){
+    foreach ($header as $key => $label) {
+      if ($key == 'name') {
         $key = "label";
-      }  
-      if($key != 'operations'){
-        $default_property_row[] = array_key_exists($key, $info)?$info[$key]:"";
+      }
+      if ($key != 'operations') {
+        $default_property_row[] = array_key_exists($key, $info) ? $info[$key] : "";
       }
     }
-    
-    if(array_key_exists($machine_name, $entity_type_properties)){
-      $default_property_row[] = l('Deactivate', $current_path."/".$machine_name."/deactivate");
+
+    if (array_key_exists($machine_name, $entity_type_properties)) {
+      $default_property_row[] = l(t('Deactivate', $current_path . "/" . $machine_name . "/deactivate"));
       unset($entity_type_properties[$machine_name]);
-    }else{
-       $default_property_row[] = l('Activate', $current_path."/".$machine_name."/activate") ;
     }
-    
+    else {
+      $link = "{$current_path}/{$machine_name}/activate";
+      $default_property_row[] = l(t('Activate'), $link);
+    }
+
     $options[] = $default_property_row;
   }
-  
-  //ok, now lets do our custom properties
-  //lets process default properties first
-  foreach($entity_type_properties as $machine_name => $info){
+
+  // Ok, now lets do our custom properties.
+  foreach ($entity_type_properties as $machine_name => $info) {
     $default_property_row = array();
     $info['machine_name'] = $machine_name;
-    foreach($header as $key => $label){
-      if($key == 'name'){
+
+    foreach ($header as $key => $label) {
+      if ($key == 'name') {
         $key = "label";
-      }  
-      if($key != 'operations'){
-        $default_property_row[] = array_key_exists($key, $info)?$info[$key]:"";
+      }
+      if ($key != 'operations') {
+        $default_property_row[] = array_key_exists($key, $info) ? $info[$key] : "";
       }
     }
-    
+
     $operations = "";
-    foreach(array('edit' => "Edit", 'delete' => "Delete", "behavior" => "behavior") as $op => $label){
-      if($op == 'behavior' && !empty($info['behavior'])){
-        $label = "Edit ".$label;
-      }else if($op == 'behavior' && empty($info['behavior'])){
-        $label = "Add ".$label;
+    $ops = array(
+      'edit' => "Edit",
+      'delete' => "Delete",
+      "behavior" => "behavior",
+    );
+
+    foreach ($ops as $op => $label) {
+      if ($op == 'behavior' && !empty($info['behavior'])) {
+        $label = "Edit " . $label;
       }
-      
-      $operations .= l($label, $current_path."/".$machine_name."/{$op}")."<br>";
+      elseif ($op == 'behavior' && empty($info['behavior'])) {
+        $label = "Add " . $label;
+      }
+
+      $operations .= l($label, $current_path . "/" . $machine_name . "/{$op}") . "<br \>";
     }
-    
+
     $default_property_row[] = $operations;
-    
+
     $options[] = $default_property_row;
   }
-  
-  $build['properties_table'] = 
-  array(
+
+  $build['properties_table'] = array(
     '#theme' => 'table',
     '#header' => $header,
     '#rows' => $options,
     '#empty' => t('No other properties for this entity type.'),
   );
-  
+
   return $build;
 }
 
-function eck__property_add__form($form, &$state, $entity_type_name){
-  
+/**
+ * Add property form.
+ */
+function eck__property_add__form($form, &$state, $entity_type_name) {
+
   $form['entity_type_name'] = array(
     '#type' => 'value',
-    '#value' => $entity_type_name
+    '#value' => $entity_type_name,
   );
-  
-  //Add new property
+
+  // Add new property.
   $property_types = eck_get_property_types();
-  
-  //lets transform the property_types info array into something appropriate for
-  //a select list
+
+  // Lets transform the property_types info array into something appropriate
+  // for a select list.
   $property_type_options = array();
-  foreach($property_types as $property_name => $info){
+  foreach ($property_types as $property_name => $info) {
     $property_type_options[$property_name] = $info['label'];
   }
-  
+
   $types[t('Generic')] = $property_type_options;
- 
+
   $form["add_new_property"] = array(
     '#markup' => '<h3>Add new property</h3>',
   );
@@ -115,14 +141,14 @@ function eck__property_add__form($form, &$state, $entity_type_name){
     '#options' => array('' => t('- Please choose -')) + $types,
     '#required' => TRUE,
   );
-   
- $form['property_select_type'] = array(
+
+  $form['property_select_type'] = array(
     '#type' => 'submit',
     '#value' => t('Select Property Type'),
   );
- 
-  if(array_key_exists('values', $state) && !empty($state['values']['property_type'])) {
-    
+
+  if (array_key_exists('values', $state) && !empty($state['values']['property_type'])) {
+
     $property_type = $state['values']['property_type'];
     $property_type_info = eck_get_property_types($property_type);
 
@@ -130,26 +156,32 @@ function eck__property_add__form($form, &$state, $entity_type_name){
 
     $form['default_schema'] = array(
       '#type' => 'value',
-      '#value' => $default_schema
+      '#value' => $default_schema,
     );
 
     $sf = new SchemaForm($default_schema);
 
     $schema_form = $sf->getSchemaForm();
-    foreach($schema_form as $name => $field){
+    foreach ($schema_form as $name => $field) {
       unset($schema_form[$name]);
       $schema_form["schema_{$name}"] = $field;
     }
 
-    $form['schema'] = array('#type' => 'fieldset', '#collapsible' => TRUE, '#collapsed' => TRUE, '#title' => 'Schema Configuration');
+    $form['schema'] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#title' => 'Schema Configuration',
+    );
+
     $form['schema']['form'] = $schema_form;
-    
+
     $form["property_label"] = array(
       '#type' => 'textfield',
       '#title' => t("Name"),
       '#description' => t("A human readable name for the property."),
       '#required' => TRUE,
-      '#after_build' => array('_eck_deactivate_on_save')
+      '#after_build' => array('_eck_deactivate_on_save'),
     );
 
     $form["property_name"] = array(
@@ -158,7 +190,7 @@ function eck__property_add__form($form, &$state, $entity_type_name){
         'exists' => '_eck_fake_exists',
         'source' => array('property_label'),
       ),
-     '#after_build' => array('_eck_deactivate_on_save')
+      '#after_build' => array('_eck_deactivate_on_save'),
     );
 
     $form['property_add'] = array(
@@ -167,128 +199,148 @@ function eck__property_add__form($form, &$state, $entity_type_name){
     );
 
   }
-  
+
   return $form;
 }
 
-function eck__property_edit__form($form, &$state, $entity_type_name, $property){
+/**
+ * Property edit form.
+ */
+function eck__property_edit__form($form, &$state, $entity_type_name, $property) {
   $entity_type = EntityType::loadByName($entity_type_name);
   $properties = $entity_type->properties;
-  if(array_key_exists($property, $properties)){
+  if (array_key_exists($property, $properties)) {
     $form['entity_type'] = array(
       '#type' => 'value',
-      '#value' => $entity_type
+      '#value' => $entity_type,
     );
-    
+
     $form['property'] = array(
       '#type' => 'value',
-      '#value' => $property
+      '#value' => $property,
     );
-    
+
     $form['label'] = array(
       '#type' => 'textfield',
       '#title' => 'label',
-      '#default_value' => $properties[$property]['label']
+      '#default_value' => $properties[$property]['label'],
     );
-    
+
     $form['submit'] = array(
       '#type' => 'submit',
       '#weight' => 10000,
       '#value' => t('Save'),
     );
-  }else{
-    drupal_set_message('This property does not exists');
-    drupal_goto(eck__entity_type__path()."/{$entity_type->name}/property");
   }
-  
+  else {
+    drupal_set_message('This property does not exists');
+    drupal_goto(eck__entity_type__path() . "/{$entity_type->name}/property");
+  }
+
   return $form;
 }
 
-function eck__property_edit__form_submit($form, &$state){
+/**
+ * Property edit form submit.
+ */
+function eck__property_edit__form_submit($form, &$state) {
   $values = $state['values'];
   $entity_type = $values['entity_type'];
   $property = $values['property'];
   $label = $values['label'];
-  
+
   $properties = $entity_type->properties;
   $properties[$property]['label'] = $label;
-  
+
   $entity_type->properties = $properties;
-  
+
   $entity_type->save();
-  
+
   EntityType::loadAll(NULL, TRUE);
-  $state['redirect'] = eck__entity_type__path()."/{$entity_type->name}/property";
+  $state['redirect'] = eck__entity_type__path() . "/{$entity_type->name}/property";
 }
 
-function eck__property_delete__form($form, &$state, $entity_type_name, $property){
+/**
+ * Property delete form.
+ */
+function eck__property_delete__form($form, &$state, $entity_type_name, $property) {
   $entity_type = EntityType::loadByName($entity_type_name);
   $properties = $entity_type->properties;
-  if(array_key_exists($property, $properties)){
+  if (array_key_exists($property, $properties)) {
     $form['entity_type'] = array(
       '#type' => 'value',
-      '#value' => $entity_type
+      '#value' => $entity_type,
     );
-    
+
     $form['property'] = array(
       '#type' => 'value',
-      '#value' => $property
+      '#value' => $property,
     );
-    
-    $form['confirmation'] = confirm_form($form, 
-     "Are you sure you want to delete {$property}", 
-     eck__entity_type__path()."/{$entity_type->name}/property");
-    
-    
-  }else{
-    drupal_set_message('This property does not exists');
-    drupal_goto(eck__entity_type__path()."/{$entity_type->name}/property");
+
+    $form['confirmation'] = confirm_form($form,
+     "Are you sure you want to delete {$property}",
+     eck__entity_type__path() . "/{$entity_type->name}/property");
+
   }
-  
+  else {
+    // @todo are we really using drupal_goto?
+    drupal_set_message('This property does not exists');
+    drupal_goto(eck__entity_type__path() . "/{$entity_type->name}/property");
+  }
+
   return $form;
 }
 
-function eck__property_delete__form_submit($form, &$state){
+/**
+ * Property delete form submit.
+ */
+function eck__property_delete__form_submit($form, &$state) {
   $values = $state['values'];
   $entity_type = $values['entity_type'];
   $property = $values['property'];
-  
+
   $entity_type->removeProperty($property);
-  
+
   $entity_type->save();
-  
+
   EntityType::loadAll(NULL, TRUE);
-  $state['redirect'] = eck__entity_type__path()."/{$entity_type->name}/property";
+  $state['redirect'] = eck__entity_type__path() . "/{$entity_type->name}/property";
 }
 
-function eck__property_add__form_submit($form, &$state){
+/**
+ * Property add form.
+ */
+function eck__property_add__form_submit($form, &$state) {
   $values = $state['values'];
-  
-  if(strcmp($values['op'], t('Select Property Type')) == 0){
+
+  if (strcmp($values['op'], t('Select Property Type')) == 0) {
     $state['rebuild'] = TRUE;
-  }else{
-    //lets save schema customization
+  }
+  else {
+    // Lets save schema customization.
     $default_schema = $values['default_schema'];
     unset($values['default_schema']);
 
     $new_schema = array();
-    //lets get the values from the form
-    foreach($values as $name => $value){
-      if(substr_count($name, "schema") > 0){
+
+    // Lets get the values from the form.
+    foreach ($values as $name => $value) {
+      if (substr_count($name, "schema") > 0) {
         $new_name = str_replace("schema_", "", $name);
-        if(strcmp($new_name, "unsigned") == 0 || strcmp($new_name, "not null") == 0){
-          $value = ($value)?TRUE:FALSE;
+        if (strcmp($new_name, "unsigned") == 0 || strcmp($new_name, "not null") == 0) {
+          $value = ($value) ? TRUE : FALSE;
         }
         $new_schema[$new_name] = $value;
       }
     }
-    
-    //if the default is empty lets take it off
-    if(array_key_exists('default', $new_schema) && empty($new_schema['default'])){
+
+    // If the default is empty lets take it off.
+    if (array_key_exists('default', $new_schema) && empty($new_schema['default'])) {
       unset($new_schema['default']);
     }
-    //lets format the not null key to work with schema
-    if(array_key_exists('not_null', $new_schema)){
+
+    // Lets format the not null key to work with schema.
+    if (array_key_exists('not_null', $new_schema)) {
       $temp = $new_schema['not_null'];
       unset($new_schema['not_null']);
       $new_schema['not null'] = $temp;
@@ -297,7 +349,7 @@ function eck__property_add__form_submit($form, &$state){
     $entity_type_name = $values['entity_type_name'];
     $entity_type = EntityType::loadByName($entity_type_name);
 
-    $entity_type->addProperty($values['property_name'], $values['property_label'], 
+    $entity_type->addProperty($values['property_name'], $values['property_label'],
             $values['property_type'], NULL, $new_schema);
 
     $entity_type->save();
@@ -305,7 +357,10 @@ function eck__property_add__form_submit($form, &$state){
   }
 }
 
-function eck_properties_property_config($form, &$state){
+/**
+ * Property config.
+ */
+function eck_properties_property_config($form, &$state) {
   return $form['eck_property_config2'];
 }
 
@@ -360,16 +415,20 @@ function eck__properties__form_submit($form, &$state) {
 
     // Lets flush the cache so new behaviors and properties will get set up
     // correctly.
+    // @todo do we need to replace this with our new caching strategy?
     drupal_flush_all_caches();
   }
 }
 
-function _eck_deactivate_on_save($element, &$state){
-  if(array_key_exists('input', $state) && array_key_exists('op', $state['input']) && 
+/**
+ * Deactivate on save.
+ */
+function _eck_deactivate_on_save($element, &$state) {
+  if (array_key_exists('input', $state) && array_key_exists('op', $state['input']) &&
     $state['input']['op'] == t('Save')) {
     isset($element['#element_validate']) ? $element['#element_validate'] = NULL : NULL;
     isset($element['#needs_validation']) ? $element['#needs_validation'] = NULL : NULL;
   }
-  
+
   return $element;
 }

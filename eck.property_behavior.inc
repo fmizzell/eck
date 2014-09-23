@@ -37,9 +37,8 @@ function eck_property_behavior_implements($entity_type, $property, $function_nam
 /**
  * A general function to call specific functions in a property behavior plugin.
  */
-function eck_property_behavior_invoke_plugin($entity_type, $function_name, $all = array(), 
-  $specific = array()){
-  
+function eck_property_behavior_invoke_plugin($entity_type, $function_name, $all = array(), $specific = array()) {
+
   $properties = $entity_type->properties;
   $returns = array();
 
@@ -98,9 +97,9 @@ function eck_property_behavior_invoke_plugin_alter($entity_type, $function_name,
       $plugin = ctools_get_plugins('eck', 'property_behavior', $behavior);
 
       $function = ctools_plugin_get_function($plugin, $function_name);
-  
-      if($function){
-        if(array_key_exists('behavior_config', $info)){
+
+      if ($function) {
+        if (array_key_exists('behavior_config', $info)) {
           $return['config'] = $info['behavior_config'];
         }
         $return = $function($property, $return);
@@ -159,18 +158,21 @@ function eck_property_behavior_validation($value, $info) {
   }
 }
 
-function eck__property_behavior__form($form, &$state, $entity_type_name, $property){
+/**
+ * Property behavior form.
+ */
+function eck__property_behavior__form($form, &$state, $entity_type_name, $property) {
   $entity_type = EntityType::loadByName($entity_type_name);
   $properties = $entity_type->properties;
-  if(array_key_exists($property, $properties)){
+  if (array_key_exists($property, $properties)) {
     $form['entity_type'] = array(
       '#type' => 'value',
-      '#value' => $entity_type
+      '#value' => $entity_type,
     );
 
     $form['property'] = array(
       '#type' => 'value',
-      '#value' => $property
+      '#value' => $property,
     );
 
     ctools_include("plugins");
@@ -180,31 +182,31 @@ function eck__property_behavior__form($form, &$state, $entity_type_name, $proper
 
     $form['behaviors'] = array(
       '#type' => 'value',
-      '#value' => $behaviors
+      '#value' => $behaviors,
     );
 
     $key = array_search($properties[$property]['behavior'], $behaviors);
 
-    //we can have 3 possible states,
-    //1) there is no behavior for the property and non has been selected for
-    //configuration
-    //2) there is no behavior for the property, but one has been chosen to be
-    //configured
-    //3) This property has a behavior already
+    // We can have 3 possible states,
+    // 1) there is no behavior for the property and non has been selected for
+    // configuration.
+    // 2) there is no behavior for the property, but one has been chosen to be
+    // configured.
+    // 3) This property has a behavior already.
 
-    //has a behavior been selected?
+    // Has a behavior been selected?
     $behavior = FALSE;
-    if(array_key_exists('values', $state)){
+    if (array_key_exists('values', $state)) {
       $values = $state['values'];
       $behavior = $values['behavior'];
     }
 
-    if(!$key && !$behavior){
+    if (!$key && !$behavior) {
       $form['behavior'] = array(
         '#title' => 'behavior',
         '#type' => 'select',
         '#options' => $behaviors,
-        '#default_value' => $key
+        '#default_value' => $key,
       );
 
       $form['configure'] = array(
@@ -213,25 +215,25 @@ function eck__property_behavior__form($form, &$state, $entity_type_name, $proper
         '#value' => t('Configure'),
       );
     }
-    else if(!$key && $behavior){
+    elseif (!$key && $behavior) {
       $form['behavior'] = array(
         '#title' => 'behavior',
         '#type' => 'select',
         '#options' => $behaviors,
-        '#default_value' => $key
+        '#default_value' => $key,
       );
 
-      //need to get the behaviors configuration form
+      // Need to get the behaviors configuration form.
       $behavior_name = $behaviors[$behavior];
       $function = ctools_plugin_get_function($plugins[$behavior_name], "config_form");
-      if($function){
+      if ($function) {
         $config_form = $function();
-        foreach($config_form as $key => $element){
+        foreach ($config_form as $key => $element) {
           unset($config_form[$key]);
           $config_form["config_{$key}"] = $element;
         }
       }
-      
+
       $form['config_form_wrapper'] = array('#type' => 'fieldset', '#title' => "Configure Behavior");
       $form['config_form_wrapper']['config_form'] = $config_form;
 
@@ -241,9 +243,9 @@ function eck__property_behavior__form($form, &$state, $entity_type_name, $proper
         '#value' => t('Save'),
       );
     }
-    else{
+    else {
       $form['behavior'] = array(
-        '#markup' => "<h3>{$behaviors[$key]}</h3>"
+        '#markup' => "<h3>{$behaviors[$key]}</h3>",
       );
 
       $form['remove'] = array(
@@ -252,49 +254,58 @@ function eck__property_behavior__form($form, &$state, $entity_type_name, $proper
         '#value' => t('Remove'),
       );
     }
-
-  }else{
+  }
+  else {
     drupal_set_message('This property does not exists');
-    drupal_goto(eck__entity_type__path()."/{$entity_type->name}/property");
+    drupal_goto(eck__entity_type__path() . "/{$entity_type->name}/property");
   }
 
   return $form;
 }
 
-function eck_property_behavior_get_config_values($values){
+/**
+ * Property behavior get config values.
+ */
+function eck_property_behavior_get_config_values($values) {
   $config = array();
-  foreach($values as $key => $value){
-    if(substr_count($key, "config_") > 0){
+  foreach ($values as $key => $value) {
+    if (substr_count($key, "config_") > 0) {
       $new_key = str_replace("config_", "", $key);
       $config[$new_key] = $value;
     }
   }
-  
+
   return $config;
 }
-function eck__property_behavior__form_submit($form, &$state){
 
-  if($state['values']['op'] == "Configure"){
+/**
+ * Property behavior form submit.
+ */
+function eck__property_behavior__form_submit($form, &$state) {
+
+  if ($state['values']['op'] == "Configure") {
     $state['rebuild'] = TRUE;
-  }else{
+  }
+  else {
     $values = $state['values'];
-    
+
     $behavior_config = eck_property_behavior_get_config_values($values);
-    
+
     $entity_type = $values['entity_type'];
     $property = $values['property'];
     $behaviors = $values['behaviors'];
-    $behavior = array_key_exists('behavior', $values)?$values['behavior']:FALSE;
+    $behavior = array_key_exists('behavior', $values) ? $values['behavior'] : FALSE;
 
     $properties = $entity_type->properties;
 
-    if($behavior != 0){
+    if ($behavior != 0) {
       $properties[$property]['behavior'] = $behaviors[$behavior];
-      if(!empty($behavior_config)){
+      if (!empty($behavior_config)) {
         $properties[$property]['behavior_config'] = $behavior_config;
       }
       $entity_type->properties = $properties;
-    }else{
+    }
+    else {
       $properties[$property]['behavior'] = NULL;
       $entity_type->properties = $properties;
     }
@@ -303,7 +314,6 @@ function eck__property_behavior__form_submit($form, &$state){
 
     EntityType::loadAll(NULL, TRUE);
 
-    $state['redirect'] = eck__entity_type__path()."/{$entity_type->name}/property";
+    $state['redirect'] = eck__entity_type__path() . "/{$entity_type->name}/property";
   }
 }
-

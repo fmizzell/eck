@@ -24,9 +24,10 @@ module_load_include('inc', 'eck', 'includes/eck.references_dialog');
  * Load callback for %eckentity.
  */
 function eckentity_load($id, $type) {
-  try{
+  try {
     $entity = entity_load_single($type, $id);
-  } catch (Exception $ex) {
+  }
+  catch (Exception $ex) {
     drupal_not_found();
     exit();
   }
@@ -84,7 +85,10 @@ function eck_modules_disabled($modules) {
   }
 }
 
-function eck_eck_default_properties(){
+/**
+ * Implements hook_eck_default_properties().
+ */
+function eck_eck_default_properties() {
   $default_properties = array();
 
   $default_properties['title'] = array(
@@ -115,12 +119,12 @@ function eck_eck_default_properties(){
     'type' => "language",
     'behavior' => 'language',
   );
-  //include uuid as default property if module_exists
+  // Include uuid as default property if module_exists.
   if (module_exists('uuid')) {
     $default_properties['uuid'] = array(
       'label' => "UUID",
       'type' => "text",
-      'behavior' => 'uuid'
+      'behavior' => 'uuid',
     );
   }
 
@@ -270,15 +274,18 @@ function entity_table($entities, $select = FALSE) {
     // Check that the user has permissions to delete.
     if (eck_access('delete', 'entity', $entity)) {
       $delete_path = str_replace('%', $id, $crud_info['delete']['path']);
-      $allowed_operations .= (($allowed_operations)?'<br />':'').l(t('delete'), $delete_path, array('query' => $destination));
+      $allowed_operations .= (($allowed_operations) ? '<br />' : '') .
+        l(t('delete'), $delete_path, array('query' => $destination));
     }
     $uri = entity_uri($entity_type, $entity);
-    if(eck_access("view", "entity", $entity)){
-      $row = array(l(entity_label($entity_type, $entity), $uri['path'], $uri['options']));
-    }else{
+    if (eck_access("view", "entity", $entity)) {
+      $row = array(l(entity_label($entity_type, $entity), $uri['path'],
+        $uri['options']));
+    }
+    else {
       $row = array(entity_label($entity_type, $entity));
     }
-    $row[] = array('data' => $allowed_operations); //"admin/structure/eck/{$entity_type}/{$bundle}/{$id}/delete"));
+    $row[] = array('data' => $allowed_operations);
 
     $info['entity'] = $entity;
     drupal_alter("entity_{$entity_type}_{$bundle}_tr", $row, $info);
@@ -353,9 +360,9 @@ function eck_entity_info_alter(&$info) {
 function eck_field_extra_fields() {
   $extra = array();
 
-  foreach(EntityType::loadAll() as $entity_type){
-    foreach(Bundle::loadByEntityType($entity_type) as $bundle){
-      foreach($entity_type->properties as $property_name => $property_info) {
+  foreach (EntityType::loadAll() as $entity_type) {
+    foreach (Bundle::loadByEntityType($entity_type) as $bundle) {
+      foreach ($entity_type->properties as $property_name => $property_info) {
         if (!empty($bundle->config['extra_fields'][$property_name]['form'])) {
           $extra[$entity_type->name][$bundle->name]['form'][$property_name] = array(
             'label' => $bundle->config['extra_fields'][$property_name]['form']['label'],
@@ -379,7 +386,7 @@ function eck_field_extra_fields() {
 /**
  * Entity type load.
  */
-function entity_type_load($entity_type_name){
+function entity_type_load($entity_type_name) {
   return EntityType::loadByName($entity_type_name);
 }
 
@@ -589,8 +596,6 @@ function entity_table_select($form, &$state, $entity_type, $bundle, $header, $ro
   return $form;
 }
 
-
-
 /*******************************************************************************
  *            Property widget info and hooks
  ******************************************************************************/
@@ -633,19 +638,19 @@ function eck_property_widget_type_options($property_type = NULL, $by_label = FAL
 
 
 /**
- * Returns information about property widgets from hook_eck_property_widget_info().
+ * Returns information of property widgets from hook_eck_property_widget_info.
  *
- * @param $widget_type
+ * @param string $widget_type
  *   (optional) A widget type name. If omitted, all widget types will be
  *   returned.
  *
- * @param $reset
+ * @param bool $reset
  *   Forces rebuild of the property widget cache.
  *
- * @return
+ * @return array
  *   Either a single widget type description, as provided by
- *   hook_eck_property_widget_info(), or an array of all existing widget types, keyed
- *   by widget type name.
+ *   hook_eck_property_widget_info(), or an array of all existing widget types,
+ *   keyed by widget type name.
  */
 function eck_property_info_widget_types($widget_type = NULL, $reset = FALSE) {
   global $language;
@@ -675,7 +680,7 @@ function eck_property_info_widget_types($widget_type = NULL, $reset = FALSE) {
           // Provide defaults.
           $widget_info += array(
             'type' => $name,
-            'label' => t($name),
+            'label' => t("@name", array('@name' => $name)),
             'settings' => array(),
             'property types' => array(),
             'file' => FALSE,
@@ -701,24 +706,34 @@ function eck_property_info_widget_types($widget_type = NULL, $reset = FALSE) {
 }
 
 /**
- * Implementation of hook_eck_property_widget_info().
+ * Implements hook_eck_property_widget_info().
  *
  * Defines some default property widgets that come with ECK.
  *
- * @see eck_property_info_widget_types().
- **/
+ * @see eck_property_info_widget_types()
+ */
 function eck_eck_property_widget_info() {
   $widget_types = array(
     'text' => array(
       'label' => t('Text'),
       'settings' => array('size' => 60, 'max_length' => 255),
-      'property types' => array('text', 'integer', 'positive_integer', 'decimal'),
+      'property types' => array(
+        'text',
+        'integer',
+        'positive_integer',
+        'decimal',
+      ),
       'file' => 'eck.property_widgets',
     ),
     'options' => array(
       'label' => t('Options'),
       'settings' => array('options' => ''),
-      'property types' => array('text', 'integer', 'positive_integer', 'decimal'),
+      'property types' => array(
+        'text',
+        'integer',
+        'positive_integer',
+        'decimal',
+      ),
       'file' => 'eck.property_widgets',
     ),
     'language_toggle' => array(
@@ -737,8 +752,10 @@ function eck_eck_property_widget_info() {
  ******************************************************************************/
 
 /**
- * Adds a manage properties section to the field overview 'Manage fields' form
- * that allows for the inclusion of properties as "extra fields" on entity forms.
+ * Adds a manage properties section.
+ *
+ * To the field overview 'Manage fields' form that allows for the inclusion of
+ * properties as "extra fields" on entity forms.
  */
 function eck_form_field_ui_field_overview_form_alter(&$form, &$form_state) {
   if (array_key_exists($form['#entity_type'], eck_entity_info())) {
@@ -753,18 +770,21 @@ function eck_form_field_ui_field_overview_form_alter(&$form, &$form_state) {
     $properties = array();
     $extra_fields = (!empty($bundle->config['extra_fields']) && is_array($bundle->config['extra_fields'])) ? $bundle->config['extra_fields'] : array();
     foreach ($entity_type->properties as $property => $info) {
-      if (empty($extra_fields[$property]['form']))
-      {
+      if (empty($extra_fields[$property]['form'])) {
         $properties[$property] = $info;
-      } else {
+      }
+      else {
         $admin_property_path = $admin_path . '/properties/' . $property;
         unset($form['fields'][$property]['type']['#cell_attributes']);
         unset($form['fields'][$property]['edit']);
         unset($form['fields'][$property]['delete']);
+
+        $key = $extra_fields[$property]['form']['widget']['type'];
+
         $table_elements = array(
           'widget_type' => array(
             '#type' => 'link',
-            '#title' => t($widget_types[$extra_fields[$property]['form']['widget']['type']]['label']),
+            '#title' => t("@widget_label", array("@widget_label" => $widget_types[$key]['label'])),
             '#href' => $admin_property_path . '/widget-type',
             '#options' => array('attributes' => array('title' => t('Change widget type.'))),
           ),
@@ -800,7 +820,13 @@ function eck_form_field_ui_field_overview_form_alter(&$form, &$form_state) {
       asort($properties_options);
       $name = '_eck_add_extra_field';
       $form['fields'][$name] = array(
-        '#attributes' => array('class' => array('draggable', 'tabledrag-leaf', 'add-new')),
+        '#attributes' => array(
+          'class' => array(
+            'draggable',
+            'tabledrag-leaf',
+            'add-new',
+          ),
+        ),
         '#row_type' => 'add_new_field',
         '#region_callback' => 'field_ui_field_overview_row_region',
         'label' => array(
@@ -810,7 +836,7 @@ function eck_form_field_ui_field_overview_form_alter(&$form, &$form_state) {
           '#size' => 15,
           '#description' => t('Label'),
           '#attributes' => array('class' => array('label-textfield')),
-          '#prefix' => '<div class="label-input"><div class="add-new-placeholder">' . t('Manage a property') .'</div>',
+          '#prefix' => '<div class="label-input"><div class="add-new-placeholder">' . t('Manage a property') . '</div>',
           '#suffix' => '</div>',
         ),
         'weight' => array(
@@ -870,18 +896,24 @@ function eck_form_field_ui_field_overview_form_alter(&$form, &$form_state) {
       // Add settings for the update selects behavior.
       $js_properties = array();
       foreach ($properties as $property => $info) {
-        $js_properties[$property] = array('label' => $info['label'], 'type' => $info['type']);
+        $js_properties[$property] = array(
+          'label' => $info['label'],
+          'type' => $info['type'],
+        );
       }
       $form['#attached']['js'][] = array(
         'type' => 'setting',
-        'data' => array('eckProperties' => $js_properties, 'eckPropertyWidgetTypes' => eck_property_widget_type_options()),
+        'data' => array(
+          'eckProperties' => $js_properties,
+          'eckPropertyWidgetTypes' => eck_property_widget_type_options(),
+        ),
       );
     }
   }
 }
 
 /**
- * Validates the 'add property as extra field' row of field_ui_field_overview_form().
+ * Validates the add property as extra field of field_ui_field_overview_form().
  *
  * @see eck_form_field_ui_field_overview_form_alter()
  * @see field_ui_field_overview_form_validate()
@@ -893,7 +925,13 @@ function eck_form_field_ui_field_overview_form_validate($form, &$form_state) {
     $extra_field = $form_state['values']['fields']['_eck_add_extra_field'];
 
     // Validate if any information was provided in the 'add existing field' row.
-    if (array_filter(array($extra_field['label'], $extra_field['field_name'], $extra_field['widget_type']))) {
+    $array = array(
+      $extra_field['label'],
+      $extra_field['field_name'],
+      $extra_field['widget_type'],
+    );
+
+    if (array_filter($array)) {
       // Missing label.
       if (!$extra_field['label']) {
         form_set_error('fields][_eck_add_extra_field][label', t('Add property as extra field: you need to provide a label.'));
@@ -927,7 +965,7 @@ function eck_form_field_ui_field_overview_form_validate($form, &$form_state) {
 }
 
 /**
- * Form submission handler for ECK's additions to field_ui_field_overview_form().
+ * Form submission handler for ECK's additions to field_ui_field_overview_form.
  *
  * @see eck_form_field_ui_field_overview_form_alter()
  * @see eck_form_field_ui_field_overview_form_validate()
@@ -936,7 +974,13 @@ function eck_form_field_ui_field_overview_form_submit($form, &$form_state) {
   if (isset($form_state['values']['fields']['_eck_add_extra_field'])) {
     $extra_field_settings = $form_state['values']['fields']['_eck_add_extra_field'];
     // Submit only if information was provided in the 'add existing field' row.
-    if (array_filter(array($extra_field_settings['label'], $extra_field_settings['field_name'], $extra_field_settings['widget_type']))) {
+    $array = array(
+      $extra_field_settings['label'],
+      $extra_field_settings['field_name'],
+      $extra_field_settings['widget_type'],
+    );
+
+    if (array_filter($array)) {
       $entity_type = entity_type_load($form['#entity_type']);
       $bundle = bundle_load($form['#entity_type'], $form['#bundle']);
       $property_name = $extra_field_settings['field_name'];
@@ -952,8 +996,9 @@ function eck_form_field_ui_field_overview_form_submit($form, &$form_state) {
           'settings' => $widget_info['settings'],
         ),
       );
-      // If the property behavior supplies a default value function then make sure we use it.
-      if($default_function = eck_property_behavior_implements($entity_type, $property_name, 'default_value')){
+      // If the property behavior supplies a default value function then make
+      // sure we use it.
+      if ($default_function = eck_property_behavior_implements($entity_type, $property_name, 'default_value')) {
         $extra_field['default_value_function'] = $default_function;
       }
       // Pull in the default..default value from the property type schema.
@@ -982,13 +1027,16 @@ function eck_entity_delete($entity, $entity_type) {
   }
 }
 
-function eck_entity_view_alter(&$build){
+/**
+ * Implements hook_entity_view_alter().
+ */
+function eck_entity_view_alter(&$build) {
   $entity_types = EntityType::loadAll();
 
   $this_entity_type = $build['#entity_type'];
 
-  foreach($entity_types as $et){
-    if($et->name == $this_entity_type){
+  foreach ($entity_types as $et) {
+    if ($et->name == $this_entity_type) {
       $entity = $build['#entity'];
       $this_bundle = $entity->bundle();
       // Lets add contextual links to our entities in eck you can change
@@ -996,9 +1044,10 @@ function eck_entity_view_alter(&$build){
       // are dependent on the hierarchy of those paths, changing the paths
       // could cause of contextual links not to work correctly.
 
-      $build['#contextual_links']['eck'] =
-      array(
-        "{$this_entity_type}/{$this_bundle}",array($entity->id));
+      $build['#contextual_links']['eck'] = array(
+        "{$this_entity_type}/{$this_bundle}",
+        array($entity->id),
+      );
     }
   }
 }
@@ -1010,61 +1059,67 @@ function eck_alphabetical_cmp($a, $b) {
   return strcasecmp($a->name, $b->name);
 }
 
-function eck_eck_property_types(){
+/**
+ * Implements hook_eck_property_types().
+ */
+function eck_eck_property_types() {
   $property_types = array();
 
   $property_types['decimal'] = array(
     'label' => t("Decimal"),
-    'class' => "DecimalPropertyType"
+    'class' => "DecimalPropertyType",
   );
   $property_types['integer'] = array(
     'label' => t("Integer"),
-    'class' => "IntegerPropertyType"
+    'class' => "IntegerPropertyType",
   );
   $property_types['text'] = array(
     'label' => t("Text"),
-    'class' => "TextPropertyType"
+    'class' => "TextPropertyType",
   );
   $property_types['fixed_size_text'] = array(
     'label' => t("Fixed Size Text"),
-    'class' => "FixedSizeTextPropertyType"
+    'class' => "FixedSizeTextPropertyType",
   );
   $property_types['long_text'] = array(
     'label' => t("Long Text"),
-    'class' => "LongTextPropertyType"
+    'class' => "LongTextPropertyType",
   );
   $property_types['blob'] = array(
     'label' => t("Blob"),
-    'class' => "BlobPropertyType"
+    'class' => "BlobPropertyType",
   );
   $property_types['datetime'] = array(
     'label' => t("Date/Time"),
-    'class' => "DatetimePropertyType"
+    'class' => "DatetimePropertyType",
   );
 
   $property_types['language'] = array(
     'label' => t("Language"),
-    'class' => "LanguagePropertyType"
+    'class' => "LanguagePropertyType",
   );
   $property_types['uuid'] = array(
     'label' => t("UUID"),
-    'class' => "UUIDPropertyType"
+    'class' => "UUIDPropertyType",
   );
   $property_types['positive_integer'] = array(
     'label' => t("Positive Integer"),
-    'class' => "PositiveIntegerPropertyType"
+    'class' => "PositiveIntegerPropertyType",
   );
 
   return $property_types;
 }
 
+/**
+ * Implements hook_init().
+ */
 function eck_init() {
-  // Let's initialize our global caches
-  global $eck_entity_types_cache;
-  global $eck_bundles_cache;
+  // Lets initialize our global caches.
+  global $_eck_entity_types_cache;
+  global $_eck_bundles_cache;
 
-  $eck_entity_types_cache = new ECKCache("entity_types");
-  $eck_bundles_cache = new ECKCache("bundles");
+  $_eck_entity_types_cache = new ECKCache("entity_types");
+  $_eck_bundles_cache = new ECKCache("bundles");
 
   if (variable_get("eck_clear_caches", FALSE)) {
     variable_set("eck_clear_caches", FALSE);
@@ -1072,6 +1127,9 @@ function eck_init() {
   }
 }
 
+/**
+ * Clean up.
+ */
 function eck_clean_up() {
   drupal_get_schema(NULL, TRUE);
   entity_info_cache_clear();
@@ -1082,12 +1140,12 @@ function eck_clean_up() {
 /**
  * Implements hook_system_info_alter().
  *
- * If there are entity types created, let's not let the user disable the module.
+ * If there are entity types created, lets not let the user disable the module.
  */
 function eck_system_info_alter(&$info, $file, $type) {
-  if($type == "module" && array_key_exists("name", $info) && $info['name'] == "Entity Construction Kit") {
+  if ($type == "module" && array_key_exists("name", $info) && $info['name'] == "Entity Construction Kit") {
     $entity_types = EntityType::loadAll();
-    if(!empty($entity_types)) {
+    if (!empty($entity_types)) {
       $info['required'] = TRUE;
       $info['explanation'] = "Entity types created by ECK are still present in the system.";
     }
