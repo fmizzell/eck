@@ -77,10 +77,10 @@ function eck__entity_type__list() {
       "eck administer {$entity_type->name} bundles",
       "eck list {$entity_type->name} bundles",
     ))) {
-      $label = l(t("{$entity_type->label}"), "{$path}/{$entity_type->name}");
+      $label = l(t("@el", array("@el" => $entity_type->label)), "{$path}/{$entity_type->name}");
     }
     else {
-      $label = t("{$entity_type->label}");
+      $label = t("@el", array("@el" => $entity_type->label));
     }
 
     $rows[] = array($label, $allowed_operations);
@@ -345,7 +345,7 @@ function eck__entity_type__info($entity_type) {
   $controller_class = "EntityAPIController";
 
   $info[$entity_type->name] = array(
-    'label' => t($entity_type_label),
+    'label' => t("@etl", array("@etl" => $entity_type_label)),
     'base table' => "eck_{$entity_type->name}",
     'entity class' => $entity_class,
     'controller class' => $controller_class,
