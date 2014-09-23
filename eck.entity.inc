@@ -501,7 +501,11 @@ function eck__entity__form_submit($form, &$state) {
 
   $entity_type = EntityType::loadByName($entity->entityType());
 
-  // Let the behaviors to modify the entity.
+  // Let the behaviors modify the entity.
+  // @todo Why do we need to pass form information to the save behavior.
+  // This is related to eck_revisions. Is there a danger that the current
+  // eck_revision logic will not apply when entities are manipulated from
+  // code and not the UI?
   eck_property_behavior_invoke_plugin($entity_type, 'entity_save',
     array('entity' => $entity, 'form' => $form, 'form_state' => $state));
 
