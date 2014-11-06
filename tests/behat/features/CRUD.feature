@@ -16,8 +16,8 @@ Feature: CRUD
   Scenario: I am able to create entity types
     Given I visit "/admin/structure/entity-type"
     And I click "Add entity type"
-    And I fill in "Entity Type" with "Test 12587"
-    And I fill in "Machine-readable name" with "test_12587"
+    And I fill in "edit-entity-type-label" with "Test 12587"
+    And I fill in "edit-entity-type-name" with "test_12587"
     And I check "Title"
     And I press the "Save" button
     Then I should see the text "Entity type Test 12587 has been updated."
