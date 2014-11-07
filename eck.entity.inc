@@ -376,7 +376,8 @@ function eck__entity__form($form, &$form_state, $entity) {
     }
   }
 
-  $form['submit'] = array(
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#weight' => 10000,
     '#value' => t('Save'),
