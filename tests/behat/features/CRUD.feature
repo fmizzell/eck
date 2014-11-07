@@ -16,8 +16,8 @@ Feature: CRUD
   Scenario: I am able to create entity types
     Given I visit "/admin/structure/entity-type"
     And I click "Add entity type"
-    And I fill in "Entity Type" with "Test 12587"
-    And I fill in "Machine-readable name" with "test_12587"
+    And I fill in "edit-entity-type-label" with "Test 12587"
+    And I fill in "edit-entity-type-name" with "test_12587"
     And I check "Title"
     And I press the "Save" button
     Then I should see the text "Entity type Test 12587 has been updated."
@@ -29,9 +29,10 @@ Feature: CRUD
   Scenario: I am able to create bundles
     Given I visit "/admin/structure/entity-type/test_12587"
     And I click "Add bundle"
-    And I fill in "Type" with "Bundle 19756"
-    And I fill in "Machine-readable name" with "bundle_19756"
+    And I fill in "edit-bundle-label" with "Bundle 19756"
+    And I fill in "edit-bundle-name" with "bundle_19756"
     And I press the "Save" button
+    And show last response
     Then I should see the text "the bundle_19756 for entity type test_12587 has been saved"
     
     Given I visit "/admin/structure/entity-type/test_12587"
