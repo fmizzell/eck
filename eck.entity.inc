@@ -371,7 +371,7 @@ function eck__entity__form($form, &$form_state, $entity) {
   $entity_type = entity_type_load($entity->entityType());
   $bundle = bundle_load($entity_type->name, $entity->type);
   $property_info = entity_get_property_info($entity->entityType());
-  $lanaguage = LANGUAGE_NONE;
+  $language = LANGUAGE_NONE;
   if (function_exists("entity_language")) {
     $language = entity_language($entity_type->name, $entity);
   }
@@ -443,7 +443,8 @@ function eck__entity__form($form, &$form_state, $entity) {
     $form += $properties;
   }
 
-  $form['submit'] = array(
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#weight' => 10000,
     '#value' => t('Save'),
