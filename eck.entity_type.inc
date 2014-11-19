@@ -256,6 +256,8 @@ function eck__entity_type__form_submit($form, &$state) {
       drupal_set_message(t('Entity type %entity_type has been updated.', array('%entity_type' => $entity_type->label)));
     }
   }
+
+  $state['redirect'] = 'admin/structure/entity-type/' . $entity_type->name;
 }
 
 /**
