@@ -435,7 +435,7 @@ class EntityType extends DBObject {
   public static function loadByName($name) {
     $entity_types = EntityType::loadAll();
 
-    if(array_key_exists($name, $entity_types)) {
+    if (array_key_exists($name, $entity_types)) {
       return $entity_types[$name];
     }
 
