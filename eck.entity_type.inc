@@ -232,14 +232,14 @@ function eck__entity_type__form_submit($form, &$state) {
     // Lets handle the default properties.
     eck__default_properties__form_submit($form, $state, $entity_type);
 
-    $entity_type->save();
-
     if ($entity_type->isNew) {
-      drupal_set_message(t('Entity type %entity_type has been created.', array('%entity_type' => $entity_type->label)));
+      drupal_set_message(t('The entity type %entity_type has been created.', array('%entity_type' => $entity_type->label)));
     }
     else {
-      drupal_set_message(t('Entity type %entity_type has been updated.', array('%entity_type' => $entity_type->label)));
+      drupal_set_message(t('The entity type %entity_type has been updated.', array('%entity_type' => $entity_type->label)));
     }
+
+    $entity_type->save();
   }
 
   $state['redirect'] = 'admin/structure/entity-type/' . $entity_type->name;
@@ -255,10 +255,8 @@ function eck__entity_type__form_submit($form, &$state) {
  * @see eck.classes.inc
  */
 function eck__entity_type__delete($entity_type) {
-
   $entity_type->delete();
-
-  drupal_set_message("Entity type '{$entity_type->name}' has been deleted");
+  drupal_set_message(t('The entity type %entity_type has been deleted.', array('%entity_type' => $entity_type->label)));
 }
 
 /**
@@ -277,8 +275,8 @@ function eck__entity_type__delete_form($form, &$state, $entity_type_name) {
     '#value' => $path,
   );
 
-  $message = t("Are you sure that you want to delete the entity type '@entity_type_name'",
-    array("@entity_type_name" => $entity_type->name));
+  $message = t("Are you sure that you want to delete the entity type %entity_type?",
+    array("%entity_type" => $entity_type->label));
 
   $caption = t("All of the data (entities and bundles) from this entity type will be deleted. This action cannot be undone.");
 
