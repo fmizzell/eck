@@ -109,11 +109,15 @@ function eck__entity_type__list() {
 
 /**
  * Entity type form callback.
+ *
+ * @param string $entity_type_name
+ *   (optional) The machine name of the entity type to edit. If omitted, the
+ *   form is presented for adding a new entity type.
  */
 function eck__entity_type__form($form, &$state, $entity_type_name = NULL) {
 
-  // If this form is being called on a new entity, create a new entity object,
-  // otherwise load the corresponding entity.
+  // If this form is being called on a new entity, create a new entity type
+  // object, otherwise load the corresponding entity type.
   if (!isset($entity_type_name)) {
     $entity_type = new EntityType();
   }
