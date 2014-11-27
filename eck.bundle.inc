@@ -300,8 +300,8 @@ function eck__bundle__add_submit($form, &$form_state) {
   $bundle->entity_type = $entity_type->name;
   $bundle->save();
 
-  drupal_set_message(t('the %bundle for entity type %entity_type has been saved',
-  array('%bundle' => $bundle_name, '%entity_type' => $entity_type->name)));
+  drupal_set_message(t('the bundle %bundle for entity type %entity_type has been created.',
+    array('%bundle' => $bundle->label, '%entity_type' => $entity_type->label)));
 
   Bundle::loadAll(NULL, TRUE);
   drupal_get_schema(NULL, TRUE);
@@ -353,6 +353,7 @@ function eck__bundle__edit_form($form, &$form_state, $entity_type_name, $bundle_
  * Budle edit form submit callback.
  */
 function eck__bundle__edit_form_submit($form, &$form_state) {
+  $entity_type = $form_state['values']['entity_type'];
   $bundle = $form_state['values']['bundle'];
   // Save all form values starting from 'config_' to the $bundle->config array.
   $bundle_config = array();
@@ -365,6 +366,9 @@ function eck__bundle__edit_form_submit($form, &$form_state) {
   $bundle->config = $bundle_config;
   // Save the bundle object to the database.
   $bundle->save();
+
+  drupal_set_message(t('the bundle %bundle for entity type %entity_type has been updated.',
+    array('%bundle' => $bundle->label, '%entity_type' => $entity_type->label)));
 }
 
 /**
@@ -385,7 +389,8 @@ function eck__bundle__delete($entity_type, $bundle) {
   variable_set('menu_rebuild_needed', TRUE);
   drupal_flush_all_caches();
 
-  drupal_set_message("The bundle '{$bundle->name}' from the entity type '{$entity_type->name}' has been deleted");
+  drupal_set_message(t('The bundle %bundle from the entity type %entity_type has been deleted.',
+    array('%bundle' => $bundle->label, '%entity_type' => $entity_type->label)));
 }
 
 /**
@@ -411,8 +416,8 @@ function eck__bundle__delete_form($form, &$form_state, $entity_type_name, $bundl
     '#value' => "{$path}/{$entity_type->name}",
   );
 
-  $message = t("Are you sure that you want to delete the bundle '@bundle_name'",
-    array("@bundle_name" => $bundle->name));
+  $message = t('Are you sure that you want to delete the bundle %bundle?',
+    array('%bundle' => $bundle->label));
 
   $caption = t("All of the data (entities) associated with this bundle
   will be deleted. This action cannot be undone.");
