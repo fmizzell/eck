@@ -4,7 +4,7 @@ Feature: CRUD
   I want to be able to forge my entities with custom attributes (properties)
   so my content will do exactly what it needs to do
 
-  Background: 
+  Background:
     Given I am logged in as a user with the "administrator" role
 
   @setup
@@ -26,7 +26,7 @@ Feature: CRUD
     And I press the "edit-property-add" button
     And I check the box <checkbox>
     And I press the "Save" button
-    
+
     Given I visit "admin/structure/entity-type/vehicle/car/add"
     And I fill in <label> with <value>
     And I press the "Save" button
@@ -36,7 +36,7 @@ Feature: CRUD
     And I uncheck the box <checkbox>
     And I press the "Save" button
 
-    Examples: 
+    Examples:
       | type               | label | name | checkbox                   | value          |
       | "text"             | "T"   | "t"  | "new_properties_table[t]"  | "Toyota Prius" |
       | "integer"          | "I"   | "i"  | "new_properties_table[i]"  | "-123456"      |
