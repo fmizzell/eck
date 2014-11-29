@@ -4,7 +4,7 @@ Feature: Properties
   I want to be able to forge my entities with custom attributes (properties)
   so my content will do exactly what it needs to do
 
-  Background: 
+  Background:
     Given I am logged in as a user with the "administrator" role
 
   @setup
@@ -29,7 +29,7 @@ Feature: Properties
       And I press the "Add Property" button
       When I visit "/admin/structure/entity-type/vehicle/property"
       Then I should see the text <label>
-  
+
       # Configure the widget
       Given I visit "/admin/structure/entity-type/vehicle/car/fields"
       And I fill in "edit-fields-eck-add-extra-field-label" with <label>
@@ -37,14 +37,14 @@ Feature: Properties
       And I fill in "edit-fields-eck-add-extra-field-widget-type" with "text"
       And I press the "Save" button
       Then I should see the text <label>
-  
+
       # Create a test entity
       Given I visit "/admin/structure/entity-type/vehicle/car"
       And I click "Add Car"
       And I fill in <element id> with <value>
       And I press the "Save" button
       Then I should see the text "has been saved"
-  
+
       # Confirm the value was saved
       Given I visit "admin/structure/entity-type/vehicle/car"
       And I click "edit"
@@ -57,8 +57,8 @@ Feature: Properties
 
       # @todo: add behavior tests
       # @todo: delete individual properties
-  
-  
+
+
       Examples:
         | type               | label | name | element id | value          |
         | "text"             | "T"   | "t"  | "edit-t"   | "Toyota Prius" |

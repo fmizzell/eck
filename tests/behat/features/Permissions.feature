@@ -24,9 +24,9 @@ Feature: Permissions
     And I visit <link>
     And I click <add_link>
     And I fill in "Title" with <entity_title>
-    And I press the "Save" button 
+    And I press the "Save" button
 
-    Examples: 
+    Examples:
       | type_label | type      | bundle_label | bundle | entity_title   | link                                       | add_link  |
       | "Vehicle"  | "vehicle" | "Car"        | "car"  | "Toyota Prius" | "/admin/structure/entity-type/vehicle/car" | "Add Car" |
       | "Animal"   | "animal"  | "Dog"        | "dog"  | "Snoopy"       | "/admin/structure/entity-type/animal/dog"  | "Add Dog" |
@@ -42,7 +42,7 @@ Feature: Permissions
     And I click "Entity types"
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | permissions                                                     |
       | "Use the administration pages and help,List Entity Types"   |
       | "Use the administration pages and help,Administer Entity Types" |
@@ -57,7 +57,7 @@ Feature: Permissions
     And I click "Add entity type"
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | permissions                                                                           |
       | "Use the administration pages and help,List Entity Types,Create Entity Types"        |
       | "Use the administration pages and help,List Entity Types,Administer Entity Types" |
@@ -72,7 +72,7 @@ Feature: Permissions
     And I click "delete" in the "Vehicle" row
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | permissions                                                                           |
       | "Use the administration pages and help,List Entity Types,Delete Entity Types"     |
       | "Use the administration pages and help,List Entity Types,Administer Entity Types" |
@@ -93,7 +93,7 @@ Feature: Permissions
     When I click <type_label>
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | type_label | permissions                                                                      |
       | "Vehicle"  | "Use the administration pages and help,List Entity Types,List Bundles"  |
       | "Animal"   | "Use the administration pages and help,List Entity Types,List Bundles"  |
@@ -111,7 +111,7 @@ Feature: Permissions
     When I click "Vehicle"
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | operation | object_id   |
       | "list"    | "vehicle\|*" |
       | "*"       | "vehicle\|*" |
@@ -130,7 +130,7 @@ Feature: Permissions
     When I click "Add bundle"
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | link                                   | permissions                            |
       | "/admin/structure/entity-type/vehicle" | "List Bundles,Create Bundles"        |
       | "/admin/structure/entity-type/animal"  | "List Bundles,Create Bundles"        |
@@ -148,7 +148,7 @@ Feature: Permissions
     And I visit "/admin/structure/entity-type/animal"
     Then I should not see the link "Add bundle"
 
-    Examples: 
+    Examples:
       | operation | object_id    |
       | "create"  | "vehicle\|*" |
       | "*"       | "vehicle\|*" |
@@ -167,7 +167,7 @@ Feature: Permissions
     When I click "delete"
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | link                                   | permissions                            |
       | "/admin/structure/entity-type/vehicle" | "List Bundles,Delete Bundles"     |
       | "/admin/structure/entity-type/animal"  | "List Bundles,Delete Bundles"     |
@@ -185,7 +185,7 @@ Feature: Permissions
     And I visit "/admin/structure/entity-type/animal"
     Then I should not see the link "delete"
 
-    Examples: 
+    Examples:
       | operation | object_id    |
       | "delete"  | "vehicle\|*" |
       | "*"       | "vehicle\|*" |
@@ -206,7 +206,7 @@ Feature: Permissions
     When I click <link>
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | path                                   | link  | permissions                             |
       | "/admin/structure/entity-type/vehicle" | "Car" | "List Bundles,List Entities"   |
       | "/admin/structure/entity-type/animal"  | "Dog" | "List Bundles,List Entities"   |
@@ -222,7 +222,7 @@ Feature: Permissions
     When I click "Car"
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | operation | object_id   |
       | "list"    | "vehicle\|car\|*" |
       | "*"       | "vehicle\|car\|*" |
@@ -242,7 +242,7 @@ Feature: Permissions
     When I click <link>
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | path                                       | link      | permissions                     |
       | "/admin/structure/entity-type/vehicle/car" | "Add Car" | "List Entities,Create Entities" |
       | "/admin/structure/entity-type/animal/dog"  | "Add Dog" | "List Entities,Create Entities" |
@@ -258,7 +258,7 @@ Feature: Permissions
     When I click "Add Car"
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | operation | object_id   |
       | "create"    | "vehicle\|car\|*" |
       | "*"       | "vehicle\|car\|*" |
@@ -278,7 +278,7 @@ Feature: Permissions
     When I click "edit"
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | path                                       | permissions                     |
       | "/admin/structure/entity-type/vehicle/car" | "List Entities,Update Entities" |
       | "/admin/structure/entity-type/animal/dog"  | "List Entities,Update Entities" |
@@ -294,7 +294,7 @@ Feature: Permissions
     When I click "edit"
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | operation | object_id         |
       | "update"  | "vehicle\|car\|*" |
       | "*"       | "vehicle\|car\|*" |
@@ -314,7 +314,7 @@ Feature: Permissions
     When I click "delete"
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | path                                       | permissions                     |
       | "/admin/structure/entity-type/vehicle/car" | "List Entities,Delete Entities" |
       | "/admin/structure/entity-type/animal/dog"  | "List Entities,Delete Entities" |
@@ -330,7 +330,7 @@ Feature: Permissions
     When I click "delete"
     Then I should get a "200" HTTP response
 
-    Examples: 
+    Examples:
       | operation | object_id         |
       | "delete"  | "vehicle\|car\|*" |
       | "*"       | "vehicle\|car\|*" |
@@ -344,7 +344,7 @@ Feature: Permissions
     And I click "Delete"
     And I press the "Delete" button
 
-    Examples: 
+    Examples:
       | type_label |
       | "Vehicle"  |
       | "Animal"   |
