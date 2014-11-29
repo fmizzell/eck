@@ -373,6 +373,10 @@ function eck__entity_type__info($entity_type) {
     // I guess we need at least one view mode for entity_view_modes (the module)
     // to work.
     'view modes' => array(
+      'full' => array(
+        'label' => t('Full'),
+        'custom settings' => FALSE,
+      ),
       'teaser' => array(
         'label' => t('Teaser'),
         'custom settings' => TRUE,
