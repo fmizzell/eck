@@ -225,10 +225,18 @@ function eck__entity__list($entity_type_name, $bundle_name) {
 
   // Check that the user has permissions to add an entity:
   if (eck_access('create', 'entity') || eck_access('create', 'entity', $bundle)) {
-    $text = t("Add @bundle_label", array("@bundle_label" => $bundle->label));
-    $options = array('query' => $destination);
-    $build['add'] = array(
-      '#markup' => "+ " . l($text, $crud_info['add']['path'], $options),
+    $build['actions'] = array(
+      '#theme' => 'links',
+      '#links' => array(
+        array(
+          'title' => t("Add") . " $bundle->label",
+          'href' => $crud_info['add']['path'],
+          'query' => $destination,
+        ),
+      ),
+      '#attributes' => array(
+        'class' => array('action-links'),
+      ),
     );
   }
 
