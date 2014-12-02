@@ -46,9 +46,9 @@ function eck_views_api() {
  */
 function eck_flush_caches() {
   // Reload all ECK entity types.
-  EntityType::loadAll(NULL, TRUE);
+  EntityType::loadAll(TRUE);
   // Reload all Bundles.
-  Bundle::loadAll(NULL, TRUE);
+  Bundle::loadAll(TRUE);
 }
 
 /**
