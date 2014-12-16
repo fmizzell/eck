@@ -1,6 +1,6 @@
 {
-  "name": "fmizzell/eck",
-  "description": "Drupal's Entity Construction Kit module",
+  "name": "fmizzell/eck-tests",
+  "description": "Tests for Drupal's Entity Construction Kit module",
   "license": "GPLv2",
   "authors": [
     {

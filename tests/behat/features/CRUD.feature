@@ -3,15 +3,15 @@ Feature: CRUD
   As a content architect
   I want to be able to create, update, read, and delete entity types, bundles and entities
   so my content will be as lean and specific as possible.
-  
+
   Background:
-    Given I am logged in as a user with the "administrator" role
-  
+    Given I am logged in as a user with the "Use the administration pages and help,Administer Entity Types,Administer Bundles,Administer Entities" permissions
+
   Scenario: The entity type management page is completely functional
     Given I visit "/admin/structure/entity-type"
     Then I should see the heading "Entity types"
     Then I should see the link "Add entity type"
- 
+
   @entity-type
   Scenario: I am able to create entity types
     Given I visit "/admin/structure/entity-type"
@@ -21,7 +21,7 @@ Feature: CRUD
     And I check "Title"
     And I press the "Save" button
     Then I should see the text "The entity type Test 12587 has been created."
-    
+
     Given I visit "/admin/structure/entity-type"
     Then I should see the link "Test 12587"
 
@@ -33,10 +33,10 @@ Feature: CRUD
     And I fill in "Machine-readable name" with "bundle_19756"
     And I press the "Save" button
     Then I should see the text "the bundle Bundle 19756 for entity type Test 12587 has been created."
-    
+
     Given I visit "/admin/structure/entity-type/test_12587"
     Then I should see the link "Bundle 19756"
-  
+
   @entity
   Scenario: I am able to create and view entities
     Given I visit "/admin/structure/entity-type/test_12587/bundle_19756"
@@ -79,4 +79,4 @@ Feature: CRUD
     And I press the "Delete" button
     Then I should see the text "The entity type Test 12587 has been deleted."
     And I should not see the link "Test 12587"
-    
+

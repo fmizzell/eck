@@ -5,7 +5,7 @@ Feature: CRUD
   so my content will do exactly what it needs to do
 
   Background:
-    Given I am logged in as a user with the "administrator" role
+    Given I am logged in as a user with the "Use the administration pages and help,Administer Entity Types,Administer Bundles,Administer Entities" permissions
 
   @setup
   Scenario: Setting up for the tests
