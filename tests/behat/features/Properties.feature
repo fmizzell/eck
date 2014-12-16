@@ -58,14 +58,13 @@ Feature: Properties
       # @todo: add behavior tests
       # @todo: delete individual properties
 
-
-      Examples:
-        | type               | label | name | element id | value          |
-        | "text"             | "T"   | "t"  | "edit-t"   | "Toyota Prius" |
-        | "integer"          | "I"   | "i"  | "edit-i"   | "-123456"      |
-        | "decimal"          | "D"   | "d"  | "edit-d"   | "45.98"        |
-        | "positive_integer" | "PI"  | "pi" | "edit-pi"  | "987"          |
-        | "language"         | "L"   | "l"  | "edit-l"   | "en"           |
+    Examples:
+      | type               | label | name | id        | checkbox                   | value          |
+      | "text"             | "T"   | "t"  | "edit-t"  | "new_properties_table[t]"  | "Toyota Prius" |
+      | "integer"          | "I"   | "i"  | "edit-i"  | "new_properties_table[i]"  | "-123456"      |
+      | "decimal"          | "D"   | "d"  | "edit-d"  | "new_properties_table[d]"  | "45.98"        |
+      | "positive_integer" | "PI"  | "pi" | "edit-pi" | "new_properties_table[pi]" | "987"          |
+      | "language"         | "L"   | "l"  | "edit-l"  | "new_properties_table[l]"  | "en"           |
 
   @cleanup
   Scenario: This is a clean up step

@@ -554,27 +554,40 @@ function eck__entity__view($entity_type_name, $bundle_name, $id) {
     $entity = entity_load_single($entity_type_name, $id);
   }
 
-  $entity_type = entity_type_load($entity_type_name);
-  $properties = $entity_type->properties;
-  $bundle = bundle_load($entity_type_name, $bundle_name);
+  return entity_view($entity_type_name, array($entity));
+}
 
+/**
+ * Entity view callback.
+ */
+function eck__entity__view_callback($entities, $view_mode = 'full', $langcode = NULL) {
   $build = array();
-  $entity_view = eck__entity__build($entity_type, $bundle, $entity);
-  $property_view = array();
 
-  $formatters = eck_property_behavior_invoke_plugin($entity_type, 'default_formatter',
-    array('entity' => $entity));
+  foreach ($entities as $entity) {
+    $entity_type_name = $entity->entityType();
+    $bundle_name = $entity->type;
 
-  foreach ($formatters as $property => $formatter) {
-    $property_view[$property] = $formatter;
+    $entity_type = entity_type_load($entity_type_name);
+    $bundle = bundle_load($entity_type_name, $bundle_name);
+
+    $build = array();
+    $entity_view = eck__entity__build($entity_type, $bundle, $entity);
+    $property_view = array();
+
+    $formatters = eck_property_behavior_invoke_plugin($entity_type, 'default_formatter',
+      array('entity' => $entity));
+
+    foreach ($formatters as $property => $formatter) {
+      $property_view[$property] = $formatter;
+    }
+
+    $entity_view[$entity->entityType()][$entity->id] = array_merge($property_view, $entity_view[$entity->entityType()][$entity->id]);
+
+    eck_property_behavior_invoke_plugin($entity_type, 'entity_view',
+      array('entity' => $entity));
+
+    $build["{$entity_type->name}_{$bundle->name}_page"] = $entity_view;
   }
-
-  $entity_view[$entity->entityType()][$entity->id] = array_merge($property_view, $entity_view[$entity->entityType()][$entity->id]);
-
-  eck_property_behavior_invoke_plugin($entity_type, 'entity_view',
-    array('entity' => $entity));
-
-  $build["{$entity_type->name}_{$bundle->name}_page"] = $entity_view;
 
   return $build;
 }
