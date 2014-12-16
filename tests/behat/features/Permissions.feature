@@ -6,7 +6,7 @@ Feature: Permissions
 
   @setup
   Scenario Outline: This is a set up step
-    Given I am logged in as a user with the "administrator" role
+    Given I am logged in as a user with the "Use the administration pages and help,Administer Entity Types,Administer Bundles,Administer Entities,Administer permissions" permissions
     And I visit "/admin/structure/entity-type"
     And I click "Add entity type"
     And I fill in "edit-entity-type-label" with <type_label>
@@ -338,7 +338,7 @@ Feature: Permissions
 
   @cleanup
   Scenario Outline: This is a clean up step
-    Given I am logged in as a user with the "administrator" role
+    Given I am logged in as a user with the "Use the administration pages and help,Administer Entity Types,Administer Bundles,Administer Entities" permissions
     Given I visit "/admin/structure/entity-type"
     And I click <type_label>
     And I click "Delete"
