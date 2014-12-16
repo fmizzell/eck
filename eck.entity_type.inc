@@ -384,6 +384,7 @@ function eck__entity_type__info($entity_type) {
     ),
     // Inline entity form module integration.
     'inline entity form' => array('controller' => 'EckInlineEntityFormController'),
+    'view callback' => 'eck__entity__view_callback',
   );
 
   $eck_path = eck__entity_type__path();

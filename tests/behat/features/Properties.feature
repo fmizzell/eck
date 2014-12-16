@@ -28,7 +28,7 @@ Feature: CRUD
     And I press the "Save" button
 
     Given I visit "admin/structure/entity-type/vehicle/car/add"
-    And I fill in <label> with <value>
+    And I fill in <id> with <value>
     And I press the "Save" button
     Then I should see the text <value>
 
@@ -37,12 +37,12 @@ Feature: CRUD
     And I press the "Save" button
 
     Examples:
-      | type               | label | name | checkbox                   | value          |
-      | "text"             | "T"   | "t"  | "new_properties_table[t]"  | "Toyota Prius" |
-      | "integer"          | "I"   | "i"  | "new_properties_table[i]"  | "-123456"      |
-      | "decimal"          | "D"   | "d"  | "new_properties_table[d]"  | "45.98"        |
-      | "positive_integer" | "PI"  | "pi" | "new_properties_table[pi]" | "987"          |
-      | "language"         | "L"   | "l"  | "new_properties_table[l]"  | "en"           |
+      | type               | label | name | id        | checkbox                   | value          |
+      | "text"             | "T"   | "t"  | "edit-t"  | "new_properties_table[t]"  | "Toyota Prius" |
+      | "integer"          | "I"   | "i"  | "edit-i"  | "new_properties_table[i]"  | "-123456"      |
+      | "decimal"          | "D"   | "d"  | "edit-d"  | "new_properties_table[d]"  | "45.98"        |
+      | "positive_integer" | "PI"  | "pi" | "edit-pi" | "new_properties_table[pi]" | "987"          |
+      | "language"         | "L"   | "l"  | "edit-l"  | "new_properties_table[l]"  | "en"           |
 
   @cleanup
   Scenario: This is a clean up step
