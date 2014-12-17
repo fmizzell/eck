@@ -9,8 +9,8 @@
 language: php
 
 php:
-  - 5.3
- # - 5.4
+ # - 5.3
+  - 5.4
  # - 5.5
  # - 5.6
  # - hhvm
@@ -27,7 +27,7 @@ env:
     - PATH="$PATH:$HOME/.composer/vendor/bin"
 
     # Configuration variables.
-    - DRUPAL_TI_MODULE_NAME="eck"
+    - DRUPAL_TI_MODULE_NAME="eck_tests"
 
     # Define runners and environment vars to include before and after the
     # main runners / environment vars.
