@@ -4,6 +4,7 @@
  * Field handler to present a link to the entity content.
  */
 
+// @codingStandardsIgnoreStart
 class eck_views_handler_field_link extends views_handler_field_entity {
 
   public function option_definition() {
@@ -43,3 +44,4 @@ class eck_views_handler_field_link extends views_handler_field_entity {
     return $text;
   }
 }
+// @codingStandardsIgnoreEnd
