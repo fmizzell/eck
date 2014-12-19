@@ -265,20 +265,14 @@ function eck__entity__add($entity_type_name, $bundle_name) {
 /**
  * Get the entities view.
  */
-function eck__entity__build($entity_type, $bundle, $entity) {
+function eck__entity__build($entity_type, $bundle, $id, $view_mode = "full") {
 
-  if (!$entity) {
-    drupal_not_found();
-    exit();
+  if (is_object($id) && $id->entityType() == $entity_type->name && $id->bundle() == $bundle->name) {
+    return $id->view($view_mode);
   }
-  else {
-    if ($entity->type == $bundle->name) {
-      return $entity->view();
-    }
-    else {
-      drupal_not_found();
-      exit();
-    }
+  elseif (is_numeric($id)) {
+    $entity = entity_load_single($entity_type->name, $id);
+    return $entity->view($view_mode);
   }
 
   drupal_not_found();
@@ -570,8 +564,7 @@ function eck__entity__view_callback($entities, $view_mode = 'full', $langcode = 
     $entity_type = entity_type_load($entity_type_name);
     $bundle = bundle_load($entity_type_name, $bundle_name);
 
-    $build = array();
-    $entity_view = eck__entity__build($entity_type, $bundle, $entity);
+    $entity_view = eck__entity__build($entity_type, $bundle, $entity, $view_mode);
     $property_view = array();
 
     $formatters = eck_property_behavior_invoke_plugin($entity_type, 'default_formatter',
@@ -581,12 +574,12 @@ function eck__entity__view_callback($entities, $view_mode = 'full', $langcode = 
       $property_view[$property] = $formatter;
     }
 
-    $entity_view[$entity->entityType()][$entity->id] = array_merge($property_view, $entity_view[$entity->entityType()][$entity->id]);
+    $entity_view = array_merge($property_view, $entity_view[$entity_type_name][$entity->id]);
 
     eck_property_behavior_invoke_plugin($entity_type, 'entity_view',
       array('entity' => $entity));
 
-    $build["{$entity_type->name}_{$bundle->name}_page"] = $entity_view;
+    $build[$entity_type_name][$entity->id] = $entity_view;
   }
 
   return $build;
