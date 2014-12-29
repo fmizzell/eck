@@ -520,7 +520,7 @@ function eck__entity__form_submit($form, &$state) {
       "@entity_label" => entity_label($form['#entity_type'], $entity),
     )));
 
-  $uri = eck__entity__uri($entity);
+  $uri = entity_uri($entity->entityType(), $entity);
   $state['redirect'] = $uri['path'];
 }
 
