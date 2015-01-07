@@ -11,18 +11,19 @@
  */
 
 $plugin = array(
-  'label' => "Title",
-  'entity_view' => 'eck_title_property_entity_view',
-  'entity_info' => 'eck_title_property_entity_info',
-  'default_widget' => 'eck_title_property_widget',
+  'label' => "Title and Formatter",
+  'entity_view' => 'eck_title_and_formatter_property_entity_view',
+  'entity_info' => 'eck_title_and_formatter_property_entity_info',
+  'default_widget' => 'eck_title_and_formatter_property_widget',
+  'default_formatter' => 'eck_title_and_formatter_property_formatter',
 );
 
 /**
  * How to input a title.
  */
-function eck_title_property_widget($property, $vars) {
+function eck_title_and_formatter_property_widget($property, $vars) {
   $entity = $vars['entity'];
-  $title = _eck_title_property_extract_title($entity, $property);
+  $title = _eck_title_and_formatter_property_extract_title($entity, $property);
   return array(
     '#type' => 'textfield',
     '#title' => $vars['properties'][$property]['label'],
@@ -32,11 +33,20 @@ function eck_title_property_widget($property, $vars) {
 }
 
 /**
+ * Display the title as an h1.
+ */
+function eck_title_and_formatter_property_formatter($property, $vars) {
+  $entity = $vars['entity'];
+  $title = _eck_title_and_formatter_property_extract_title($entity, $property);
+  return array('#markup' => "<h1>{$title}</h1>");
+}
+
+/**
  * When we are viewing the entity, set the pages title.
  */
-function eck_title_property_entity_view($property, $vars) {
+function eck_title_and_formatter_property_entity_view($property, $vars) {
   $entity = $vars['entity'];
-  $title = _eck_title_property_extract_title($entity, $property);
+  $title = _eck_title_and_formatter_property_extract_title($entity, $property);
 
   if (empty($title)) {
     $tile = "{$entity->entityType()} : {$entity->id}";
@@ -48,7 +58,7 @@ function eck_title_property_entity_view($property, $vars) {
 /**
  * Make whatever property is using the title behavior, the label.
  */
-function eck_title_property_entity_info($property, $var) {
+function eck_title_and_formatter_property_entity_info($property, $var) {
   $info = $var;
   unset($info['label callback']);
   $info['entity keys']['label'] = $property;
@@ -67,7 +77,7 @@ function eck_title_property_entity_info($property, $var) {
  * @return string
  *   The title of the entity.
  */
-function _eck_title_property_extract_title($entity, $property) {
+function _eck_title_and_formatter_property_extract_title($entity, $property) {
   $title = "";
   if (isset($entity->{$property})) {
     $title = $entity->{$property};
