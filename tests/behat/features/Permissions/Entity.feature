@@ -1,5 +1,5 @@
 @api @permissions
-Feature: Permissions
+Feature: Entity Permissions
   As a site administrator
   I want to control who can do what with entity types, bundles and entities
   so users don't get themselves in trouble.
