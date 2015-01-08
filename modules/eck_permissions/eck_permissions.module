@@ -62,7 +62,7 @@ function eck_permissions_delete_form_submit($form, &$state){
 
 function eck_permissions($object_type = NULL, $object_id = NULL){
 
-  if(!isset($object_type) && !isset($objcet_id)){
+  if(!isset($object_type) && !isset($object_id)){
     $form = drupal_get_form("eck_permissions_receiving_object_form");
     return $form;
   }
