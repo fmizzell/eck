@@ -114,9 +114,12 @@ class DBObject implements Iterator {
     else {
       // Well I need to know what the primary id is to set up the condition.
       $primary_key = $this->primaryKeys[0];
+      // Do not update Primary Key field.
+      $data = $this->data;
+      unset($data[$primary_key]);
       db_update($this->table)
       ->condition($primary_key, $this->{$primary_key}, '=')
-      ->fields($this->data)
+      ->fields($data)
       ->execute();
     }
 
