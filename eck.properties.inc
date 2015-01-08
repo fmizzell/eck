@@ -51,7 +51,7 @@ function eck__properties($entity_type_name) {
     }
 
     if (array_key_exists($machine_name, $entity_type_properties)) {
-      $default_property_row[] = l(t('Deactivate', $current_path . "/" . $machine_name . "/deactivate"));
+      $default_property_row[] = l(t('Deactivate'), $current_path . "/" . $machine_name . "/deactivate");
       unset($entity_type_properties[$machine_name]);
     }
     else {
