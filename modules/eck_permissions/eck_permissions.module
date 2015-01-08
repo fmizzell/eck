@@ -8,8 +8,8 @@ function eck_permissions_menu(){
   array(
     'title' => "ECK Permissions",
     'page callback' => "eck_permissions",
-    'access callback' => TRUE,
-    'type' => MENU_LOCAL_TASK
+    'access arguments' => array('administer eck permissions'),
+    'type' => MENU_LOCAL_TASK,
   );
 
   $menu['admin/people/eck-permissions/%/%'] =
@@ -17,7 +17,7 @@ function eck_permissions_menu(){
     'title' => "ECK Permissions",
     'page callback' => "eck_permissions",
     'page arguments' => array(3, 4),
-    'access callback' => TRUE
+    'access arguments' => array('administer eck permissions'),
   );
 
   $menu['admin/people/eck-permissions/%/%/delete/%'] =
@@ -25,10 +25,22 @@ function eck_permissions_menu(){
     'title' => "ECK Permissions",
     'page callback' => "drupal_get_form",
     'page arguments' => array('eck_permissions_delete_form', 6),
-    'access callback' => TRUE
+    'access arguments' => array('administer eck permissions'),
   );
 
   return $menu;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function eck_permissions_permission() {
+    return array(
+      'administer eck permissions' => array(
+        'title' => t('Administer ECK Permissions'),
+        'description' => t('Perform administration tasks for the ECK Permissions module.'),
+      )
+  );
 }
 
 /**
