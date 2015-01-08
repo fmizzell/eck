@@ -9,7 +9,10 @@ class DBObject implements Iterator {
   // I believe that entity api expects this to be a public property that
   // does not match drupal coding standards, lets not change it until we
   // are sure that that is not the case.
+
+  // @codingStandardsIgnoreStart
   public $is_new;
+  // @codingStandardsIgnoreEnd
 
   // Iterator variable.
   private $position;

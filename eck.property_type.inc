@@ -137,7 +137,7 @@ function eck_get_property_type_schema($property_type_name) {
  * 'varchar', 'char', 'int', 'serial', 'float', 'numeric', 'text', 'blob' or
  * 'datetime'
  */
-interface PropertyType {
+interface PropertyTypeInterface {
   /**
    * Schema.
    */
@@ -153,7 +153,7 @@ interface PropertyType {
  * PRIMITIVE PROPERTY TYPES
  */
 
-class TextPropertyType implements PropertyType {
+class TextPropertyType implements PropertyTypeInterface {
 
   /**
    * Schema.
@@ -183,7 +183,7 @@ class TextPropertyType implements PropertyType {
   }
 }
 
-class FixedSizeTextPropertyType implements PropertyType {
+class FixedSizeTextPropertyType implements PropertyTypeInterface {
 
   /**
    * Schema.
@@ -214,7 +214,7 @@ class FixedSizeTextPropertyType implements PropertyType {
   }
 }
 
-class LongTextPropertyType implements PropertyType {
+class LongTextPropertyType implements PropertyTypeInterface {
 
   /**
    * Schema.
@@ -245,7 +245,7 @@ class LongTextPropertyType implements PropertyType {
   }
 }
 
-class IntegerPropertyType implements PropertyType {
+class IntegerPropertyType implements PropertyTypeInterface {
 
   /**
    * Schema.
@@ -273,7 +273,7 @@ class IntegerPropertyType implements PropertyType {
   }
 }
 
-class DecimalPropertyType implements PropertyType {
+class DecimalPropertyType implements PropertyTypeInterface {
 
   /**
    * Schema.
@@ -300,7 +300,7 @@ class DecimalPropertyType implements PropertyType {
   }
 }
 
-class BlobPropertyType implements PropertyType {
+class BlobPropertyType implements PropertyTypeInterface {
 
   /**
    * Schema.
@@ -325,7 +325,7 @@ class BlobPropertyType implements PropertyType {
   }
 }
 
-class DateTimePropertyType implements PropertyType {
+class DateTimePropertyType implements PropertyTypeInterface {
 
   /**
    * Schema.

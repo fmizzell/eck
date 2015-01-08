@@ -18,6 +18,7 @@ use Behat\Gherkin\Node\PyStringNode,
 //   require_once 'PHPUnit/Framework/Assert/Functions.php';
 //
 
+// @codingStandardsIgnoreStart
 class FeatureContext extends Drupal\DrupalExtension\Context\DrupalContext {
   /**
    * {@inheritdoc}
@@ -44,3 +45,4 @@ class FeatureContext extends Drupal\DrupalExtension\Context\DrupalContext {
     $perm->save();
   }
 }
+// @codingStandardsIgnoreEnd
