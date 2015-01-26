@@ -52,7 +52,10 @@ function eck_title_and_formatter_property_entity_view($property, $vars) {
     $tile = "{$entity->entityType()} : {$entity->id}";
   }
 
-  drupal_set_title($title);
+  $uri = entity_uri($entity->entityType(), $entity);
+  if ($uri['path'] == current_path()) {
+    drupal_set_title($title);
+  }
 }
 
 /**
