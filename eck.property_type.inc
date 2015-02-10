@@ -320,8 +320,8 @@ class BlobPropertyType implements PropertyTypeInterface {
    * Validate.
    */
   public static function validate($value) {
-    $number = filter_var($value, FILTER_VALIDATE_FLOAT);
-    return ($number !== FALSE);
+   // Anything can be stored in a blob.
+    return TRUE;
   }
 }
 
