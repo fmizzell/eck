@@ -60,12 +60,17 @@ Feature: Properties
     # @todo: delete individual properties
 
   Examples:
-    | type               | label | name | id        | value          |
-    | "text"             | "T"   | "t"  | "edit-t"  | "Toyota Prius" |
-    | "integer"          | "I"   | "i"  | "edit-i"  | "-123456"      |
-    | "decimal"          | "D"   | "d"  | "edit-d"  | "45.98"        |
-    | "positive_integer" | "PI"  | "pi" | "edit-pi" | "987"          |
-    | "language"         | "L"   | "l"  | "edit-l"  | "en"           |
+    | type               | label | name  | id         | value                                  |
+    | "text"             | "T"   | "t"   | "edit-t"   | "Toyota Prius"                         |
+    | "integer"          | "I"   | "i"   | "edit-i"   | "-123456"                              |
+    | "decimal"          | "D"   | "d"   | "edit-d"   | "45.98"                                |
+    | "positive_integer" | "PI"  | "pi"  | "edit-pi"  | "987"                                  |
+    | "fixed_size_text"  | "FST" | "fst" | "edit-fst" | "Toyota Prius"                         |
+    | "long_text"        | "LT"  | "lt"  | "edit-lt"  | "Toyota Prius"                         |
+    | "blob"             | "B"   | "b"   | "edit-b"   | "Toyota Prius"                         |
+    # | "datetime"         | "DT"  | "dt"  | "edit-dt"  | "1420775194"                           |
+    | "language"         | "L"   | "l"   | "edit-l"   | "en"                                   |
+    # | "uuid"             | "U"   | "u"   | "edit-u"   | "45c91bc8-97b2-11e4-b100-123b93f75cba" |
 
   @cleanup
   Scenario: This is a clean up step
