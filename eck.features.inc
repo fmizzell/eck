@@ -186,6 +186,7 @@ function eck_bundle_features_export_render($module, $data, $export = NULL) {
     'entity_type' => NULL,
     'name' => NULL,
     'label' => NULL,
+    'config' => NULL,
   );
   $output = array();
   $output[] = '  $items = array(';
