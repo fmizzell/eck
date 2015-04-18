@@ -295,6 +295,24 @@ function eck__bundle__edit_form($form, &$form_state, $entity_type_name, $bundle_
     '#value' => $bundle,
   );
 
+  // Create a list of properties for this bundle.
+  $properties = array();
+  foreach ($entity_type->properties as $property => $info) {
+    $properties[$property] = $property . ' (' . $info['label'] . ')';
+  }
+  // Determine which managed fields should be checked by default.
+  $default_properties = (!empty($bundle->config['managed_properties']) && is_array($bundle->config['managed_properties'])) ? array_intersect_key($bundle->config['managed_properties'], $properties) : array();
+
+  // Add configuration to manage property display through the manage field
+  // forms.
+  $form['config_managed_properties'] = array(
+    '#type' => 'checkboxes',
+    '#options' => $properties,
+    '#default_value' => $default_properties,
+    '#title' => t('Managed Properties'),
+    '#description' => t('Select the properties you would like to be able to manage like fields through the "Manage Fields" and "Display Fields" tabs on this Bundle.'),
+  );
+
   // Let the behaviors to modify form.
   $vars = eck_property_behavior_invoke_plugin_alter($entity_type, 'bundle_form', array('form' => $form, 'form_state' => $form_state));
   $form = $vars['form'];
