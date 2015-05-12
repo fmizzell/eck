@@ -295,6 +295,13 @@ function eck__bundle__edit_form($form, &$form_state, $entity_type_name, $bundle_
     '#value' => $bundle,
   );
 
+  $form['label'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Label'),
+    '#default_value' => $bundle->label,
+    '#required' => TRUE,
+  );
+
   // Create a list of properties for this bundle.
   $properties = array();
   foreach ($entity_type->properties as $property => $info) {
@@ -342,6 +349,9 @@ function eck__bundle__edit_form_submit($form, &$form_state) {
     }
   }
   $bundle->config = $bundle_config;
+
+  $bundle->label = $form_state['values']['label'];
+
   // Save the bundle object to the database.
   $bundle->save();
 
