@@ -417,31 +417,42 @@ function eck__entity__form_submit($form, &$state) {
   $entity_type = EntityType::loadByName($entity_type);
   $properties = $entity_type->properties;
 
-  $wrapper = NULL;
-  // If we find a value set for a property lets just set it.
+  // Collect all form values for properties to be passed to pre_set behavior.
+  $values = array();
   foreach ($properties as $property => $info) {
-    $form_value = _eck_form_property_value($state, $property);
-
-    if (isset($form_value)) {
-      // @todo maybe we should do this in the form validation step.
-      // that way we can catch entity wrapper validation exceptions
-      // and set a form error message appropiately.
-
-      // Lets give the behavior a chance to manipulate the data
-      // before it is set.
-      $vars = array('data' => $form_value);
-      $data = eck_property_behavior_invoke_plugin($entity_type, 'pre_set', $vars);
-
-      if (array_key_exists($property, $data)) {
-        $form_value = $data[$property];
-      }
-
-      if (!$wrapper) {
-        $wrapper = entity_metadata_wrapper($entity_type->name, $entity);
-      }
-
-      $wrapper->{$property}->set($form_value);
+    // Pass form values "as are" because for example NULL values are valid.
+    // The isset() does not return TRUE for array keys that correspond to a NULL
+    // value, while array_key_exists() does.
+    if (array_key_exists($property, $state['values'])) {
+      $values[$property] = array('data' => $state['values'][$property]);
     }
+  }
+
+  // @TODO: maybe we should do this in the form validation step. That way we can
+  // catch entity wrapper validation exceptions and set a form error message
+  // appropriately.
+
+  // Lets give the behavior a chance to manipulate the data before it is set.
+  $data = eck_property_behavior_invoke_plugin($entity_type, 'pre_set', array('entity' => $entity), $values);
+
+  // Now that behaviors got a chance to manipulate the values given by the user,
+  // lets set them in the entity.
+  $wrapper = entity_metadata_wrapper($entity_type->name, $entity);
+  foreach ($properties as $property => $info) {
+    // Use the value added by "pre_set" behavior callback, if any.
+    if (array_key_exists($property, $data)){
+      $value = $data[$property];
+    }
+    // Otherwise use the un-altered value.
+    elseif (isset($values[$property])) {
+      $value = $values[$property]['data'];
+    }
+    // Else exit, preventing any value to be set to this property.
+    else {
+      continue;
+    }
+
+    $wrapper->{$property}->set($value);
   }
 
   // Let the behaviors modify the entity.
