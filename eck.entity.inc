@@ -354,6 +354,12 @@ function eck__entity__form($form, &$form_state, $entity) {
     '#type' => 'value',
     '#value' => $entity,
   );
+  $form['#entity_type'] = array(
+    '#type' => 'value',
+    '#value' => $entity->type,
+  );
+
+  $form_state[$entity->entityType()] = $entity;
 
   // Property Widget Handling through property_info by entity api.
   $property_info = entity_get_property_info($entity->entityType());
@@ -392,7 +398,15 @@ function eck__entity__form($form, &$form_state, $entity) {
     '#value' => t('Save'),
   );
 
-  field_attach_form($entity->entityType(), $entity, $form, $form_state);
+  // Entity Translation module integration.
+  $langcode = LANGUAGE_NONE;
+  if (module_exists('entity_translation') &&
+    entity_translation_enabled($entity->entityType())) {
+    $handler = entity_translation_get_handler($entity->entityType(), $entity);
+    $langcode = $handler->getFormLanguage();
+  }
+
+  field_attach_form($entity->entityType(), $entity, $form, $form_state, $langcode);
 
   return $form;
 }

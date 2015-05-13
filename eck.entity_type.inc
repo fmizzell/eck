@@ -384,13 +384,54 @@ function eck__entity_type__info($entity_type) {
     ),
     // Inline entity form module integration.
     'inline entity form' => array('controller' => 'EckInlineEntityFormController'),
+    'translation' => array(
+      'entity_translation' => array(
+        'class' => 'EntityTranslationECKHandler',
+        // This will be populated based on the bundles.
+       'path schemes' => array(
+          'default' => array(
+            'base path' => "$entity_type->name/%",
+            'path wildcard' => '%',
+          ),
+        ),
+      ),
+    ),
     'view callback' => 'eck__entity__view_callback',
   );
+  // Add title replacement support for translations.
+  if (isset($entity_type->properties['title'])) {
+    $info[$entity_type->name]['field replacement'] = array(
+      'title' => array(
+        'field' => array(
+          'type' => 'text',
+          'cardinality' => 1,
+          'translatable' => TRUE,
+        ),
+        'instance' => array(
+          'label' => t('Title'),
+          'required' => TRUE,
+          'settings' => array(
+            'text_processing' => 0,
+          ),
+          'widget' => array(
+            'weight' => -5,
+          ),
+        ),
+      ),
+    );
+  }
 
   $eck_path = eck__entity_type__path();
   foreach (Bundle::loadByEntityType($entity_type) as $bundle) {
     $bundle_label = $bundle->label;
     $path = "{$eck_path}/{$entity_type->name}/{$bundle->name}";
+
+    // Provide a path scheme for the Entity Translation UI.
+    $info[$entity_type->name]['translation']['entity_translation']['path schemes'][$bundle->name] = array(
+      'base path' => "{$entity_type->name}/{$bundle->name}/%",
+      'translate path' => "{$entity_type->name}/{$bundle->name}/%/translate",
+      'path wildcard' => '%',
+    );
 
     $info[$entity_type->name]['bundles'][$bundle->name] = array(
       'label' => $bundle_label,

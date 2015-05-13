@@ -12,5 +12,8 @@ files[] = views/handlers/eck_views_handler_field_link.inc
 files[] = views/handlers/eck_views_handler_field_link_edit.inc
 files[] = views/handlers/eck_views_handler_field_link_delete.inc
 
+; Entity translation integration
+files[] = includes/translation.handler.eck.inc
+
 ; Inline entity form integration
 files[] = includes/eck.inline_entity_form.inc

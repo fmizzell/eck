@@ -19,6 +19,23 @@ function eck__bundle__menu($entity_type) {
   $path = eck__entity_type__path();
   $menu = array();
 
+  // Dummy menu items so that entity translation will not complain about there
+  // not being a default.
+  // @todo: Remove these dummy items once issue https://drupal.org/node/2273189
+  // is resolved.
+  $menu["$entity_type->name/%"] = array(
+    'page callback' => FALSE,
+    'page arguments' => array(),
+    'access callback' => FALSE,
+    'access arguments' => array(),
+  );
+  $menu["$entity_type->name/%/edit"] = array(
+    'page callback' => FALSE,
+    'page arguments' => array(),
+    'access callback' => FALSE,
+    'access arguments' => array(),
+  );
+
   // DELETE Entity Types.
   $menu["{$path}/{$entity_type->name}/delete"] = array(
     'title' => "Delete",
