@@ -11,6 +11,9 @@
  * Overrides default behaviours for ECK properties.
  */
 class EntityTranslationECKHandler extends EntityTranslationDefaultHandler {
+  /**
+   * {@inheritdoc}
+   */
   public function __construct($entity_type, $entity_info, $entity) {
     parent::__construct($entity_type, $entity_info, $entity);
 

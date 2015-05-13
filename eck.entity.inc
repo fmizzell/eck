@@ -454,7 +454,7 @@ function eck__entity__form_submit($form, &$state) {
   $wrapper = entity_metadata_wrapper($entity_type->name, $entity);
   foreach ($properties as $property => $info) {
     // Use the value added by "pre_set" behavior callback, if any.
-    if (array_key_exists($property, $data)){
+    if (array_key_exists($property, $data)) {
       $value = $data[$property];
     }
     // Otherwise use the un-altered value.

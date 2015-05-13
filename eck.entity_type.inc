@@ -388,7 +388,7 @@ function eck__entity_type__info($entity_type) {
       'entity_translation' => array(
         'class' => 'EntityTranslationECKHandler',
         // This will be populated based on the bundles.
-       'path schemes' => array(
+        'path schemes' => array(
           'default' => array(
             'base path' => "$entity_type->name/%",
             'path wildcard' => '%',
