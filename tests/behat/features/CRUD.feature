@@ -44,7 +44,8 @@ Feature: CRUD
     And I fill in "Title" with "Entity 1239"
     And I press the "Save" button
     Then I should see the text "Entity 1239 has been saved"
-    And I should see the link "Entity 1239"
+    When I visit "/admin/structure/entity-type/test_12587/bundle_19756"
+    Then I should see the link "Entity 1239"
 
   @entity
   Scenario: I am able to edit entities

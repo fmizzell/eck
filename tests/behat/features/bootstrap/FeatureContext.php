@@ -3,6 +3,7 @@
  * @file
  * Custom behat step definitions.
  */
+define('BEHAT_ERROR_REPORTING', E_ERROR | E_WARNING | E_PARSE);
 
 use Behat\Behat\Context\ClosuredContextInterface,
     Behat\Behat\Context\TranslatedContextInterface,
