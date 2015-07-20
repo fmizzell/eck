@@ -208,14 +208,14 @@ function eck__property_edit__form($form, $form_state, $et_name = NULL, $property
 
   // Add property settings form implemented by behavior via 'property_form'.
   $context = array(
-    'property_name' => $property_name,
+    'property' => $property_name,
     'entity_type' => $entity_type,
     'behavior' => $info['behavior'],
     'form_state' => $form_state,
     'settings' => isset($info['settings']) ? $info['settings'] : NULL,
   );
   if ($settings_form = eck_property_settings_form($info['behavior'], $context)) {
-    $form['settings'] = $function($name, $context);
+    $form['settings'] = $settings_form;
     $form['property']['settings']['#type'] = 'fieldset';
     $form['property']['settings']['#title'] = t(':name behavior settings', array(':name' => $info['behavior']));
   }
