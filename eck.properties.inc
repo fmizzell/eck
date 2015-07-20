@@ -215,8 +215,9 @@ function eck__property_edit__form($form, $form_state, $et_name = NULL, $property
     'settings' => isset($info['settings']) ? $info['settings'] : NULL,
   );
   if ($settings_form = eck_property_settings_form($info['behavior'], $context)) {
-    $form['settings'] = $settings_form;
+    $form['property']['settings'] = $settings_form;
     $form['property']['settings']['#type'] = 'fieldset';
+    $form['property']['settings']['#tree'] = TRUE;
     $form['property']['settings']['#title'] = t(':name behavior settings', array(':name' => $info['behavior']));
   }
 
