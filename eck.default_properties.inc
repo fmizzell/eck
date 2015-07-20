@@ -44,7 +44,12 @@ function eck__default_properties__form_submit($form, &$state, $entity_type) {
   foreach ($dp as $property => $active) {
     if ($active) {
       $info = eck_get_default_property($property);
-      $entity_type->addProperty($property, $info['label'], $info['type'], $info['behavior']);
+      $data = array(
+        'label' => $info['label'],
+        'type' => $info['type'],
+        'behavior' => $info['behavior'],
+      );
+      $entity_type->addProperty($property, $data);
     }
     else {
       $entity_type->removeProperty($property);

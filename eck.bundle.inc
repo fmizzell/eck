@@ -15,7 +15,7 @@ module_load_include('inc', 'eck', 'eck.classes');
  * @see eck_menu()
  */
 function eck__bundle__menu($entity_type) {
-  // Create the menus relavant to types.
+  // Create the menus relavant to entity types.
   $path = eck__entity_type__path();
   $menu = array();
 
@@ -36,13 +36,24 @@ function eck__bundle__menu($entity_type) {
     'access arguments' => array(),
   );
 
-  // DELETE Entity Types.
+  // EDIT Entity Type.
+  $menu["{$path}/{$entity_type->name}/edit"] = array(
+    'title' => 'Edit',
+    'description' => "Edit the '{$entity_type->label}' entity type",
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('eck__entity_type__form', $entity_type->name),
+    'access callback' => 'eck__multiple_access_check',
+    'access arguments' => array(array('eck administer entity types', 'eck edit entity types')),
+    'file' => 'eck.entity_type.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+  );
+  // DELETE Entity Type.
   $menu["{$path}/{$entity_type->name}/delete"] = array(
-    'title' => "Delete",
+    'title' => 'Delete',
     'description' => "Delete the '{$entity_type->label}' Entity Type",
-    // "eck__entity_type__delete",
-    'page callback' => "drupal_get_form",
-    'page arguments' => array("eck__entity_type__delete_form", $entity_type->name),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('eck__entity_type__delete_form', $entity_type->name),
     'access callback' => 'eck__multiple_access_check',
     'access arguments' => array(array('eck administer entity types', 'eck delete entity types')),
     'file' => 'eck.entity_type.inc',
@@ -52,11 +63,11 @@ function eck__bundle__menu($entity_type) {
 
   // MANAGE Entity Type Properties.
   $menu["{$path}/{$entity_type->name}/properties"] = array(
-    'title' => "Manage properties",
+    'title' => 'Manage properties',
     'description' => "Manage the properties of the {$entity_type->label} entity type",
     // "eck__entity_type__delete",
-    'page callback' => "drupal_get_form",
-    'page arguments' => array("eck__properties__form", $entity_type->name),
+    'page callback' => 'eck__properties',
+    'page arguments' => array($entity_type->name),
     'access callback' => 'eck__multiple_access_check',
     'access arguments' => array(
       array(
@@ -68,8 +79,55 @@ function eck__bundle__menu($entity_type) {
     'type' => MENU_LOCAL_TASK,
     'weight' => 4,
   );
+  // ADD Entity Type property.
+  $menu["{$path}/{$entity_type->name}/properties/add"] = array(
+    'title' => 'Add property',
+    'description' => "Add a property to {$entity_type->label} entity type",
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('eck__property_add__form', $entity_type->name),
+    'access callback' => 'eck__multiple_access_check',
+    'access arguments' => array(
+      array(
+        'eck administer entity types',
+        "manage {$entity_type->name} properties",
+      ),
+    ),
+    'file' => 'eck.properties.inc',
+    'type' => MENU_LOCAL_ACTION,
+    'weight' => 4,
+  );
+  // EDIT Entity Type property.
+  $menu["{$path}/{$entity_type->name}/property/edit/%"] = array(
+    'title' => 'Edit property',
+    'description' => "Edit a property of the {$entity_type->label} entity type",
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('eck__property_edit__form', $entity_type->name, 6),
+    'access callback' => 'eck__multiple_access_check',
+    'access arguments' => array(
+      array(
+        'eck administer entity types',
+        "manage {$entity_type->name} properties",
+      ),
+    ),
+    'file' => 'eck.properties.inc',
+  );
+  // DELETE Entity Type property.
+  $menu["{$path}/{$entity_type->name}/property/delete/%"] = array(
+    'title' => 'Delete property',
+    'description' => "Delete a property of the {$entity_type->label} entity type",
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('eck__property_delete__form', $entity_type->name, 6),
+    'access callback' => 'eck__multiple_access_check',
+    'access arguments' => array(
+      array(
+        'eck administer entity types',
+        "manage {$entity_type->name} properties",
+      ),
+    ),
+    'file' => 'eck.properties.inc',
+  );
 
-  // LIST Bundles.
+  // LIST Entity Type Bundles.
   $menu["{$path}/{$entity_type->name}"] = array(
     'title' => "{$entity_type->label}",
     'description' => "View all the bundles for '{$entity_type->label}'",
@@ -86,31 +144,17 @@ function eck__bundle__menu($entity_type) {
     ),
     'file' => 'eck.bundle.inc',
   );
-
   $menu["{$path}/{$entity_type->name}/list"] = array(
     'title' => 'Bundle List',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 100,
   );
 
-  // EDIT Entity Types.
-  $menu["{$path}/{$entity_type->name}/edit"] = array(
-    'title' => "Edit",
-    'description' => "Edit the '{$entity_type->label}' entity type",
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array("eck__entity_type__form", $entity_type->name),
-    'access callback' => 'eck__multiple_access_check',
-    'access arguments' => array(array('eck administer entity types', 'eck edit entity types')),
-    'file' => 'eck.entity_type.inc',
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 2,
-  );
-
-  // ADD Bundles.
+  // ADD Entity Type Bundles.
   $menu["{$path}/{$entity_type->name}/add"] = array(
     'title' => "Add bundle ",
     'description' => "Add a(n) new '{$entity_type->label} Bundle'",
-    'page callback' => "drupal_get_form",
+    'page callback' => 'drupal_get_form',
     'page arguments' => array('eck__bundle__add', 3),
     'access callback' => 'eck__multiple_access_check',
     'access arguments' => array(

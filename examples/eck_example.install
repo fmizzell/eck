@@ -28,7 +28,12 @@ function eck_example_install() {
   // property is used to store the bundle of the entity.
   // We can easily add new properties to an entity type by using the addProperty
   // method.
-  $entity_type->addProperty('name', 'Name', 'text');
+  $data = array(
+    'label' => 'Name',
+    'type' => 'text',
+    'behavior' => 'text',
+  );
+  $entity_type->addProperty('name', $data);
 
   // If you look at the method in eck.classes.inc, you will notice that it takes
   // 3 arguments and 1 optional argument. The required arguments are 'name',
