@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * The ECK Services module.
+ */
+
+/**
  * Implements hook_form_alter().
  *
  * Add option to entity type form to enable service resource.
@@ -18,46 +23,55 @@ function eck_services_form_eck__entity_type__form_alter(&$form, &$form_state, $f
     }
   }
 }
+
+/**
+ * Custom submit handler for 'eck__entity_type__form'.
+ */
 function _eck_services_entity_type_form_submit($form, &$form_state) {
   if (isset($form_state['values']['enable_services'])) {
-    variable_set('eck_services_' . $form_state['build_info']['args'][0] . '_enable',
-      $form_state['values']['enable_services']);
+    variable_set('eck_services_' . $form_state['build_info']['args'][0] . '_enable', $form_state['values']['enable_services']);
   }
 }
 
-
 /**
- *  Class to allow dynamic dispatch of entity resource callbacks
+ *  Class to allow dynamic dispatch of entity resource callbacks.
  */
 class eckServicesCallbacks {
+
+  /**
+   * Overloading.
+   */
   public static function __callStatic($name, $args) {
     list($entity, $method) = explode('__', $name);
 
     switch ($method) {
       case 'retrieve':
         return entity_load($entity, array($args[0]));
-        break;
+
+      break;
 
       case 'create':
         $new_entity = entity_create($entity, $args[0]);
         return entity_save($entity, $new_entity);
-        break;
+
+      break;
 
       case 'update':
         $update_entity = array_shift(entity_load($entity, array($args[0])));
         $update_entity = (object) array_merge((array) $update_entity, (array) $args[1]);
         return entity_save($entity, $update_entity);
-        break;
+
+      break;
 
       case 'delete':
         return entity_delete($entity, $args[0]);
-
     }
   }
+
 }
 
 /**
- * Define a services resource for each enabled entity
+ * Define a services resource for each enabled entity.
  */
 function eck_services_services_resources() {
   $resources = array();
@@ -125,5 +139,3 @@ function eck_services_services_resources() {
   }
   return $resources;
 }
-
-

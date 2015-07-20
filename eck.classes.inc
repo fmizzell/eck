@@ -1,22 +1,20 @@
 <?php
+
 /**
  * @file
  * Classes for all the different objects used in ECK.
  */
 
 class DBObject implements Iterator {
+
   // Wheteher this object was loaded or just created.
   public $isNew;
-
   // Iterator variable.
   private $position;
-
   // The database table where the objects exist.
   private $table;
-
   private $vars;
   private $data;
-
   private $primaryKeys;
   private $serialize;
 
@@ -101,8 +99,8 @@ class DBObject implements Iterator {
 
     if ($this->isNew) {
       $this->id = db_insert($this->table)
-      ->fields($this->data)
-      ->execute();
+          ->fields($this->data)
+          ->execute();
     }
     else {
       // Well I need to know what the primary id is to set up the condition.
@@ -111,9 +109,9 @@ class DBObject implements Iterator {
       $data = $this->data;
       unset($data[$primary_key]);
       db_update($this->table)
-        ->condition($primary_key, $this->{$primary_key}, '=')
-        ->fields($data)
-        ->execute();
+          ->condition($primary_key, $this->{$primary_key}, '=')
+          ->fields($data)
+          ->execute();
     }
 
     // Now that we are done saving lets deserialize in case that for some
@@ -135,10 +133,10 @@ class DBObject implements Iterator {
    */
   protected function load($property, $value) {
     $result = db_select($this->table, 't')
-      ->fields('t')
-      ->condition($property, $value, '=')
-      ->execute()
-      ->fetchAssoc();
+        ->fields('t')
+        ->condition($property, $value, '=')
+        ->execute()
+        ->fetchAssoc();
 
     if ($result) {
       foreach ($result as $property => $value) {
@@ -208,6 +206,7 @@ class DBObject implements Iterator {
       return FALSE;
     }
   }
+
 }
 
 class EntityType extends DBObject {
@@ -232,12 +231,8 @@ class EntityType extends DBObject {
    *
    * @param string $name
    *   The name.
-   * @param string $label
-   *   A label.
-   * @param string $type
-   *   The type of the property.
-   * @param string $behavior
-   *   A behavior to attach to the property.
+   * @param array $data
+   *   Property info array.
    */
   public function addProperty($name, $data = array()) {
     if (!$this->isNew) {
@@ -251,10 +246,8 @@ class EntityType extends DBObject {
     }
     // Validate the property behavior.
     $behaviors = ctools_get_plugins('eck', 'property_behavior');
-    
+
     $property_behaviors = drupal_map_assoc(array_keys($behaviors));
-    dpm($data);
-    dpm($property_behaviors);
     if (!isset($property_behaviors[$data['behavior']])) {
       return FALSE;
     }
@@ -268,11 +261,10 @@ class EntityType extends DBObject {
       $context = array(
         'name' => $name,
         'property' => $p[$name],
-        'entity_type' => $this
+        'entity_type' => $this,
       );
       eck_property_behavior_invoke_plugin($this, 'property_add', $context);
     }
-
   }
 
   /**
@@ -288,7 +280,7 @@ class EntityType extends DBObject {
       $context = array(
         'name' => $name,
         'property' => $p[$name],
-        'entity_type' => $this
+        'entity_type' => $this,
       );
       eck_property_behavior_invoke_plugin($this, 'property_remove', $context);
 
@@ -365,7 +357,6 @@ class EntityType extends DBObject {
             $c[$op][] = $name;
           }
           break;
-
       }
       $this->changes = $c;
     }
@@ -413,7 +404,7 @@ class EntityType extends DBObject {
 
     $this->clearCache();
   }
-  
+
   /**
    * Delete.
    */
@@ -432,7 +423,7 @@ class EntityType extends DBObject {
 
     $this->clearCache();
   }
-  
+
   /**
    * Clear Cache.
    */
@@ -491,8 +482,8 @@ class EntityType extends DBObject {
     if (empty($entity_types)) {
       $entity_types = array();
       $results = db_select('eck_entity_type', 't')
-        ->fields('t', array('name'))
-        ->execute();
+          ->fields('t', array('name'))
+          ->execute();
 
       foreach ($results as $result) {
         $name = $result->name;
@@ -507,6 +498,7 @@ class EntityType extends DBObject {
     }
     return $entity_types;
   }
+
 }
 
 class Bundle extends DBObject {
@@ -595,7 +587,7 @@ class Bundle extends DBObject {
     $query = new EntityFieldQuery();
 
     $query->entityCondition('entity_type', $this->entity_type, '=')
-      ->entityCondition('bundle', $this->name, '=');
+        ->entityCondition('bundle', $this->name, '=');
 
     $results = $query->execute();
 
@@ -608,14 +600,14 @@ class Bundle extends DBObject {
     field_attach_delete_bundle($this->entity_type, $this->name);
 
     parent::delete();
-    
+
     global $_eck_bundles_cache;
-    
+
     $cache_enabled = isset($_eck_bundles_cache) ? TRUE : FALSE;
 
     if ($cache_enabled) {
       $_eck_bundles_cache->reset();
-  }
+    }
 
     variable_set('eck_clear_caches', TRUE);
   }
@@ -665,8 +657,8 @@ class Bundle extends DBObject {
       $bundles = array();
       // @todo move this to a general function.
       $results = db_select('eck_bundle', 't')
-        ->fields('t', array('machine_name'))
-        ->execute();
+          ->fields('t', array('machine_name'))
+          ->execute();
 
       foreach ($results as $result) {
         $name = $result->machine_name;
@@ -773,6 +765,7 @@ class Bundle extends DBObject {
     }
     return field_create_instance($instance);
   }
+
 }
 
 class ECKEntity extends Entity {
@@ -780,12 +773,11 @@ class ECKEntity extends Entity {
   // This flag only gets set so we can make our properties public again
   // before we save the object.
   protected $ignoreValidation;
-
   protected $PropertyValues = array();
 
-/**
+  /**
    * Constructor.
- */
+   */
   public function __construct(array $values = array(), $entity_type = NULL) {
 
     $this->ignoreValidation = FALSE;
@@ -811,7 +803,6 @@ class ECKEntity extends Entity {
   public function __set($name, $value) {
     // Lets implement non restrictive validation.
     // If it is a property validate, if it isn't just set it.
-
     // Try to load the entityType and property information.
     if ($entity_type_name = $this->entityType()) {
       if (($entity_type = EntityType::loadByName($entity_type_name)) && is_object($entity_type)) {
@@ -842,7 +833,6 @@ class ECKEntity extends Entity {
         throw new Exception("Invalid value {$value} for property {$name} of type {$property_type} in
         Entity type: {$entity_type_name}");
       }
-
     }
     else {
       $this->{$name} = $value;
@@ -896,13 +886,13 @@ class ECKEntity extends Entity {
     }
     return parent::save();
   }
+
 }
 
 class ECKCache {
 
   private $id;
   private $data;
-
   private $noCache;
 
   /**
@@ -918,7 +908,6 @@ class ECKCache {
     if (!db_table_exists('cache_eck')) {
       $this->noCache = TRUE;
     }
-
   }
 
   /**
@@ -966,4 +955,5 @@ class ECKCache {
     $this->data = NULL;
     cache_clear_all($this->id, 'cache_eck');
   }
+
 }
