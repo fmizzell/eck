@@ -112,7 +112,12 @@ function eck_entity_type_features_rebuild($module) {
             }
             else {
               // Property didn't already exist, so lets create it.
-              $entity_type->addProperty($property_key, $property['label'], $property['type'], $property['behavior']);
+              $data = array(
+                'label' => $info['label'],
+                'type' => $info['type'],
+                'behavior' => $info['behavior'],
+              );
+              $entity_type->addProperty($property_key, $data);
             }
           }
         }

@@ -6,6 +6,308 @@
  */
 
 /**
+ * ECK Entity type properties page callback.
+ */
+function eck__properties($et_name = NULL) {
+  if (empty($et_name) || !($entity_type = EntityType::loadByName($et_name))) {
+    drupal_not_found();
+    die;
+  }
+  // Prepare the content table.
+  $content = array(
+    '#theme' => 'table',
+    '#header' => array(
+      'Label',
+      'Machine name',
+      'Behavior',
+      'Type',
+      'Actions'),
+    '#rows' => array(),
+  );
+
+  // Prepare some vars to reuse them in action links.
+  $args = array('query' => drupal_get_destination());
+  $path = "admin/structure/entity-type/{$entity_type->name}/property";
+  // Loop trough properties and fill the rows.
+  foreach ($entity_type->properties as $name => $info) {
+    $actions = array(
+      l(t('edit'), "$path/edit/{$name}", $args),
+      l(t('delete'), "$path/delete/{$name}", $args),
+    );
+    $content['#rows'][] = array(
+      $info['label'],
+      $name,
+      $info['behavior'],
+      $info['type'],
+      implode(' | ', $actions),
+    );
+  }
+
+  return drupal_render($content);
+}
+
+/**
+ * Form builder for property add form.
+ *
+ * @see eck__property_add__form_submit()
+ */
+function eck__property_add__form($form, &$form_state, $et_name = NULL) {
+  if (empty($et_name) || ($entity_type = EntityType::loadByName($et_name)) == FALSE) {
+    drupal_not_found();
+    die;
+  }
+
+  // Ease access to $form_state['values'].
+  $values = isset($form_state['values']) ? $form_state['values'] : array();
+  // Pass the EntityType object as value.
+  $form['entity_type'] = array('#type' => 'value', '#value' => $entity_type);
+  // Container for all entity property info.
+  $form['property']['#tree'] = TRUE;
+  $form['property']['label'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Label'),
+    '#required' => TRUE,
+  );
+  $form['property']['name'] = array(
+    '#type' => 'machine_name',
+    '#title' => t('Name'),
+    '#machine_name' => array(
+      'source' => array('property', 'label'),
+    ),
+    '#element_validate' => array('_eck_property_exists'),
+    '#required' => TRUE,
+  );
+
+  // Behaviors.
+  $behaviors = array();
+  $property_behaviors = ctools_get_plugins('eck', 'property_behavior');
+  foreach ($property_behaviors as $property_behavior) {
+    $behaviors[$property_behavior['name']] = $property_behavior['label'];
+  }
+  $form['property']['behavior'] = array(
+    '#type' => 'select',
+    '#title' => t('Behavior'),
+    '#options' => $behaviors,
+    '#required' => TRUE,
+    '#ajax' => array(
+      'wrapper' => 'property-settings',
+      'callback' => '_eck_property_settings_callback',
+    ),
+  );
+  $form['property']['settings']['#prefix'] = '<div id="property-settings">';
+  $form['property']['settings']['#suffix'] = '</div>';
+  // Provide the property form as implemented in the behavior.
+  if (isset($values['property']['behavior'])) {
+    // Invoke the "property_form" plugin function and add the property form.
+    $context = array(
+      'entity_type' => $entity_type,
+      'behavior' => $values['property']['behavior'],
+      'form_state' => $form_state,
+    );
+    if ($property_form = eck_property_settings_form($values['property']['behavior'], $context)) {
+      $form['property']['settings'] = $property_form;
+      $form['property']['settings']['#type'] = 'fieldset';
+      $form['property']['settings']['#title'] = t(':name behavior settings', array(':name' => $values['property']['behavior']));
+    }
+  }
+  // Always add the property settings as an element.
+  $form['property']['settings']['#tree'] = TRUE;
+  $form['property']['settings']['#prefix'] = '<div id="property-settings">';
+  $form['property']['settings']['#suffix'] = '</div>';
+  // Property types.
+  $form['property']['type'] = array(
+    '#type' => 'select',
+    '#title' => t('Type'),
+    '#options' => eck_property_types(),
+    '#required' => TRUE,
+  );
+  // Actions.
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+
+  return $form;
+}
+
+/**
+ * Ajax callback for property settings form element.
+ *
+ * @see eck__property_add__form()
+ */
+function _eck_property_settings_callback($form, $form_state) {
+  return $form['property']['settings'];
+}
+
+/**
+ * Element validate for property name. Must be unique per entity type.
+ *
+ * @see eck__property_add__form()
+ */
+function _eck_property_exists($element, $form_state) {
+  if (empty($element['#value'])) {
+    return;
+  }
+  $entity_type = $form_state['values']['entity_type'];
+  if (isset($entity_type->properties[$element['#value']])) {
+    $arg = array('%name' => $element['#value']);
+    form_error($element, t('Property %name already exists. Please choose another machine name.', $arg));
+  }
+}
+
+/**
+ * Submit handler for property form.
+ *
+ * @see eck__property_add__form()
+ */
+function eck__property_add__form_submit($form, &$form_state) {
+  $entity_type = $form_state['values']['entity_type'];
+  $name = $form_state['values']['property']['name'];
+
+  $data = $form_state['values']['property'];
+  unset($data['name']);
+
+  if ($entity_type->addProperty($name, $data) !== FALSE) {
+    $entity_type->save();
+    $form_state['redirect'] = "admin/structure/entity-type/{$entity_type->name}/properties";
+  }
+  else {
+    // @TODO: woops, now what?
+  }
+}
+
+/**
+ * Property edit form.
+ */
+function eck__property_edit__form($form, $form_state, $et_name = NULL, $property_name = NULL) {
+  if (empty($et_name) || !($entity_type = EntityType::loadByName($et_name)) || !isset($entity_type->properties[$property_name])) {
+    drupal_not_found();
+    die;
+  }
+
+  // ECK EntityType.
+  $form['entity_type'] = array('#type' => 'value', '#value' => $entity_type);
+  // Property name.
+  $form['property_name'] = array('#type' => 'value', '#value' => $property_name);
+
+  // Wrap all property data.
+  $form['property']['#tree'] = TRUE;
+
+  $info = $entity_type->properties[$property_name];
+  $form['property']['behavior'] = array('#type' => 'value', '#value' => $info['behavior']);
+  $form['property']['type'] = array('#type' => 'value', '#value' => $info['type']);
+  // Allow property label change.
+  $form['property']['label'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Label'),
+    '#required' => TRUE,
+    '#max_lenght' => 30,
+    '#default_value' => $info['label'],
+  );
+
+  // Add property settings form implemented by behavior via 'property_form'.
+  $context = array(
+    'property' => $property_name,
+    'entity_type' => $entity_type,
+    'behavior' => $info['behavior'],
+    'form_state' => $form_state,
+    'settings' => isset($info['settings']) ? $info['settings'] : NULL,
+  );
+  if ($settings_form = eck_property_settings_form($info['behavior'], $context)) {
+    $form['property']['settings'] = $settings_form;
+    $form['property']['settings']['#type'] = 'fieldset';
+    $form['property']['settings']['#tree'] = TRUE;
+    $form['property']['settings']['#title'] = t(':name behavior settings', array(':name' => $info['behavior']));
+  }
+
+  // Actions.
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+
+  return $form;
+}
+
+/**
+ * Submit handler for property edit form.
+ *
+ * @see eck__property_edit__form()
+ */
+function eck__property_edit__form_submit($form, $form_state) {
+  $property_name = $form_state['values']['property_name'];
+  $data = $form_state['values']['property'];
+  $entity_type = $form_state['values']['entity_type'];
+
+  // Update property and save.
+  if ($entity_type->addProperty($property_name, $data) !== FALSE) {
+    $entity_type->save();
+    drupal_set_message(t('Property %name saved.', array('%name' => $property_name)));
+  }
+  else {
+    // @Todo: handle error.
+  }
+}
+
+/**
+ * DELETE: Form builder "eckextend_property_delete_form".
+ *
+ * @see eckextend_property_delete_form_submit()
+ */
+function eck__property_delete__form($form, $form_state, $et_name, $property_name) {
+  if (empty($et_name) || !($entity_type = EntityType::loadByName($et_name))
+      || empty($property_name) || !isset($entity_type->properties[$property_name])) {
+    drupal_not_found();
+    die;
+  }
+  $form = array();
+  // Pass the entity type and property name as a values.
+  $form['entity_type'] = array('#type' => 'value', '#value' => $entity_type);
+  $form['property_name'] = array('#type' => 'value', '#value' => $property_name);
+
+  $args = array(
+    '%label' => $entity_type->properties[$property_name]['label'],
+    '%name' => $property_name,
+  );
+  $message = t('Are you sure you want to delete %label (%name) property?', $args);
+  $caption = $message . t('This action cannot be undone.');
+
+  return confirm_form($form, $message, "admin/confing/entity-type/{$entity_type->name}/properties", $caption, t('Delete'));
+}
+
+/**
+ * DELETE: Submit handler for "eckextend_property_delete_form" form.
+ *
+ * @see eckextend_property_delete_form()
+ */
+function eck__property_delete__form_submit($form, &$form_state) {
+  $entity_type = $form_state['values']['entity_type'];
+  $name = $form_state['values']['property_name'];
+
+  $entity_type->removeProperty($name);
+  $entity_type->save();
+}
+
+/**
+ * Invoke behavior plugin function 'property_form'.
+ */
+function eck_property_settings_form($behavior, $context = array()) {
+  $plugin = ctools_get_plugins('eck', 'property_behavior', $behavior);
+  if ($function = ctools_plugin_get_function($plugin, 'property_form')) {
+    $default = array(
+      'entity_type' => NULL,
+      'property' => NULL,
+      'behavior' => $behavior,
+    );
+    $context = array_merge($default, $context);
+
+    return $function($context['property'], $context);
+  }
+}
+
+/**
  * Assigns fields to the db schema for an entity type.
  *
  * @param array $schema
@@ -114,258 +416,10 @@ function eck_property_type_schema($type) {
     default:
       $schema = NULL;
       break;
-
   }
 
   // @todo Don't really like this.
   drupal_alter('eck_property_type_schema', $schema, $type);
 
   return $schema;
-}
-
-/**
- * Properties form callback.
- */
-function eck__properties__form($form, &$state, $entity_type_name) {
-  if (!isset($entity_type_name)) {
-    $entity_type = new EntityType();
-  }
-  else {
-    $entity_type = EntityType::loadByName($entity_type_name);
-  }
-
-  $form['entity_type'] = array('#type' => 'value', '#value' => $entity_type);
-
-  $form['info'] = array(
-    '#markup' => "<p><strong>HELP:</strong> "
-    . "The add property button will temporarily add a property to the entity "
-    . "type, to finalize adding the property, click the checkbox on the left and "
-    . "click save </p>");
-
-  // When the add button is clicked, the submit callback directs the form to
-  // be rebuilt. Here we check to see if a new property was added, and keep it
-  // in a a list of new properties to add them to the table on each rebuild.
-  $entity_type_properties = $entity_type->properties;
-
-  if (!array_key_exists('values', $state) || !array_key_exists('new_properties', $state['values'])) {
-    $new_properties = eck_get_default_properties();
-    $new_properties = array_merge($new_properties, $entity_type_properties);
-  }
-  else {
-    $new_properties = $state['values']['new_properties'];
-  }
-
-  if (!empty($state['values']['property_name'])) {
-    $property_name = $state['values']['property_name'];
-    $property_type = $state['values']['property_type'];
-
-    // OK we need to do a little bit of filtering do the oddity of modifying
-    // existing properties through the add Property form #fail.
-    // @todo need to get a better interface.
-    // But until then, we need to keep the form from changing the
-    // property_type or property_name of the already existing properties.
-
-    if (!array_key_exists($property_name, $new_properties) ||
-      $new_properties[$property_name]['type'] == $property_type) {
-
-      $new_properties[$property_name] = array(
-        'label' => $state['values']['property_label'],
-        'type' => $state['values']['property_type'],
-      );
-
-      if (array_key_exists('property_behavior', $state['values'])) {
-        $new_properties[$state['values']['property_name']]['behavior'] = $state['values']['property_behavior'];
-      }
-    }
-    else {
-      drupal_set_message("Can not modify the type of {$property_name}", "error");
-    }
-  }
-
-  $form['new_properties'] = array('#type' => 'value', '#value' => $new_properties);
-
-  // This is the select table where all the new properties are shown.
-  $header = array(
-    'machine_name' => t('Machine Name'),
-    'name' => t('Name'),
-    'type' => t('Type'),
-    'behavior' => t('Behaviour'),
-  );
-
-  $options = array();
-
-  // @todo can we do this in a better way.. the only way I can think of is,
-  // load all defaults, and then load all the properties in the entity type,
-  // while modifying the before added default properties given the entity
-  // type settings.
-
-  $property_arrays = array('new_properties');
-
-  foreach ($property_arrays as $array_name) {
-    foreach (${$array_name} as $property_name => $property_info) {
-      $options[$property_name] = array(
-        'machine_name' => $property_name,
-        'name' => $property_info['label'],
-        'type' => $property_info['type'],
-      );
-
-      if (array_key_exists('behavior', $property_info)) {
-        $options[$property_name]['behavior'] = $property_info['behavior'];
-      }
-      else {
-        $options[$property_name]['behavior'] = "";
-      }
-    }
-  }
-
-  $form["new_properties_table_label"] = array(
-    '#markup' => '<h3>Properties</h3>',
-  );
-
-  $defaults = array();
-  foreach ($entity_type_properties as $property => $info) {
-    $defaults[$property] = 1;
-  }
-
-  $form['new_properties_table'] = array(
-    '#type' => 'tableselect',
-    '#header' => $header,
-    '#options' => $options,
-    '#empty' => t('No other properties for this entity type.'),
-    '#default_value' => $defaults,
-  );
-
-  // Add a new property.
-  $types[t('Generic')] = eck_property_types();
-
-  $form["add_new_property"] = array(
-    '#markup' => '<h3>Add new property</h3>',
-  );
-
-  $form['property_type'] = array(
-    '#type' => 'select',
-    '#title' => t('Type'),
-    '#options' => array('' => t('- Please choose -')) + $types,
-    '#required' => TRUE,
-    '#after_build' => array('eck_deactivate_on_save'),
-  );
-
-  $form["property_label"] = array(
-    '#type' => 'textfield',
-    '#title' => t("Name"),
-    '#description' => t("A human readable name for the property."),
-    '#required' => TRUE,
-    '#after_build' => array('eck_deactivate_on_save'),
-  );
-
-  $form["property_name"] = array(
-    '#type' => 'machine_name',
-    '#machine_name' => array(
-      'exists' => '_eck_fake_exists',
-      'source' => array('property_label'),
-    ),
-    '#after_build' => array('eck_deactivate_on_save'),
-  );
-
-  $behavior_plugins = ctools_get_plugins('eck', 'property_behavior');
-  $options = array();
-
-  foreach ($behavior_plugins as $behavior => $info) {
-    $options[$behavior] = $info['label'];
-  }
-
-  $form['property_behavior'] = array(
-    '#type' => 'select',
-    '#title' => t('Behavior'),
-    '#options' => array('' => t('- Please choose -')) + $options,
-  );
-
-  $form['property_add'] = array(
-    '#type' => 'submit',
-    '#value' => t('Add Property'),
-  );
-
-  $form['line_break'] = array(
-    '#markup' => '<br \><hr \><br \>',
-  );
-
-  $form['save'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save'),
-  );
-
-  return $form;
-}
-
-/**
- * Deactivate on save.
- */
-function eck_deactivate_on_save($element, &$state) {
-  if (array_key_exists('input', $state) && array_key_exists('op', $state['input']) &&
-    $state['input']['op'] == t('Save')) {
-    isset($element['#element_validate']) ? $element['#element_validate'] = NULL : NULL;
-    isset($element['#needs_validation']) ? $element['#needs_validation'] = NULL : NULL;
-  }
-
-  return $element;
-}
-
-/**
- * Properties form validation callback.
- */
-function eck__properties__form_validate($form, &$state) {
-  if ($state['values']['op'] == t('Add Property')) {
-    if (isset($state['values']['property_behavior'])) {
-      $property_behavior = $state['values']['property_behavior'];
-      $behavior_plugins = ctools_get_plugins('eck', 'property_behavior');
-      if (isset($behavior_plugins[$property_behavior]['unique']) && $behavior_plugins[$property_behavior]['unique']) {
-        foreach ($state['values']['new_properties'] as $property_name => $property_info) {
-          if ($property_info['behavior'] == $property_behavior) {
-            form_set_error('property_behavior',
-              t("There can be only one property with '@name' behavior per entity.",
-                array('@name' => $behavior_plugins[$property_behavior]['label'])));
-          }
-        }
-      }
-    }
-    if (!empty($state['values']['property_name']) && in_array($state['values']['property_name'], array('id', 'type'))) {
-      form_set_error('property_name', t('Property name "@name" is already used by the module. Please choose another name.', array(
-        '@name' => $state['values']['property_name'],
-      )));
-    }
-  }
-}
-
-/**
- * Properties form submit callback.
- */
-function eck__properties__form_submit($form, &$state) {
-  if ($state['values']['op'] == t('Add Property')) {
-    $state['rebuild'] = TRUE;
-  }
-  elseif ($state['values']['op'] == t('Save')) {
-    // Here we want to add the properties to the entity type and save it.
-    $entity_type = $state['values']['entity_type'];
-
-    foreach ($state['values']['new_properties_table'] as $property => $active) {
-      if ($active) {
-        $info = $state['values']['new_properties'][$property];
-        if (array_key_exists('behavior', $info)) {
-          $entity_type->addProperty($property, $info['label'], $info['type'], $info['behavior']);
-        }
-        else {
-          $entity_type->addProperty($property, $info['label'], $info['type']);
-        }
-      }
-      else {
-        $entity_type->removeProperty($property);
-      }
-    }
-
-    $entity_type->save();
-
-    // Lets flush the cache so new behaviors and properties will get set up
-    // correctly.
-    drupal_flush_all_caches();
-  }
 }
