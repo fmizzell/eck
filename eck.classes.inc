@@ -239,17 +239,19 @@ class EntityType extends DBObject {
       $this->recordFieldChange('add', $name);
     }
     // Validate required property keys.
-    foreach (array('label', 'type', 'behavior') as $key) {
+    foreach (array('label', 'type') as $key) {
       if (!isset($data[$key])) {
         return FALSE;
       }
     }
     // Validate the property behavior.
-    $behaviors = ctools_get_plugins('eck', 'property_behavior');
+    if (!empty($data['behavior'])) {
+      $behaviors = ctools_get_plugins('eck', 'property_behavior');
 
-    $property_behaviors = drupal_map_assoc(array_keys($behaviors));
-    if (!isset($property_behaviors[$data['behavior']])) {
-      return FALSE;
+      $property_behaviors = drupal_map_assoc(array_keys($behaviors));
+      if (!isset($property_behaviors[$data['behavior']])) {
+        return FALSE;
+      }
     }
     $p = $p2 = $this->properties;
     $p[$name] = $data;

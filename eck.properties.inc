@@ -87,8 +87,7 @@ function eck__property_add__form($form, &$form_state, $et_name = NULL) {
   $form['property']['behavior'] = array(
     '#type' => 'select',
     '#title' => t('Behavior'),
-    '#options' => $behaviors,
-    '#required' => TRUE,
+    '#options' => array_merge(array(NULL => "NONE"), $behaviors),
     '#ajax' => array(
       'wrapper' => 'property-settings',
       'callback' => '_eck_property_settings_callback',
