@@ -27,6 +27,7 @@ function eck_title_and_formatter_property_widget($property, $vars) {
   return array(
     '#type' => 'textfield',
     '#title' => $vars['properties'][$property]['label'],
+    '#maxlength' => 255,
     '#default_value' => $title,
     '#required' => TRUE,
   );
