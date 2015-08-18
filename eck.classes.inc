@@ -769,8 +769,6 @@ class ECKCache {
   private $id;
   private $data;
 
-  private $noCache;
-
   /**
    * Inititate the ECK cache manager.
    *
@@ -779,22 +777,12 @@ class ECKCache {
    */
   public function __construct($id) {
     $this->id = $id;
-    $this->noCache = FALSE;
-
-    if (!db_table_exists('cache_eck')) {
-      $this->noCache = TRUE;
-    }
-
   }
 
   /**
    * Set the cache.
    */
   public function set($data) {
-    if ($this->noCache) {
-      return;
-    }
-
     cache_set($this->id, $data, "cache_eck");
     $this->data = $data;
   }
@@ -803,10 +791,6 @@ class ECKCache {
    * Get something from the cache.
    */
   public function get() {
-    if ($this->noCache) {
-      return NULL;
-    }
-
     if ($this->data) {
       return $this->data;
     }
@@ -826,9 +810,6 @@ class ECKCache {
    * Reset the cache.
    */
   public function reset() {
-    if ($this->noCache) {
-      return;
-    }
     $this->data = NULL;
     cache_clear_all($this->id, 'cache_eck');
   }
