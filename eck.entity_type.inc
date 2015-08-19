@@ -174,12 +174,9 @@ function eck__entity_type__form($form, &$state, $entity_type_name = NULL) {
  */
 function eck__entity_type__form_validate($form, &$state) {
   if ($form['entity_type']['#value']->isNew) {
-    $info = entity_get_info();
-    $entity_types = array_keys($info);
-    $entity_type = $state['values']['entity_type_name'];
-    if (in_array($entity_type, $entity_types)) {
-      form_set_error('name', t("Entity Type '@entity_type' already exists"),
-        array('@entity_type' => $entity_type));
+    if (entity_get_info($state['values']['entity_type_name'])) {
+      form_set_error('entity_type_name', t("Entity Type '@entity_type' already exists!",
+        array('@entity_type' => $state['values']['entity_type_name'])));
     }
   }
 }
