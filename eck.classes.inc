@@ -396,7 +396,7 @@ class EntityType extends DBObject {
       $_eck_entity_types_cache->reset();
     }
 
-    variable_set('eck_clear_caches', TRUE);
+    eck_clean_up_request();
   }
   /**
    * Delete.
@@ -420,7 +420,7 @@ class EntityType extends DBObject {
     if ($cache_enabled) {
       $_eck_entity_types_cache->reset();
     }
-    variable_set('eck_clear_caches', TRUE);
+    eck_clean_up_request();
   }
 
   /**
@@ -553,7 +553,7 @@ class Bundle extends DBObject {
           $_eck_bundles_cache->reset();
         }
 
-        variable_set('eck_clear_caches', TRUE);
+        eck_clean_up_request();
       }
       else {
         // @todo throw some error.
@@ -594,7 +594,7 @@ class Bundle extends DBObject {
       $_eck_bundles_cache->reset();
     }
 
-    variable_set('eck_clear_caches', TRUE);
+    eck_clean_up_request();
   }
 
   /**

@@ -908,6 +908,24 @@ function eck_init() {
   $_eck_entity_types_cache = new ECKCache("entity_types");
   $_eck_bundles_cache = new ECKCache("bundles");
 
+  eck_clean_up_init();
+}
+
+/**
+ * Request that eck cleans up on the next request.
+ *
+ * @see eck_init().
+ */
+function eck_clean_up_request() {
+  variable_set("eck_clear_caches", TRUE);
+}
+
+/**
+ * If a clean up has been requested, perform it.
+ *
+ * @see eck_clean_up().
+ */
+function eck_clean_up_init() {
   if (variable_get("eck_clear_caches", FALSE)) {
     variable_set("eck_clear_caches", FALSE);
     eck_clean_up();
@@ -920,6 +938,11 @@ function eck_init() {
  * Actions like creating and entity type or a bundle require modifycations
  * to many parts of drupal, this function takes care of clearing those
  * caches.
+ *
+ * This is an expensive operation. Do not call this function unless this
+ * clean up is needed immediately, and it can not wait until the next request.
+ * Otherwise, look at eck_clean_up_request()
+ * and eck_clean_up_if_requested().
  */
 function eck_clean_up() {
   drupal_get_schema(NULL, TRUE);
