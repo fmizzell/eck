@@ -231,6 +231,8 @@ function eck__bundle__add($form, &$form_state, $entity_type) {
 
   $form['bundle_name'] = array(
     '#type' => 'machine_name',
+    '#maxlength' => 32,
+    '#description' => t('A unique machine-readable name. Can only contain lowercase letters, numbers, and underscores. Maximum length 32 characters.'),
     '#required' => FALSE,
     '#machine_name' => array(
       'exists' => '_eck_fake_exists',

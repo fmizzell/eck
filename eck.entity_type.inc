@@ -129,6 +129,8 @@ function eck__entity_type__form($form, &$state, $entity_type_name = NULL) {
 
   $form['entity_type_name'] = array(
     '#type' => 'machine_name',
+    '#maxlength' => 32,
+    '#description' => t('A unique machine-readable name. Can only contain lowercase letters, numbers, and underscores. Maximum length 32 characters.'),
     '#default_value' => $entity_type->name,
     '#disabled' => !$entity_type->isNew,
     '#machine_name' => array(
@@ -149,6 +151,8 @@ function eck__entity_type__form($form, &$state, $entity_type_name = NULL) {
 
     $form['bundle_name'] = array(
       '#type' => 'machine_name',
+      '#maxlength' => 32,
+      '#description' => t('A unique machine-readable name. Can only contain lowercase letters, numbers, and underscores. Maximum length 32 characters.'),
       '#required' => FALSE,
       '#machine_name' => array(
         'exists' => '_eck_fake_exists',
