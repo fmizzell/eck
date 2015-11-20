@@ -873,10 +873,8 @@ function eck__entity_access($op, $entity_or_bundle, $account, $entity_type_name)
 function eck_entity_view_alter(&$build, $entity_type) {
   $entity_types = EntityType::loadAll();
 
-  $this_entity_type = $build['#entity_type'];
-
   foreach ($entity_types as $et) {
-    if ($et->name == $this_entity_type) {
+    if ($et->name == $entity_type) {
       $entity = $build['#entity'];
       $this_bundle = $entity->bundle();
       // Lets add contextual links to our entities in eck you can change
@@ -885,7 +883,7 @@ function eck_entity_view_alter(&$build, $entity_type) {
       // could cause of contextual links not to work correctly.
 
       $build['#contextual_links']['eck']
-        = array("{$this_entity_type}/{$this_bundle}",array($entity->id));
+        = array("{$entity_type}/{$this_bundle}",array($entity->id));
     }
   }
 }
