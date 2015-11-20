@@ -284,8 +284,18 @@ function eck__bundle__add_submit($form, &$form_state) {
   $bundle->entity_type = $entity_type->name;
   $bundle->save();
 
-  drupal_set_message(t('the bundle %bundle for entity type %entity_type has been created.',
-      array('%bundle' => $bundle->label, '%entity_type' => $entity_type->label)));
+  $msg = 'the bundle @bundle for entity type @entity_type has been created.';
+  $args = array(
+    '@bundle' => $bundle->label,
+    '@entity_type' => $entity_type->label,
+  );
+
+  $context = array('bundle' => $bundle, 'form_state' => $form_state);
+  drupal_alter('eck_bundle_save_message', $msg, $args, $context);
+
+  if ($msg) {
+    drupal_set_message(t($msg, $args));
+  }
 
   $form_state['redirect'] = "{$path}/{$entity_type->name}";
 }

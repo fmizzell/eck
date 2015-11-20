@@ -479,11 +479,18 @@ function eck__entity__form_submit($form, &$state) {
 
   $entity->save();
 
-  drupal_set_message(t("Entity @entity_id - @entity_label has been saved",
-    array(
-      "@entity_id" => $entity->id,
-      "@entity_label" => entity_label($form['#entity_type'], $entity),
-    )));
+  $msg = 'Entity @entity_id - @entity_label has been saved';
+  $args = array(
+    '@entity_id' => $entity->id,
+    '@entity_label' => entity_label($form['#entity_type'], $entity),
+  );
+
+  $context = array('entity' => $entity, 'form' => $form, 'form_state' => $state);
+  drupal_alter('eck_entity_save_message', $msg, $args, $context);
+
+  if ($msg) {
+    drupal_set_message(t($msg, $args));
+  }
 
   $uri = entity_uri($entity->entityType(), $entity);
   $state['redirect'] = $uri['path'];

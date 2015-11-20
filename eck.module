@@ -912,7 +912,7 @@ function eck_init() {
 /**
  * Request that eck cleans up on the next request.
  *
- * @see eck_init().
+ * @see eck_init()
  */
 function eck_clean_up_request() {
   variable_set("eck_clear_caches", TRUE);
@@ -921,7 +921,7 @@ function eck_clean_up_request() {
 /**
  * If a clean up has been requested, perform it.
  *
- * @see eck_clean_up().
+ * @see eck_clean_up()
  */
 function eck_clean_up_init() {
   if (variable_get("eck_clear_caches", FALSE)) {
