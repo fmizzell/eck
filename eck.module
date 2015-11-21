@@ -437,14 +437,6 @@ function eck_entity_property_info_alter(&$info) {
 }
 
 /**
- * Get property label.
- */
-function eck_get_property_label($name) {
-  $info = hook_eck_property_info();
-  return $info[$name]['label'];
-}
-
-/**
  * Implements hook_features_api().
  */
 function eck_features_api() {
