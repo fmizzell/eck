@@ -323,7 +323,7 @@ function eck__entity__delete_form($form, &$form_state, $entity_type, $bundle, $e
   );
 
   $message = t("Are you sure that you want to delete %id",
-    array("%id" => $entity->id));
+    array("%id" => entity_id($entity_type->name, $entity)));
 
   $caption = t("This action cannot be undone.");
 
@@ -481,7 +481,7 @@ function eck__entity__form_submit($form, &$state) {
 
   $msg = 'Entity @entity_id - @entity_label has been saved';
   $args = array(
-    '@entity_id' => $entity->id,
+    '@entity_id' => entity_id($form['#entity_type'], $entity),
     '@entity_label' => entity_label($form['#entity_type'], $entity),
   );
 
@@ -545,13 +545,13 @@ function eck__entity__view_callback($entities, $view_mode = 'full', $langcode = 
     foreach ($formatters as $property => $formatter) {
       $property_view[$property] = $formatter;
     }
-
-    $entity_view = array_merge($property_view, $entity_view[$entity_type_name][$entity->id]);
+    $entity_id = entity_id($entity_type_name, $entity);
+    $entity_view = array_merge($property_view, $entity_view[$entity_type_name][$entity_id]);
 
     eck_property_behavior_invoke_plugin($entity_type, 'entity_view',
       array('entity' => $entity));
 
-    $build[$entity_type_name][$entity->id] = $entity_view;
+    $build[$entity_type_name][$entity_id] = $entity_view;
   }
 
   return $build;

@@ -131,9 +131,9 @@ function eck__entity__label($entity) {
     "eck_entity_{$entity->entityType()}_label",
     "eck_entity_{$entity->entityType()}_{$entity->bundle()}_label",
   );
-
+  $entity_id = entity_id($entity->entityType(), $entity);
   foreach ($hook_names as $hook_name) {
-    $new_label = module_invoke_all($hook_name, $entity, $entity->id);
+    $new_label = module_invoke_all($hook_name, $entity, $entity_id);
     $empty = empty($new_label);
     if (!$empty) {
       break;
@@ -144,7 +144,7 @@ function eck__entity__label($entity) {
     return $new_label[0];
   }
   else {
-    return $entity->id;
+    return $entity_id;
   }
 }
 
@@ -221,7 +221,7 @@ function entity_table($entities, $select = FALSE) {
     $info = array();
     $entity_type = $entity->entityType();
     $bundle = $entity->bundle();
-    $id = $entity->id;
+    $id = entity_id($entity_type, $entity);
 
     if ($crud_info == NULL) {
       $crud_info = get_bundle_crud_info($entity_type, $bundle);
@@ -875,7 +875,7 @@ function eck_entity_view_alter(&$build, $entity_type) {
       // could cause of contextual links not to work correctly.
 
       $build['#contextual_links']['eck']
-        = array("{$entity_type}/{$this_bundle}",array($entity->id));
+        = array("{$entity_type}/{$this_bundle}", array(entity_id($entity_type, $entity)));
     }
   }
 }
