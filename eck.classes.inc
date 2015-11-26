@@ -579,7 +579,7 @@ class Bundle extends DBObject {
 
     if (!empty($results)) {
       $ids = array_keys($results[$this->entity_type]);
-      entity_delete($this->entity_type, $ids);
+      entity_delete_multiple($this->entity_type, $ids);
     }
 
     // Then we delete the bundle (field_instances).
